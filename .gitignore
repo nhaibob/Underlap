@@ -1,0 +1,6 @@
+node_modules/
+.next/
+.env.local
+.gemini_key
+.DS_Store
+coverage/
