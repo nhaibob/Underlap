@@ -192,7 +192,7 @@ export const TacticEditorUI = ({
       <div className="flex justify-end gap-4 mt-4 border-t border-panel pt-3 flex-shrink-0">
         <Button variant="ghost" onClick={closeCreateModal}>Hủy</Button>
         <Button 
-            variant="primary" 
+            variant="default" 
             onClick={metaProps.onPost} 
             disabled={metaProps.isPosting || metaProps.players.length === 0 || !metaProps.title.trim()}
         >

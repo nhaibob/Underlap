@@ -51,7 +51,7 @@ export default async function FeedPage() {
                 <h1 className="font-headline text-2xl font-bold mb-6">Feed</h1>
                 <div className="p-8 rounded-lg bg-panel border border-white/10">
                     <p className="mb-4">Chưa có bài đăng nào. Hãy là người đầu tiên tạo chiến thuật!</p>
-                    <Button variant="primary">Tạo ngay</Button>
+                    <Button variant="default">Tạo ngay</Button>
                 </div>
             </div>
         );

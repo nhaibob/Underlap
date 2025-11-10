@@ -33,7 +33,7 @@ export default function LoginPage() {
         </div>
 
         {/* Nút Đăng nhập */}
-        <Button type="submit" variant="primary" className="w-full mt-6">
+        <Button type="submit" variant="default" className="w-full mt-6">
           Đăng nhập
         </Button>
       </form>

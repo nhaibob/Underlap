@@ -1,6 +1,7 @@
 // src/components/features/profile/ProfileHeader.tsx
 import React from 'react';
-import { Avatar } from '@/components/ui/Avatar';
+// SỬA Ở ĐÂY: Thêm AvatarFallback và AvatarImage
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 
 // Component con cho Stats (Thống kê)
@@ -21,15 +22,14 @@ export const ProfileHeader = () => {
       <div className="container mx-auto px-4 -mt-16">
         <div className="flex items-end justify-between">
           
-          {/* Avatar (lớn hơn) */}
-          <Avatar
-            alt="Huy Son"
-            src=""
-            className="w-32 h-32 border-4 border-background"
-          />
+          {/* SỬA Ở ĐÂY: Dùng cú pháp Avatar mới (lỗi ở dòng này) */}
+          <Avatar className="w-32 h-32 border-4 border-background">
+            <AvatarImage src="" alt="Huy Son" />
+            <AvatarFallback>HS</AvatarFallback> 
+          </Avatar>
 
-          {/* Nút Edit */}
-          <Button variant="primary">Chỉnh sửa hồ sơ</Button>
+          {/* Nút Edit (variant="default" đã đúng) */}
+          <Button variant="default">Chỉnh sửa hồ sơ</Button>
         </div>
 
         {/* 3. Tên & Bio */}

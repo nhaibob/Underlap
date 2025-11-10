@@ -4,7 +4,8 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation'; // Import hook để kiểm tra trang hiện tại
 import { Button } from '@/components/ui/Button';
-import { Avatar } from '@/components/ui/Avatar';
+// SỬA Ở ĐÂY: Thêm AvatarFallback, AvatarImage
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/Avatar';
 import { useUIStore } from '@/lib/store/uiStore';
 import { PenSquare, Search, Bell, Home, Compass, MessageCircle, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -75,7 +76,9 @@ export const Header = () => {
 
         {/* 3. CÁC NÚT HÀNH ĐỘNG */}
         <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
-          <Button variant="primary" className="gap-2 hidden md:flex" onClick={openCreateModal}>
+          
+          {/* SỬA Ở ĐÂY: Đổi variant="primary" thành "default" */}
+          <Button variant="default" className="gap-2 hidden md:flex" onClick={openCreateModal}>
             <PenSquare className="w-4 h-4" />
             Tạo chiến thuật
           </Button>
@@ -86,7 +89,11 @@ export const Header = () => {
           
           {/* Nút Profile */}
           <Link href="/profile/me">
-            <Avatar alt="H" src="" /> 
+            {/* SỬA Ở ĐÂY: Dùng cú pháp Avatar mới */}
+            <Avatar>
+              <AvatarImage src="" alt="H" /> 
+              <AvatarFallback>H</AvatarFallback>
+            </Avatar>
           </Link>
 
           {/* Nút Settings */}

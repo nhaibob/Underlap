@@ -45,7 +45,7 @@ export default function LandingPage() {
           
           <div className="mt-8 flex justify-center gap-4">
             <Link href="/feed">
-                <Button variant="primary" className="text-lg px-6 py-3 shadow-lg shadow-primary/30">
+                <Button variant="default" className="text-lg px-6 py-3 shadow-lg shadow-primary/30">
                     Bắt đầu Tạo chiến thuật
                 </Button>
             </Link>

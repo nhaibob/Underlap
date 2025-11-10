@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/Card';
-import { Avatar } from '@/components/ui/Avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/Avatar';
 import { ReactionBar } from '@/components/core/ReactionBar'; // Import ReactionBar
 import { TacticBoard } from '@/components/features/tactic-board/TacticBoard';
 import { cn } from '@/lib/utils';
@@ -24,7 +24,12 @@ export const PostCard = ({ postTitle, postDescription, authorUsername, stats }: 
 
         {/* 1. Header của Card (Avatar & Tên) */}
         <div className="flex items-center gap-3">
-          <Avatar alt={authorUsername} src="" />
+          <Avatar>
+            <AvatarImage src="" alt={authorUsername} />
+          <AvatarFallback>
+             {authorUsername ? authorUsername.substring(0, 2).toUpperCase() : '??'}
+            </AvatarFallback>
+          </Avatar>
           <div>
             <Link href={`/profile/${authorUsername}`} className="font-headline font-semibold text-text-primary hover:text-primary">
               {authorUsername}

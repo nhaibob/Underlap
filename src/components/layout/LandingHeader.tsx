@@ -23,7 +23,7 @@ export const LandingHeader = () => {
           
           {/* Nút chính */}
           <Link href="/feed">
-            <Button variant="primary">
+            <Button variant="default">
               Bắt đầu
             </Button>
           </Link>

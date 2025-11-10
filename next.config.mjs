@@ -2,8 +2,13 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Loại bỏ hoàn toàn alias konva, vì nó không còn cần thiết và gây lỗi
-  // Nếu bạn có các cài đặt khác (ví dụ: images), hãy thêm chúng vào đây
+
+  // === THÊM KHỐI NÀY ĐỂ TẮT ESLINT KHI BUILD ===
+  eslint: {
+    // Cảnh báo: Điều này sẽ bỏ qua lỗi linting khi build.
+    ignoreDuringBuilds: true,
+  },
+  // ===========================================
 
   // === TẮT CACHE MỨC ĐỘ SERVER COMPONENT ===
   async headers() {

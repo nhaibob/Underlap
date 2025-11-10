@@ -89,7 +89,7 @@ export const PlayerEditPanel = ({ player, onUpdate, onDelete, setActiveTool }: P
       </div>
       
       {/* Button Xóa */}
-      <Button variant="danger" className="w-full justify-center gap-2" onClick={handleDelete}>
+      <Button variant="default" className="w-full justify-center gap-2" onClick={handleDelete}>
         <Trash2 className="w-4 h-4" />
         Xóa cầu thủ {player.label}
       </Button>

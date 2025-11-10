@@ -36,7 +36,7 @@ export default function RegisterPage() {
         </div>
 
         {/* Nút Đăng ký */}
-        <Button type="submit" variant="primary" className="w-full mt-6">
+        <Button type="submit" variant="default" className="w-full mt-6">
           Tạo tài khoản Underlap
         </Button>
       </form>

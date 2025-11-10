@@ -1,14 +1,26 @@
 // src/components/features/chat/MemberList.tsx
 import React from 'react';
-import { Avatar } from '@/components/ui/Avatar';
+// SỬA Ở ĐÂY: Thêm AvatarFallback và AvatarImage
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/Avatar';
+import { cn } from '@/lib/utils';
 
 // Item thành viên (component con)
 const MemberItem = ({ name, status }: { name: string, status: 'Online' | 'Offline' }) => (
   <div className="flex items-center gap-3 p-2 rounded-lg">
-    <Avatar alt={name} src="" className="w-8 h-8" />
+    {/* SỬA Ở ĐÂY: Dùng cú pháp Avatar mới */}
+    <Avatar className="w-8 h-8">
+      <AvatarImage src="" alt={name} />
+      <AvatarFallback>{name ? name.substring(0, 2).toUpperCase() : '??'}</AvatarFallback>
+    </Avatar>
     <div>
       <p className="text-sm font-medium text-text-primary">{name}</p>
-      <p className="text-xs text-green-400">{status}</p>
+      {/* SỬA Ở ĐÂY: Dùng cn() để đổi màu status */}
+      <p className={cn(
+        "text-xs",
+        status === 'Online' ? "text-green-400" : "text-text-secondary"
+      )}>
+        {status}
+      </p> 
     </div>
   </div>
 );

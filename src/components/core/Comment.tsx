@@ -1,13 +1,16 @@
 // src/components/core/Comment.tsx
 import React from 'react';
-import { Avatar } from '@/components/ui/Avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/Avatar';
 import Link from 'next/link';
 
 export const Comment = () => {
   return (
     <div className="flex gap-3 py-4 border-b border-panel">
       {/* 1. Avatar (nhỏ hơn) */}
-      <Avatar alt="User" src="" className="w-8 h-8" /> 
+      <Avatar className="w-8 h-8">
+       <AvatarImage src="" alt="User" />
+      <AvatarFallback>U</AvatarFallback>
+      </Avatar> 
 
       {/* 2. Nội dung comment */}
       <div className="flex-1">
