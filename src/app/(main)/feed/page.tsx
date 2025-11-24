@@ -1,8 +1,11 @@
 // src/app/(main)/feed/page.tsx
 import React from 'react';
-import { PostCard } from '@/components/core/PostCard'; 
+import { PostCard } from '@/components/core/PostCard';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link'; // Cần import Link nếu chưa có
+
+// DÒNG NÀY ĐƯỢC THÊM VÀO ĐỂ SỬA LỖI BUILD
+export const dynamic = 'force-dynamic';
 
 // Khai báo kiểu dữ liệu cho Post (Đơn giản hóa)
 interface PostData {
@@ -12,28 +15,28 @@ interface PostData {
     author: { username: string; avatarUrl: string; };
     stats: { likes: number; comments: number; forks: number; };
     tacticData: {
-        players: any[]; 
-        arrows: any[]; 
+        players: any[];
+        arrows: any[];
     };
 }
 
 // Hàm fetch data phía Server Component
 async function getFeedData(): Promise<PostData[]> {
     const apiUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    
+
     try {
         const res = await fetch(`${apiUrl}/api/tactic`, {
-            cache: 'no-store' 
+            cache: 'no-store'
         });
-        
+
         if (!res.ok) {
             console.error("Failed to fetch feed data:", res.status, res.statusText);
             return [];
         }
-        
+
         const data = await res.json();
-        
-        return Array.isArray(data) ? data : [data]; 
+
+        return Array.isArray(data) ? data : [data];
 
     } catch (e) {
         console.error("Error fetching feed:", e);
@@ -44,7 +47,7 @@ async function getFeedData(): Promise<PostData[]> {
 
 export default async function FeedPage() {
     const feedData = await getFeedData();
-    
+
     if (feedData.length === 0) {
         return (
             <div className="p-4 md:p-6 text-center text-text-secondary">
@@ -56,12 +59,12 @@ export default async function FeedPage() {
             </div>
         );
     }
-    
+
     return (
         <div className="p-4 md:p-6">
-            
+
             <h1 className="font-headline text-2xl font-bold mb-6">Feed</h1>
-            
+
             {/* Placeholder cho Post Composer */}
             <div className="p-4 rounded-lg bg-panel mb-6 border border-white/10">
                 <textarea
@@ -78,8 +81,8 @@ export default async function FeedPage() {
             {/* HIỂN THỊ CÁC POSTCARD DỰA TRÊN DỮ LIỆU */}
             <div className="space-y-6">
                 {feedData.map((post) => (
-                    <PostCard 
-                        key={post.id} 
+                    <PostCard
+                        key={post.id}
                         postTitle={post.title}
                         postDescription={post.description}
                         authorUsername={post.author.username}
@@ -87,7 +90,7 @@ export default async function FeedPage() {
                     />
                 ))}
             </div>
-            
+
         </div>
     );
 }

@@ -1,6 +1,6 @@
 // src/components/core/SettingsModal.tsx
-"use client"; // Cần "use client" vì đây là component tương tác
-import React from 'react';
+"use client"; 
+import React, { useState, useEffect } from 'react'; // THÊM: import useState, useEffect
 import { Modal } from '@/components/ui/Modal';
 import { useUIStore } from '@/lib/store/uiStore';
 import {
@@ -13,6 +13,18 @@ import {
 export const SettingsModal = () => {
   // Lấy trạng thái từ store (Zustand)
   const { isSettingsModalOpen, closeSettingsModal } = useUIStore();
+
+  // === BẮT ĐẦU SỬA LỖI HYDRATION ===
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return null; // Không render gì cho đến khi component đã mount
+  }
+  // === KẾT THÚC SỬA LỖI HYDRATION ===
 
   return (
     <Modal isOpen={isSettingsModalOpen} onClose={closeSettingsModal} className="max-w-xl">
@@ -49,7 +61,8 @@ export const SettingsModal = () => {
         <TabsContent value="notifications">
           <p className="mt-6 text-text-secondary">Cài đặt thông báo sẽ sớm có mặt.</p>
         </TabsContent>
+
       </Tabs>
     </Modal>
   );
-};
+}

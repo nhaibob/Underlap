@@ -1,31 +1,35 @@
-// src/app/(auth)/layout.tsx
+// src/app/layout.tsx
+
+import type { Metadata } from 'next';
+import '@/styles/globals.css'; // Import Global Styles
 import React from 'react';
-import Link from 'next/link';
-import { Home } from 'lucide-react';
+// Import Modal component (vì nó cần được render ở cấp cao nhất)
+import { CreateTacticModal } from '@/components/features/tactic-board/CreateTacticModal';
+import { SettingsModal } from '@/components/core/SettingsModal';
 
-export default function AuthLayout({
-  children,
+
+// Metadata của ứng dụng
+export const metadata: Metadata = {
+    title: 'Underlap - Tactic Board',
+    description: 'Sa bàn chiến thuật, cộng đồng và công cụ tạo sơ đồ.',
+};
+
+export default function RootLayout({
+    children,
 }: {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }) {
-  return (
-    // Nền tối bao phủ toàn bộ màn hình
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
-      
-      {/* Nút trở về trang chủ */}
-      <Link 
-        href="/" 
-        className="absolute top-6 left-6 text-text-secondary hover:text-primary transition-colors flex items-center gap-2"
-      >
-        <Home className="w-5 h-5" />
-        <span className="hidden sm:inline">Trang chủ</span>
-      </Link>
+    return (
+        // Đã xóa class khỏi thẻ <html>
+        <html lang="vi">
+            {/* Thêm các class chính vào thẻ <body> */}
+            <body className="bg-background text-text-primary font-body">
+                {children} {/* Nội dung trang (page.tsx, /feed, /login...) */}
 
-      {/* Container chính giữa */}
-      <div className="w-full max-w-sm p-8 bg-panel rounded-2xl shadow-2xl border border-white/10">
-        {children}
-      </div>
-      
-    </div>
-  );
+                {/* Render Modals (Chúng cần ở cấp cao nhất) */}
+                <CreateTacticModal />
+                <SettingsModal />
+            </body>
+        </html>
+    );
 }
