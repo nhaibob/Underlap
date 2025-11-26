@@ -1,65 +1,73 @@
-// src/components/core/PostCard.tsx
-"use client";
 import React from 'react';
-import Link from 'next/link';
-import { Card, CardContent } from '@/components/ui/Card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/Avatar';
-import { ReactionBar } from '@/components/core/ReactionBar'; // Import ReactionBar
+import { Avatar } from '@/components/ui/Avatar'; 
+import { ReactionBar } from '@/components/core/ReactionBar';
 import { TacticBoard } from '@/components/features/tactic-board/TacticBoard';
-import { cn } from '@/lib/utils';
+import type { Player, Arrow } from '@/components/features/tactic-board/TacticBoard';
 
-// Khai báo Prop Types cho PostCard
+// [ĐÃ SỬA] Thêm chữ "export" vào đây
 export interface PostCardProps {
-  postTitle: string;
-  postDescription: string;
-  authorUsername: string;
-  stats: { likes: number; comments: number; forks: number; }; // Stats object
-  // Thêm các props khác nếu cần (ví dụ: avatarUrl)
+    author: {
+        name: string;
+        avatar?: string; 
+        username: string;
+    };
+    content: string;
+    timestamp: string;
+    likes: number;
+    comments: number;
+    tacticData?: {
+        players: Player[];
+        arrows: Arrow[];
+    };
 }
 
-export const PostCard = ({ postTitle, postDescription, authorUsername, stats }: PostCardProps) => {
+export const PostCard = ({ 
+  author, 
+  content, 
+  timestamp, 
+  likes, 
+  comments,
+  tacticData
+}: PostCardProps) => {
   return (
-    <Card className="mb-6">
-      <CardContent>
-
-        {/* 1. Header của Card (Avatar & Tên) */}
-        <div className="flex items-center gap-3">
-          <Avatar>
-            <AvatarImage src="" alt={authorUsername} />
-          <AvatarFallback>
-             {authorUsername ? authorUsername.substring(0, 2).toUpperCase() : '??'}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <Link href={`/profile/${authorUsername}`} className="font-headline font-semibold text-text-primary hover:text-primary">
-              {authorUsername}
-            </Link>
-            <p className="text-xs text-text-secondary">@user • vừa đăng</p>
-          </div>
+    <div className="
+      group relative p-4 rounded-xl bg-panel border border-white/5 
+      hover:border-primary/30 transition-all duration-300 
+      hover:shadow-lg hover:shadow-black/20
+    ">
+      {/* Header */}
+      <div className="flex items-start gap-3 mb-3">
+        {/* Avatar component giờ đã chạy tốt */}
+        <Avatar src={author.avatar} alt={author.name} size="md" />
+        
+        <div className="flex-1">
+           <div className="flex items-center gap-2">
+             <h3 className="font-headline font-bold text-text-primary hover:underline cursor-pointer">
+               {author.name}
+             </h3>
+             <span className="text-xs text-text-secondary">• {timestamp}</span>
+           </div>
+           <p className="text-xs text-text-secondary">@{author.username}</p>
         </div>
+      </div>
 
-        {/* 2. Nội dung text của Post */}
-        <div className="mt-4 text-text-primary">
-          <Link href="/post/123" className="hover:underline">
-            <h3 className="font-headline text-xl font-semibold mb-2">
-              {postTitle}
-            </h3>
-            <p className="text-sm text-text-secondary">
-              {postDescription}
-            </p>
-          </Link>
+      {/* Content */}
+      <p className="text-text-secondary mb-4 whitespace-pre-wrap text-sm leading-relaxed">
+        {content}
+      </p>
+
+      {/* Thumbnail Tactic (Nếu có) */}
+      {tacticData && (
+        <div className="mb-4 rounded-lg overflow-hidden border border-white/10 aspect-video bg-background/50 relative">
+           <div className="absolute inset-0 z-0 opacity-80 pointer-events-none">
+             <TacticBoard variant="thumbnail" players={tacticData.players} arrows={tacticData.arrows} />
+           </div>
+           <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors" />
         </div>
+      )}
 
-        {/* 3. Thumbnail Sơ đồ */}
-        <div className="mt-4">
-          <TacticBoard variant="thumbnail" />
-        </div>
-
-        {/* 4. Thanh tương tác (Sửa lỗi TS2322) */}
-        {/* LỖI ĐÃ SỬA: ReactionBar cần được cập nhật để chấp nhận props */}
-        <ReactionBar stats={stats} />
-
-      </CardContent>
-    </Card>
+      {/* Footer Actions */}
+      <ReactionBar likes={likes} comments={comments} />
+    </div>
   );
 };

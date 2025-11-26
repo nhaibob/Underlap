@@ -1,17 +1,16 @@
-// src/app/(main)/layout.tsx
-"use client"; // BẮT BUỘC dùng Client Component
+"use client";
 import { Header } from '@/components/layout/Header';
 import { SidebarLeft } from '@/components/layout/SidebarLeft';
 import { SidebarRight } from '@/components/layout/SidebarRight';
 import { MobileNav } from '@/components/layout/MobileNav';
-import { motion } from 'framer-motion'; // 1. IMPORT FRAMER MOTION
-import { usePathname } from 'next/navigation'; // 2. IMPORT usePathname
+import { motion, AnimatePresence } from 'framer-motion';
+import { usePathname } from 'next/navigation';
 
-// Khai báo animation variant (Hiệu ứng Fade-in/Slide-up nhẹ)
+// [ĐÃ SỬA] Thêm scale nhẹ để tạo chiều sâu cho hiệu ứng
 const variants = {
-  hidden: { opacity: 0, y: 10 },
-  enter: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -10 },
+  hidden: { opacity: 0, y: 20, scale: 0.98 },
+  enter: { opacity: 1, y: 0, scale: 1 },
+  exit: { opacity: 0, y: -20, scale: 0.98 },
 };
 
 export default function MainLayout({
@@ -22,7 +21,7 @@ export default function MainLayout({
   const pathname = usePathname();
 
   return (
-    <div className="flex flex-col min-h-screen bg-background text-text-primary">
+    <div className="flex flex-col min-h-screen">
       <Header /> 
       
       <div className="flex flex-1 container mx-auto">
@@ -31,17 +30,25 @@ export default function MainLayout({
         <main className="flex-1 min-w-0">
           <div className="pb-[4.5rem] md:pb-0"> 
             
-            {/* 3. BỌC NỘI DUNG CHÍNH BẰNG motion.div */}
-            <motion.div
-              key={pathname} // KEY RẤT QUAN TRỌNG: Buộc React nhận diện trang là mới
-              variants={variants}
-              initial="hidden" // Trạng thái khởi tạo (từ 0)
-              animate="enter"  // Trạng thái khi đã tải xong (đến 1)
-              transition={{ type: 'tween', duration: 0.2 }} // Kiểu chuyển động
-              className="w-full"
-            >
-              {children}
-            </motion.div>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={pathname}
+                variants={variants}
+                initial="hidden"
+                animate="enter"
+                exit="exit"
+                // [ĐÃ SỬA] Dùng spring để chuyển động tự nhiên hơn
+                transition={{ 
+                    type: "spring", 
+                    stiffness: 260, 
+                    damping: 20,
+                    mass: 0.5 
+                }}
+                className="w-full"
+              >
+                {children}
+              </motion.div>
+            </AnimatePresence>
             
           </div>
         </main>

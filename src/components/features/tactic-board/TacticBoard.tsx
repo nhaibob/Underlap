@@ -1,4 +1,3 @@
-// src/components/features/tactic-board/TacticBoard.tsx
 "use client"; 
 import React, { useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -8,24 +7,15 @@ import { Tool, ArrowColor, ArrowStyle, ArrowType } from './CreateTacticModal';
 import { v4 as uuidv4 } from 'uuid';
 import { PlayerTokenProps } from './PlayerToken'; 
 
-// --- CÁC IMPORT MỚI ĐỂ THÊM TÍNH NĂNG "COPY SNAPSHOT" ---
-import { Button } from '@/components/ui/Button';
-import { Copy } from 'lucide-react';
-import { useCommentClipboard } from '@/lib/hooks/useCommentClipboard';
-import { toPng } from 'html-to-image';
-// --------------------------------------------------------
-
-// (Hằng số màu)
 const ARROW_COLORS: ArrowColor[] = ['#6C5CE7', '#FF7F50', '#00CED1'];
 
-// (Export 'Player' interface)
 export interface Player {
   id: string;
   position: PlayerTokenProps['position'];
   label: string;
   pos: { x: number; y: number };
 }
-// (Export 'Arrow' interface)
+
 export interface Arrow {
   id: string;
   from: { x: number; y: number };
@@ -35,32 +25,41 @@ export interface Arrow {
   type: ArrowType;
 }
 
-// (Component FootballPitchBackground giữ nguyên)
+// === [ĐÃ SỬA] Component này giờ dùng Class Tailwind thay vì mã màu cứng ===
 const FootballPitchBackground = () => (
-    // ... (code SVG giữ nguyên)
   <svg 
     className="absolute top-0 left-0 w-full h-full" 
     viewBox="0 0 600 400" 
     fill="none" 
     xmlns="http://www.w3.org/2000/svg"
   >
-    <rect x="0" y="0" width="600" height="400" fill="#1C3D2E" /> 
-    <rect x="1.5" y="1.5" width="597" height="397" rx="4" stroke="#A7CCB7" strokeOpacity="0.4" strokeWidth="3" />
-    <line x1="300" y1="2" x2="300" y2="398" stroke="#A7CCB7" strokeOpacity="0.4" strokeWidth="3" />
-    <circle cx="300" cy="200" r="50" stroke="#A7CCB7" strokeOpacity="0.4" strokeWidth="3" />
-    <circle cx="300" cy="200" r="2" fill="#A7CCB7" fillOpacity="0.6" />
-    <rect x="1.5" y="80" width="60" height="240" rx="2" stroke="#A7CCB7" strokeOpacity="0.4" strokeWidth="3" />
-    <rect x="1.5" y="140" width="20" height="120" rx="1" stroke="#A7CCB7" strokeOpacity="0.4" strokeWidth="3" />
-    <circle cx="45" cy="200" r="2" fill="#A7CCB7" fillOpacity="0.6" />
-    <rect x="538.5" y="80" width="60" height="240" rx="2" stroke="#A7CCB7" strokeOpacity="0.4" strokeWidth="3" />
-    <rect x="578.5" y="140" width="20" height="120" rx="1" stroke="#A7CCB7" strokeOpacity="0.4" strokeWidth="3" />
-    <circle cx="555" cy="200" r="2" fill="#A7CCB7" fillOpacity="0.6" />
-    <path d="M60 140 C80 160, 80 240, 60 260" stroke="#A7CCB7" strokeOpacity="0.4" strokeWidth="3" fill="none"/>
-    <path d="M540 140 C520 160, 520 240, 540 260" stroke="#A7CCB7" strokeOpacity="0.4" strokeWidth="3" fill="none"/>
+    {/* Mặt sân: Dùng màu xanh đậm (cần đảm bảo mã màu này hợp với theme) */}
+    <rect x="0" y="0" width="600" height="400" className="fill-[#1C3D2E]" /> 
+    
+    {/* Các đường kẻ: Màu trắng opacity thấp */}
+    <g className="stroke-white/30" strokeWidth="3">
+        <rect x="1.5" y="1.5" width="597" height="397" rx="4" />
+        <line x1="300" y1="2" x2="300" y2="398" />
+        <circle cx="300" cy="200" r="50" />
+        <rect x="1.5" y="80" width="60" height="240" rx="2" />
+        <rect x="1.5" y="140" width="20" height="120" rx="1" />
+        <rect x="538.5" y="80" width="60" height="240" rx="2" />
+        <rect x="578.5" y="140" width="20" height="120" rx="1" />
+        <path d="M60 140 C80 160, 80 240, 60 260" fill="none"/>
+        <path d="M540 140 C520 160, 520 240, 540 260" fill="none"/>
+    </g>
+    
+    {/* Chấm phạt đền */}
+    <g className="fill-white/50">
+        <circle cx="300" cy="200" r="2" />
+        <circle cx="45" cy="200" r="2" />
+        <circle cx="555" cy="200" r="2" />
+    </g>
   </svg>
 );
 
-// (Component DraggablePlayerToken - Giữ nguyên)
+// ... (Phần còn lại giữ nguyên logic cũ)
+
 function DraggablePlayerToken({ 
   player, 
   activeTool, 
@@ -72,7 +71,6 @@ function DraggablePlayerToken({
   selectedPlayerId: string | null, 
   setSelectedPlayerId: React.Dispatch<React.SetStateAction<string | null>> 
 }) {
-    // ... (logic giữ nguyên)
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: player.id,
     data: { isPaletteToken: false },
@@ -113,9 +111,7 @@ function DraggablePlayerToken({
   );
 }
 
-// (Component DrawingLayer - Giữ nguyên)
 const DrawingLayer = ({ 
-    // ... (props và logic giữ nguyên)
   arrows, 
   setArrows, 
   activeTool,
@@ -138,29 +134,19 @@ const DrawingLayer = ({
     const rect = svgRef.current.getBoundingClientRect();
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    
-    // Chuyển đổi tọa độ click/touch thành tọa độ tương đối bên trong SVG (với viewBox 600x400)
-    const svgX = (clientX - rect.left) * (600 / rect.width);
-    const svgY = (clientY - rect.top) * (400 / rect.height);
-    
-    return { x: svgX, y: svgY };
+    return { x: clientX - rect.left, y: clientY - rect.top };
   };
 
-  // HÀM CHUYỂN ĐỔI ĐƯỜNG THẲNG SANG ĐƯỜNG CONG BEZIER
   const getPathData = (from: { x: number; y: number }, to: { x: number; y: number }, type: ArrowType) => {
     if (type === 'straight') {
       return `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
     }
-    
     const midX = (from.x + to.x) / 2;
     const midY = (from.y + to.y) / 2;
     const curveIntensity = 30;
-    
     const angle = Math.atan2(to.y - from.y, to.x - from.x) + Math.PI / 2;
-    
     const controlX = midX + Math.cos(angle) * curveIntensity;
     const controlY = midY + Math.sin(angle) * curveIntensity;
-
     return `M ${from.x} ${from.y} Q ${controlX} ${controlY}, ${to.x} ${to.y}`;
   };
 
@@ -179,8 +165,6 @@ const DrawingLayer = ({
 
   const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
     if (activeTool !== 'draw' || !drawingArrow) return;
-    // Ngăn chặn hành vi cuộn trang trên di động khi đang vẽ
-    e.preventDefault(); 
     const pos = getPos(e);
     setDrawingArrow(prev => ({ ...prev!, to: pos }));
   };
@@ -205,26 +189,20 @@ const DrawingLayer = ({
   };
   
   const getMarkerId = (color: ArrowColor): string => {
-      // Đảm bảo các màu này khớp với ARROW_COLORS
-      const colorMap: Record<ArrowColor, string> = {
+      const colorMap = {
           '#6C5CE7': 'primary',
           '#FF7F50': 'secondary',
           '#00CED1': 'tertiary',
-          // Bạn có thể thêm 2 màu còn lại nếu cần
-          '#FF6B81': 'attack', 
+          '#FF6B81': 'attack',
           '#54A0FF': 'defend',
       };
-      // Tìm key khớp (hoặc dùng màu đầu tiên làm mặc định)
-      const key = colorMap[color] || 'primary';
-      return `arrowhead-${key}`;
+      return `arrowhead-${colorMap[color] || 'default'}`;
   };
 
   return (
     <svg
       ref={svgRef}
       className="absolute top-0 left-0 w-full h-full z-10"
-      viewBox="0 0 600 400" // THÊM MỚI: Đảm bảo SVG này khớp với viewBox của nền
-      preserveAspectRatio="none" // THÊM MỚI: Đảm bảo tọa độ khớp
       style={{
         cursor: activeTool === 'draw' ? 'crosshair' : (activeTool === 'erase' ? 'cell' : 'default'),
         pointerEvents: activeTool === 'draw' || activeTool === 'erase' ? 'auto' : 'none' 
@@ -237,7 +215,6 @@ const DrawingLayer = ({
       onTouchEnd={handleMouseUp}
     >
       <defs>
-        {/* Định nghĩa nhiều marker cho các màu khác nhau */}
         {ARROW_COLORS.map(color => (
             <marker 
                 key={color} 
@@ -254,7 +231,6 @@ const DrawingLayer = ({
         ))}
       </defs>
 
-      {/* Render các mũi tên đã hoàn thành (Dùng <path>) */}
       {arrows.map(arrow => (
         <path
           key={arrow.id}
@@ -265,11 +241,10 @@ const DrawingLayer = ({
           markerEnd={`url(#${getMarkerId(arrow.color)})`}
           strokeDasharray={getDashArray(arrow.style)}
           onClick={() => handleArrowClick(arrow.id)}
-          className={cn(activeTool === 'erase' && "cursor-cell hover:stroke-red-500")}
+          className={cn(activeTool === 'erase' && "cursor-cell hover:stroke-danger")}
         />
       ))}
       
-      {/* Render mũi tên đang vẽ (live preview) */}
       {drawingArrow && (
         <path
           d={getPathData(drawingArrow.from, drawingArrow.to, drawingArrow.type)}
@@ -278,16 +253,12 @@ const DrawingLayer = ({
           fill="none"
           markerEnd={`url(#${getMarkerId(drawingArrow.color)})`}
           strokeDasharray={getDashArray(drawingArrow.style)}
-          opacity={0.8} // Thêm độ mờ để dễ phân biệt
         />
       )}
     </svg>
   );
 };
-// ==========================================================
 
-
-// (Props của TacticBoard giữ nguyên)
 interface TacticBoardProps {
   variant?: 'full' | 'thumbnail';
   players?: Player[];
@@ -305,7 +276,6 @@ interface TacticBoardProps {
   currentArrowType?: ArrowType; 
 }
 
-// (COMPONENT TacticBoard - ĐÃ CẬP NHẬT)
 export const TacticBoard = ({ 
   variant = 'full', 
   players,
@@ -325,120 +295,41 @@ export const TacticBoard = ({
     id: 'tactic-board-droppable-area',
   });
 
-  // Giữ ref gốc của bạn
   const boardRef = useRef<HTMLDivElement>(null);
   
-  // Ref này kết hợp cả ref của useDroppable và ref của bạn
   const setCombinedRef = (node: HTMLDivElement | null) => {
     setNodeRef(node);
     (boardRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
   };
-
-  // --- LOGIC "COPY SNAPSHOT" (THÊM MỚI) ---
-  const { setClipboardImage } = useCommentClipboard();
-  // const { toast } = useToast(); // (Tùy chọn: nếu bạn dùng shadcn toast)
-
-  /**
-   * Chụp ảnh DOM node được gắn 'boardRef'
-   * và trả về một chuỗi data:image/png;base64,...
-   */
-  const exportToImage = async (): Promise<string> => {
-    if (!boardRef.current) {
-      throw new Error("TacticBoard ref không tồn tại.");
-    }
-    
-    // Sử dụng html-to-image để chuyển đổi DOM node thành PNG
-    const dataUrl = await toPng(boardRef.current, { 
-        cacheBust: true,
-        // Lọc ra các phần tử không muốn chụp (chính nút "Copy Snapshot")
-        filter: (node) => {
-          // Đảm bảo node là một Element trước khi kiểm tra id
-          if (node instanceof HTMLElement) {
-            // ID này phải khớp với ID bạn đặt cho wrapper của nút
-            return node.id !== 'snapshot-button-wrapper'; 
-          }
-          return true;
-        }
-    });
-    return dataUrl;
-  };
-
-  // Hàm xử lý khi bấm nút "Copy Snapshot"
-  const handleCopySnapshot = async (e: React.MouseEvent) => {
-    e.stopPropagation(); // Ngăn sự kiện click lan ra ngoài board
-    try {
-      const imageData = await exportToImage();
-      setClipboardImage(imageData);
-      alert("Đã sao chép Snapshot! Bạn có thể dán vào bình luận.");
-      
-    } catch (error) {
-      console.error("Lỗi khi sao chép snapshot:", error);
-      alert("Lỗi khi sao chép snapshot.");
-    }
-  };
-  // --- KẾT THÚC LOGIC "COPY SNAPSHOT" ---
   
-  
-  // (Logic handleBoardClick giữ nguyên)
   const handleBoardClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    
-    // Ngăn chặn click vào PlayerToken
     const isPlayerTokenClick = (e.target as HTMLElement).closest('[data-dnd-kit-draggable]');
-    // Ngăn chặn click vào nút snapshot
-    const isSnapshotButtonClick = (e.target as HTMLElement).closest('#snapshot-button-wrapper');
-
-    if (isPlayerTokenClick || isSnapshotButtonClick) {
+    if (isPlayerTokenClick) {
         return; 
     }
-
-    // 1. Logic BỎ HIGHLIGHT
     if (!positionToPlace && (activeTool === 'select' || activeTool === 'move')) { 
       setSelectedPlayerId?.(null); 
     }
-    
-    // 2. LOGIC GỌI CLICK TO PLACE (Chỉ gọi khi có vị trí đang chờ đặt)
     if (positionToPlace && boardRef.current) {
-        
         const rect = boardRef.current.getBoundingClientRect();
-        
-        // Lấy tọa độ click tương đối so với board
         const relativeX = e.clientX - rect.left;
         const relativeY = e.clientY - rect.top;
-        
-        // Chuyển đổi sang tọa độ của token (player.pos)
-        // Token có kích thước 40x40 (giả định), ta cần căn giữa
-        const centeredX = relativeX - 20; 
+        const centeredX = relativeX - 20;
         const centeredY = relativeY - 20;
-        
         onBoardClick?.({ x: centeredX, y: centeredY });
     }
   };
 
   return (
     <div 
-      ref={setCombinedRef} // Dùng ref kết hợp
+      ref={setCombinedRef} 
       className={cn(
-        "relative w-full aspect-[600/400] overflow-hidden", // Sử dụng tỷ lệ của SVG
+        "relative w-full aspect-video overflow-hidden",
         "bg-panel border border-white/10 rounded-lg", 
         variant === 'thumbnail' && "border-none"
       )}
-      onClick={handleBoardClick} // Bắt sự kiện click
+      onClick={handleBoardClick}
     >
-      {/* --- NÚT COPY SNAPSHOT (THÊM MỚI) --- */}
-      {/* Chúng ta đặt nó ở đây, bên trong div có ref, 
-        nhưng hàm exportToImage sẽ lọc nó ra nhờ có id.
-        Chỉ hiển thị ở 'full' variant.
-      */}
-      {variant === 'full' && (
-        <div id="snapshot-button-wrapper" className="absolute top-2 right-2 z-30">
-          <Button variant="outline" size="sm" onClick={handleCopySnapshot}>
-            <Copy className="h-4 w-4 mr-2" />
-            Copy Snapshot
-          </Button>
-        </div>
-      )}
-      {/* --- KẾT THÚC NÚT COPY --- */}
-
       <FootballPitchBackground />
       
       {variant === 'full' && players && arrows && activeTool && (
@@ -452,9 +343,8 @@ export const TacticBoard = ({
         />
       )}
       
-      {/* Lớp 3: Cầu thủ */}
       {variant === 'full' && players && (
-        <div className="z-20"> {/* Wrapper để đảm bảo z-index */}
+        <div className="z-20"> 
             {players.map((player) => (
             <DraggablePlayerToken 
                 key={player.id} 
@@ -469,9 +359,7 @@ export const TacticBoard = ({
       
       {variant === 'thumbnail' && (
         <div className="flex items-center justify-center h-full">
-          <p className="text-text-secondary text-xs">
-            Tactic Board Preview
-          </p>
+          {/* Có thể thêm icon play hoặc overlay nếu muốn */}
         </div>
       )}
     </div>

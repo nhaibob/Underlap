@@ -1,76 +1,85 @@
-"use client"; // Cần client component để dùng hooks
+"use client";
+import React, { useState } from 'react';
+import { Avatar } from '@/components/ui/Avatar'; // Đảm bảo import Avatar mới đã sửa
+import { Button } from '@/components/ui/Button';
+import { Comment } from './Comment'; // Import component con Comment (nếu có)
 
-import React, { useEffect, useState } from 'react';
-import { useCommentStore } from '@/lib/store/useCommentStore';
-import { CommentInput } from '@/components/features/comments/CommentInput';
-import { CommentItem } from '@/components/features/comments/CommentItem';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
-
-interface CommentSectionProps {
-  // contextId có thể là postId, tacticId, v.v.
-  contextId: string;
+// 1. [QUAN TRỌNG] Export Interface để file khác dùng được (nếu cần)
+export interface CommentSectionProps {
+  postId?: string; // Thêm postId (dấu ? để không bắt buộc nếu dùng ở chỗ khác)
+  initialComments?: any[]; // Dữ liệu comment ban đầu (nếu có)
 }
 
-/**
- * Component chính để hiển thị toàn bộ hệ thống bình luận cho một context cụ thể (ví dụ: một bài post).
- */
-export const CommentSection: React.FC<CommentSectionProps> = ({ contextId }) => {
-  const { comments, fetchComments } = useCommentStore();
-  const [isLoading, setIsLoading] = useState(true);
+export const CommentSection = ({ postId, initialComments = [] }: CommentSectionProps) => {
+  const [comments, setComments] = useState(initialComments);
+  const [newCommentText, setNewCommentText] = useState('');
 
-  // Lấy dữ liệu comments khi component được mount
-  useEffect(() => {
-    const loadComments = async () => {
-      setIsLoading(true);
-      await fetchComments(contextId);
-      setIsLoading(false);
+  // Mock user hiện tại (người đang gõ comment)
+  const currentUser = {
+    name: "Bạn",
+    avatar: undefined, // Để trống để test fallback avatar
+    username: "me"
+  };
+
+  const handlePostComment = () => {
+    if (!newCommentText.trim()) return;
+
+    const newComment = {
+      id: Date.now().toString(),
+      author: currentUser,
+      content: newCommentText,
+      timestamp: "Vừa xong",
+      likes: 0,
+      replies: []
     };
-    loadComments();
-    
-    // Cleanup store khi component unmount (tùy chọn)
-    // return () => {
-    //   useCommentStore.setState({ comments: [] });
-    // };
-  }, [contextId, fetchComments]);
 
-  // Lọc chỉ lấy các comment gốc (không có parentId)
-  const topLevelComments = comments.filter(comment => comment.parentId === null);
+    setComments([newComment, ...comments]);
+    setNewCommentText('');
+    
+    // TODO: Gọi API để lưu comment với postId
+    console.log(`Posting comment to post ${postId}:`, newCommentText);
+  };
 
   return (
-    <div className="w-full max-w-2xl mx-auto py-8 space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-        Bình luận ({comments.length})
-      </h2>
+    <div className="space-y-6">
       
-      {/* Input cho comment gốc */}
-      <CommentInput contextId={contextId} />
-      
-      {/* Danh sách bình luận */}
-      <div className="space-y-6">
-        {isLoading ? (
-          <div className="flex justify-center items-center py-10">
-            <Loader2 className="h-8 w-8 animate-spin text-gray-500 dark:text-gray-400" />
-            <span className="ml-2">Đang tải bình luận...</span>
+      {/* Input Area */}
+      <div className="flex gap-3">
+        <Avatar src={currentUser.avatar} alt={currentUser.name} size="md" />
+        <div className="flex-1 space-y-2">
+          <textarea
+            value={newCommentText}
+            onChange={(e) => setNewCommentText(e.target.value)}
+            placeholder="Viết bình luận của bạn..."
+            className="w-full bg-background/50 border border-white/10 rounded-xl p-3 text-sm text-text-primary focus:border-primary focus:outline-none resize-none min-h-[80px]"
+          />
+          <div className="flex justify-end">
+            <Button 
+              variant="default" 
+              onClick={handlePostComment}
+              disabled={!newCommentText.trim()}
+            >
+              Gửi
+            </Button>
           </div>
+        </div>
+      </div>
+
+      {/* Comments List */}
+      <div className="space-y-4">
+        {comments.length > 0 ? (
+          comments.map((comment) => (
+            // Render từng comment (Giả sử bạn đã có component Comment)
+            // Nếu chưa có component Comment riêng, bạn có thể render trực tiếp div ở đây
+            <Comment key={comment.id} {...comment} />
+          ))
         ) : (
-          <AnimatePresence>
-            {topLevelComments.length > 0 ? (
-              topLevelComments.map(comment => (
-                <CommentItem key={comment.id} comment={comment} contextId={contextId} />
-              ))
-            ) : (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-center text-gray-500 dark:text-gray-400 py-6"
-              >
-                Chưa có bình luận nào. Hãy là người đầu tiên!
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <p className="text-center text-text-secondary text-sm py-4">
+            Chưa có bình luận nào. Hãy là người đầu tiên!
+          </p>
         )}
       </div>
+
     </div>
   );
 };

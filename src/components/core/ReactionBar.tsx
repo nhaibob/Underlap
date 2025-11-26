@@ -1,14 +1,15 @@
-// src/components/core/ReactionBar.tsx
 import React from 'react';
 import { Heart, MessageCircle, Bookmark, GitFork } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Khai báo ReactionBarProps để fix lỗi TS2322
+// [ĐÃ SỬA] Chuyển đổi props sang dạng phẳng để khớp với PostCard
 export interface ReactionBarProps {
-    stats: { likes: number; comments: number; forks: number; };
+    likes: number;
+    comments: number;
+    forks?: number; // Optional (có thể không có)
+    className?: string;
 }
 
-// Component con cho nút phản ứng
 const ReactionButton = ({ 
   icon: Icon, 
   count,
@@ -29,15 +30,18 @@ const ReactionButton = ({
   );
 };
 
-// Sửa lỗi TS2322: ReactionBar phải nhận props được định nghĩa
-export const ReactionBar = ({ stats }: ReactionBarProps) => {
+// [ĐÃ SỬA] Destructuring trực tiếp likes, comments, forks
+export const ReactionBar = ({ likes, comments, forks = 0, className }: ReactionBarProps) => {
   return (
-    <div className="flex items-center gap-6 pt-4 mt-4 border-t border-panel">
-      <ReactionButton icon={Heart} count={stats.likes} className="hover:text-danger" />
-      <ReactionButton icon={MessageCircle} count={stats.comments} />
-      {/* Giả lập Save/Fork count */}
-      <ReactionButton icon={Bookmark} count={stats.likes + 2} className="hover:text-secondary" /> 
-      <ReactionButton icon={GitFork} count={stats.forks} className="hover:text-primary" />
+    <div className={cn("flex items-center gap-6 pt-4 mt-4 border-t border-panel", className)}>
+      <ReactionButton icon={Heart} count={likes} className="hover:text-danger" />
+      <ReactionButton icon={MessageCircle} count={comments} />
+      
+      {/* Giả lập Save count (Demo: likes + 2) */}
+      <ReactionButton icon={Bookmark} count={likes + 2} className="hover:text-secondary" /> 
+      
+      {/* Forks có giá trị mặc định là 0 nếu không được truyền */}
+      <ReactionButton icon={GitFork} count={forks} className="hover:text-primary" />
     </div>
   );
 };

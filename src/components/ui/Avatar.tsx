@@ -1,50 +1,75 @@
-"use client"
+"use client"; // [QUAN TRỌNG NHẤT] Dòng này bắt buộc phải có ở đầu file
 
-import * as React from "react"
-import * as AvatarPrimitive from "@radix-ui/react-avatar"
+import React from 'react';
+import { cn } from '@/lib/utils';
 
-import { cn } from "@/lib/utils"
+export interface AvatarProps {
+  src?: string;
+  alt?: string;
+  className?: string;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  children?: React.ReactNode;
+}
 
-const Avatar = React.forwardRef<
-  React.ElementRef<typeof AvatarPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>
->(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Root
-    ref={ref}
-    className={cn(
-      "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full",
-      className
-    )}
-    {...props}
-  />
-))
-Avatar.displayName = AvatarPrimitive.Root.displayName
+export const Avatar = ({ 
+  src, 
+  alt = "User", 
+  className = "", 
+  size = 'md', 
+  children 
+}: AvatarProps) => {
+  
+  const sizeClasses = {
+    sm: "w-8 h-8",
+    md: "w-10 h-10",
+    lg: "w-12 h-12",
+    xl: "w-32 h-32"
+  };
 
-const AvatarImage = React.forwardRef<
-  React.ElementRef<typeof AvatarPrimitive.Image>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
->(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Image
-    ref={ref}
-    className={cn("aspect-square h-full w-full", className)}
-    {...props}
-  />
-))
-AvatarImage.displayName = AvatarPrimitive.Image.displayName
+  const baseClasses = "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white/10 border border-white/10";
+  const sizeClass = sizeClasses[size as keyof typeof sizeClasses] || "";
 
-const AvatarFallback = React.forwardRef<
-  React.ElementRef<typeof AvatarPrimitive.Fallback>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Fallback>
->(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Fallback
-    ref={ref}
-    className={cn(
-      "flex h-full w-full items-center justify-center rounded-full bg-muted",
-      className
-    )}
-    {...props}
-  />
-))
-AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName
+  if (src) {
+     return (
+        <div className={cn(baseClasses, sizeClass, className)}>
+           <img 
+             src={src} 
+             alt={alt} 
+             className="aspect-square h-full w-full object-cover" 
+             onError={(e) => {
+               (e.target as HTMLElement).style.display = 'none';
+             }}
+           />
+           {/* Fallback text hiển thị khi ảnh lỗi/ẩn */}
+           <div className="absolute inset-0 flex items-center justify-center bg-panel text-text-secondary font-bold select-none -z-10">
+              {alt.charAt(0).toUpperCase()}
+           </div>
+        </div>
+     )
+  }
 
-export { Avatar, AvatarImage, AvatarFallback }
+  return (
+    <div className={cn(baseClasses, sizeClass, className)}>
+      {children}
+    </div>
+  );
+};
+
+export const AvatarImage = ({ src, alt, className }: React.ImgHTMLAttributes<HTMLImageElement>) => {
+    return (
+      <img 
+        src={src} 
+        alt={alt} 
+        className={cn("aspect-square h-full w-full object-cover", className)} 
+        onError={(e) => (e.target as HTMLElement).style.display = 'none'}
+      />
+    );
+}
+
+export const AvatarFallback = ({ children, className }: React.HTMLAttributes<HTMLDivElement>) => {
+    return (
+        <div className={cn("flex h-full w-full items-center justify-center rounded-full bg-panel text-xs font-medium text-text-secondary", className)}>
+            {children}
+        </div>
+    )
+}

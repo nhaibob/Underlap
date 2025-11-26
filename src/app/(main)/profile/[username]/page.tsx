@@ -1,89 +1,102 @@
-// src/app/(main)/profile/[username]/page.tsx
+"use client";
 import React from 'react';
 import { ProfileHeader } from '@/components/features/profile/ProfileHeader';
-import { PostCard } from '@/components/core/PostCard'; 
-import { PostCardProps } from '@/components/core/PostCard'; // Import type
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent
-} from '@/components/ui/Tabs'; 
+import { PostCard, PostCardProps } from '@/components/core/PostCard';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs';
 
-// Dữ liệu mẫu (placeholder)
-const USER_MOCK_STATS = { likes: 50, comments: 5, forks: 8 };
+// Mock Data đã chuẩn hóa theo Interface mới
 const USER_POSTS: PostCardProps[] = [
-    { 
-        postTitle: "Sơ đồ 3-5-2 (Cá nhân hóa)", 
-        postDescription: "Phân tích vai trò của LWB và RWB trong hệ thống 3 hậu vệ.", 
-        authorUsername: "HuySon", 
-        stats: USER_MOCK_STATS 
+  {
+    author: {
+      name: "Huy Sơn",
+      username: "HuySon",
+      // avatar: để trống để test fallback
     },
-    { 
-        postTitle: "Bài tập chuyền ngắn", 
-        postDescription: "Bài tập rèn luyện cho các tiền vệ trung tâm (CM).", 
-        authorUsername: "HuySon", 
-        stats: USER_MOCK_STATS 
+    content: "**Sơ đồ 3-5-2 (Cá nhân hóa)**\n\nPhân tích vai trò của LWB và RWB trong hệ thống 3 hậu vệ. Yêu cầu thể lực cực cao để lên công về thủ liên tục.",
+    timestamp: "1 ngày trước",
+    likes: 45,
+    comments: 12,
+    tacticData: {
+        players: [
+            { id: '1', position: 'gk', label: 'GK', pos: { x: 45, y: 200 } },
+            { id: '2', position: 'def', label: 'LCB', pos: { x: 100, y: 150 } },
+            { id: '3', position: 'def', label: 'CB', pos: { x: 100, y: 200 } },
+            { id: '4', position: 'def', label: 'RCB', pos: { x: 100, y: 250 } },
+        ],
+        arrows: []
+    }
+  },
+  {
+    author: {
+      name: "Huy Sơn",
+      username: "HuySon",
     },
-    { 
-        postTitle: "Phân tích Real Madrid", 
-        postDescription: "Cách họ kiểm soát tuyến giữa bằng việc chuyển đổi vai trò.", 
-        authorUsername: "HuySon", 
-        stats: USER_MOCK_STATS 
-    },
-    { 
-        postTitle: "Tuyển chọn DM hoàn hảo", 
-        postDescription: "Những tiêu chí quan trọng khi lựa chọn tiền vệ phòng ngự.", 
-        authorUsername: "HuySon", 
-        stats: USER_MOCK_STATS 
-    },
+    content: "**Pressing Trap ở biên**\n\nCách dụ đối phương chuyền bóng ra biên rồi tổ chức vây ráp số đông để đoạt bóng.",
+    timestamp: "3 ngày trước",
+    likes: 128,
+    comments: 34
+  }
 ];
 
-export default function ProfilePage() {
-  return (
-    <div>
-      {/* 1. Header của Profile */}
-      <ProfileHeader />
+export default function ProfilePage({ params }: { params: { username: string } }) {
+  // Decode username (ví dụ: "Nguyen%20A" -> "Nguyen A")
+  const decodedUsername = decodeURIComponent(params.username);
 
-      {/* 2. Phần Tab nội dung */}
-      <div className="container mx-auto px-4 mt-8">
-        <Tabs defaultValue="posts">
-          
-          <TabsList>
-            <TabsTrigger value="posts">Bài đăng</TabsTrigger>
-            <TabsTrigger value="saved">Đã lưu</TabsTrigger>
-            <TabsTrigger value="forks">Forks</TabsTrigger>
+  return (
+    <div className="max-w-4xl mx-auto pb-10">
+      
+      {/* 1. Header Profile */}
+      <ProfileHeader 
+        username={decodedUsername} 
+        // Mock stats truyền vào header
+        stats={{
+            followers: 120,
+            following: 45,
+            likes: 890,
+            tactics: 12
+        }}
+      />
+
+      {/* 2. Tabs Content */}
+      <div className="mt-6">
+        <Tabs defaultValue="posts" className="w-full">
+          <TabsList className="w-full justify-start border-b border-white/10 bg-transparent p-0">
+            <TabsTrigger 
+              value="posts" 
+              className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+            >
+              Bài đăng
+            </TabsTrigger>
+            <TabsTrigger 
+              value="tactics" 
+              className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+            >
+              Chiến thuật
+            </TabsTrigger>
+            <TabsTrigger 
+              value="saved" 
+              className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+            >
+              Đã lưu
+            </TabsTrigger>
           </TabsList>
 
-          {/* Tab Content 1: Các bài đăng - LỖI ĐÃ SỬA */}
-          <TabsContent value="posts">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-              {/* === FIX LỖI: CHỈ DÙNG MAP (KHÔNG DÙNG POSTCARD TĨNH) === */}
-              {USER_POSTS.map((post, index) => (
-                <PostCard 
-                  key={index} 
-                  postTitle={post.postTitle}
-                  postDescription={post.postDescription}
-                  authorUsername={post.authorUsername}
-                  stats={post.stats}
-                />
-              ))}
-              {/* ĐÃ XÓA 4 DÒNG <PostCard /> TĨNH GÂY LỖI */}
-            </div>
+          <TabsContent value="posts" className="mt-6 space-y-6">
+            {USER_POSTS.map((post, index) => (
+              <PostCard key={index} {...post} />
+            ))}
           </TabsContent>
-
-          {/* Tab Content 2: Đã lưu (Placeholder) */}
-          <TabsContent value="saved">
-            <p className="mt-6 text-text-secondary">Chưa có bài đăng nào được lưu.</p>
+          
+          <TabsContent value="tactics" className="mt-6 text-center text-text-secondary py-10">
+            <p>Danh sách chiến thuật (Đang phát triển)</p>
           </TabsContent>
-
-          {/* Tab Content 3: Forks (Placeholder) */}
-          <TabsContent value="forks">
-            <p className="mt-6 text-text-secondary">Chưa có forks nào.</p>
+          
+          <TabsContent value="saved" className="mt-6 text-center text-text-secondary py-10">
+            <p>Bài viết đã lưu (Đang phát triển)</p>
           </TabsContent>
-
         </Tabs>
       </div>
+
     </div>
   );
 }

@@ -7,13 +7,13 @@
 
 @layer base {
   body {
-    /* Các @apply đã được xóa khỏi đây và chuyển sang layout.tsx */
+    /* Sử dụng các biến màu đã khai báo trong config */
+    @apply bg-background text-text-primary font-body;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    /* Font mặc định cho tiêu đề */
     @apply font-headline;
   }
 }

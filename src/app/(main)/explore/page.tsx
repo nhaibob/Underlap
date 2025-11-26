@@ -1,95 +1,90 @@
-// src/app/(main)/explore/page.tsx
+"use client";
 import React from 'react';
-import { PostCard } from '@/components/core/PostCard'; 
-import { TagButton } from '@/components/ui/TagButton'; 
-import { Input } from '@/components/ui/Input'; 
+import { Input } from '@/components/ui/Input';
 import { Search } from 'lucide-react';
-import { PostCardProps } from '@/components/core/PostCard'; // Import type
+import { PostCard, PostCardProps } from '@/components/core/PostCard'; // Import component và type
 
-// Dữ liệu mẫu (placeholder)
-const MOCK_STATS = { likes: 12, comments: 3, forks: 1 };
+// Dữ liệu mẫu đã được cập nhật theo Interface mới của PostCard
 const MOCK_POSTS: PostCardProps[] = [
-    { 
-        postTitle: "4-3-3 Pressing Sâu", 
-        postDescription: "Phân tích cách Man City sử dụng 4-3-3 để ép sân từ phần sân nhà.", 
-        authorUsername: "TacticianX", 
-        stats: MOCK_STATS 
+  {
+    author: {
+      name: "Chiến Thuật Bóng Đá",
+      username: "tactic_daily",
+      // Không truyền avatar để test fallback (hiện chữ cái đầu)
     },
-    { 
-        postTitle: "5-3-2: Phản công Cực đại", 
-        postDescription: "Sơ đồ phòng ngự phản công hiệu quả cao với 3 CB và 2 tiền đạo cắm.", 
-        authorUsername: "Coach_A", 
-        stats: MOCK_STATS 
+    content: "**4-3-3 Pressing Tầm Cao**\n\nPhân tích cách Man City sử dụng sơ đồ 4-3-3 để gây áp lực ngay từ phần sân đối phương. Các tiền vệ cánh bó vào trong để tạo số lượng áp đảo khu trung tuyến.",
+    timestamp: "2 giờ trước",
+    likes: 156,
+    comments: 24,
+    // Có thể thêm tacticData nếu muốn hiển thị sa bàn
+    tacticData: {
+        players: [
+            { id: '1', position: 'gk', label: 'GK', pos: { x: 45, y: 200 } },
+            { id: '2', position: 'def', label: 'LCB', pos: { x: 120, y: 150 } },
+            { id: '3', position: 'def', label: 'RCB', pos: { x: 120, y: 250 } },
+        ],
+        arrows: []
+    }
+  },
+  {
+    author: {
+      name: "Mourinho Fan Club",
+      username: "the_special_one",
     },
-    { 
-        postTitle: "Chạy chỗ khu vực 14", 
-        postDescription: "Bài tập di chuyển không bóng cho tiền vệ tấn công (AM).", 
-        authorUsername: "HuySon", 
-        stats: MOCK_STATS 
+    content: "**Phòng ngự phản công 5-4-1**\n\nSơ đồ khối thấp (Low Block) trứ danh. Chìa khóa nằm ở việc chuyển đổi trạng thái cực nhanh khi đoạt lại bóng.",
+    timestamp: "5 giờ trước",
+    likes: 892,
+    comments: 130
+  },
+  {
+    author: {
+      name: "Jürgen Klopp",
+      username: "heavy_metal_football",
     },
-    { 
-        postTitle: "Cân bằng 3-4-3", 
-        postDescription: "Sự linh hoạt trong tấn công và phòng ngự khi sử dụng 3 hậu vệ.", 
-        authorUsername: "Tactic_Pro", 
-        stats: MOCK_STATS 
-    },
-    { 
-        postTitle: "Vẽ đường cong hiệu quả", 
-        postDescription: "Hướng dẫn cách sử dụng công cụ vẽ mũi tên cong.", 
-        authorUsername: "Design_User", 
-        stats: MOCK_STATS 
-    },
-    { 
-        postTitle: "Chiến thuật E-Sports FIFA", 
-        postDescription: "Khác biệt giữa chiến thuật thực và ảo.", 
-        authorUsername: "GamerZ", 
-        stats: MOCK_STATS 
-    },
+    content: "**Gegenpressing là gì?**\n\nKhông phải lúc nào cũng chạy. Đó là việc tổ chức vây ráp ngay lập tức khi mất bóng để đoạt lại quyền kiểm soát.",
+    timestamp: "1 ngày trước",
+    likes: 2400,
+    comments: 342
+  }
 ];
 
 export default function ExplorePage() {
   return (
-    <div className="p-4 md:p-6">
-      <h1 className="font-headline text-2xl font-bold mb-6">Khám phá</h1>
-
-      {/* 1. Thanh tìm kiếm */}
-      <div className="relative mb-8">
-        <Input
-          placeholder="Tìm chiến thuật theo tag, vị trí, đội hình..."
-          className="pl-10 h-12 text-base"
-        />
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-secondary" />
+    <div className="max-w-2xl mx-auto space-y-6">
+      
+      {/* Header & Search */}
+      <div className="space-y-4">
+        <h1 className="text-3xl font-headline font-bold text-text-primary">Khám phá</h1>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-secondary" />
+          <Input 
+            placeholder="Tìm kiếm chiến thuật, người dùng, bài viết..." 
+            className="pl-10 bg-panel border-white/10 focus:border-primary"
+          />
+        </div>
       </div>
 
-      {/* 2. Các thẻ (Tags) thịnh hành */}
-      <section className="mb-10">
-        <h2 className="font-headline text-xl font-semibold mb-4">Thẻ thịnh hành</h2>
-        <div className="flex flex-wrap gap-3">
-          <TagButton>4-3-3</TagButton>
-          <TagButton>pressing</TagButton>
-          <TagButton>counter-attack</TagButton>
-          <TagButton>low-block</TagButton>
-          <TagButton>4-2-3-1</TagButton>
-        </div>
-      </section>
+      {/* Tabs / Filter (Có thể thêm sau) */}
+      <div className="flex gap-2 overflow-x-auto pb-2">
+        {['Thịnh hành', 'Mới nhất', 'Ngoại hạng Anh', 'La Liga'].map((tag) => (
+          <button 
+            key={tag}
+            className="px-4 py-1.5 rounded-full bg-panel border border-white/10 text-sm text-text-secondary hover:text-primary hover:border-primary/50 transition-colors whitespace-nowrap"
+          >
+            {tag}
+          </button>
+        ))}
+      </div>
 
-      {/* 3. Các chiến thuật gợi ý */}
-      <section>
-        <h2 className="font-headline text-xl font-semibold mb-4">Chiến thuật gợi ý</h2>
-        
-        {/* Tái sử dụng PostCard ở dạng lưới - FIX LỖI THIẾU PROPS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {MOCK_POSTS.map((post, index) => (
-            <PostCard 
-              key={index} 
-              postTitle={post.postTitle}
-              postDescription={post.postDescription}
-              authorUsername={post.authorUsername}
-              stats={post.stats}
-            />
-          ))}
-        </div>
-      </section>
+      {/* Feed */}
+      <div className="space-y-4">
+        {MOCK_POSTS.map((post, index) => (
+          <PostCard 
+            key={index} 
+            {...post} // Truyền toàn bộ props đã chuẩn hóa
+          />
+        ))}
+      </div>
       
     </div>
   );
