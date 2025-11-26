@@ -1,3 +1,4 @@
+// src/components/features/tactic-board/TacticBoard.tsx
 "use client"; 
 import React, { useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -7,13 +8,15 @@ import { Tool, ArrowColor, ArrowStyle, ArrowType } from './CreateTacticModal';
 import { v4 as uuidv4 } from 'uuid';
 import { PlayerTokenProps } from './PlayerToken'; 
 
-const ARROW_COLORS: ArrowColor[] = ['#6C5CE7', '#FF7F50', '#00CED1'];
+// --- Constants ---
+const AREA_COLORS: ArrowColor[] = ['#6C5CE7', '#FF7F50', '#00CED1', '#FF6B81', '#FDCB6E', '#54A0FF'];
 
+// --- Interfaces ---
 export interface Player {
   id: string;
   position: PlayerTokenProps['position'];
   label: string;
-  pos: { x: number; y: number };
+  pos: { x: number; y: number }; 
 }
 
 export interface Arrow {
@@ -23,345 +26,307 @@ export interface Arrow {
   color: ArrowColor; 
   style: ArrowStyle;
   type: ArrowType;
+  controlPoint?: { x: number; y: number }; 
 }
 
-// === [ĐÃ SỬA] Component này giờ dùng Class Tailwind thay vì mã màu cứng ===
+export interface Area {
+    id: string;
+    x: number; y: number; w: number; h: number; color: string;
+}
+
+// --- Background ---
 const FootballPitchBackground = () => (
-  <svg 
-    className="absolute top-0 left-0 w-full h-full" 
-    viewBox="0 0 600 400" 
-    fill="none" 
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    {/* Mặt sân: Dùng màu xanh đậm (cần đảm bảo mã màu này hợp với theme) */}
-    <rect x="0" y="0" width="600" height="400" className="fill-[#1C3D2E]" /> 
+  <div className="absolute inset-0 w-full h-full overflow-hidden select-none pointer-events-none">
+    {/* Nền cỏ */}
+    <div className="absolute inset-0 bg-[#1C3D2E] bg-gradient-to-br from-[#1e4533] to-[#11291e]" />
     
-    {/* Các đường kẻ: Màu trắng opacity thấp */}
-    <g className="stroke-white/30" strokeWidth="3">
-        <rect x="1.5" y="1.5" width="597" height="397" rx="4" />
-        <line x1="300" y1="2" x2="300" y2="398" />
-        <circle cx="300" cy="200" r="50" />
-        <rect x="1.5" y="80" width="60" height="240" rx="2" />
-        <rect x="1.5" y="140" width="20" height="120" rx="1" />
-        <rect x="538.5" y="80" width="60" height="240" rx="2" />
-        <rect x="578.5" y="140" width="20" height="120" rx="1" />
-        <path d="M60 140 C80 160, 80 240, 60 260" fill="none"/>
-        <path d="M540 140 C520 160, 520 240, 540 260" fill="none"/>
-    </g>
+    {/* Họa tiết sọc cỏ */}
+    <div className="absolute inset-0 opacity-[0.07]" 
+         style={{ backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 50px, #000 50px, #000 100px)' }} />
     
-    {/* Chấm phạt đền */}
-    <g className="fill-white/50">
-        <circle cx="300" cy="200" r="2" />
-        <circle cx="45" cy="200" r="2" />
-        <circle cx="555" cy="200" r="2" />
-    </g>
-  </svg>
+    {/* SVG Đường kẻ sân - Đã tinh chỉnh khớp góc */}
+    <svg className="absolute top-0 left-0 w-full h-full opacity-70" viewBox="0 0 600 400" fill="none" preserveAspectRatio="none">
+        {/* [FIXED] Tăng rx lên 18 để khớp với rounded-xl của khung ngoài */}
+        <rect x="5" y="5" width="590" height="390" rx="18" stroke="#A7CCB7" strokeWidth="2" />
+        
+        <line x1="300" y1="5" x2="300" y2="395" stroke="#A7CCB7" strokeWidth="2" />
+        <circle cx="300" cy="200" r="50" stroke="#A7CCB7" strokeWidth="2" />
+        <circle cx="300" cy="200" r="3" fill="#A7CCB7" />
+        <rect x="5" y="80" width="80" height="240" stroke="#A7CCB7" strokeWidth="2" />
+        <rect x="5" y="140" width="30" height="120" stroke="#A7CCB7" strokeWidth="2" />
+        <circle cx="60" cy="200" r="2" fill="#A7CCB7" />
+        <path d="M 85 160 Q 110 200 85 240" stroke="#A7CCB7" strokeWidth="2" fill="none"/>
+        <rect x="515" y="80" width="80" height="240" stroke="#A7CCB7" strokeWidth="2" />
+        <rect x="565" y="140" width="30" height="120" stroke="#A7CCB7" strokeWidth="2" />
+        <circle cx="540" cy="200" r="2" fill="#A7CCB7" />
+        <path d="M 515 160 Q 490 200 515 240" stroke="#A7CCB7" strokeWidth="2" fill="none"/>
+        
+        {/* Phạt góc - điều chỉnh lại cho khớp với bo góc lớn */}
+        <path d="M 5 25 A 20 20 0 0 1 25 5" stroke="#A7CCB7" strokeWidth="2" fill="none"/>
+        <path d="M 595 25 A 20 20 0 0 0 575 5" stroke="#A7CCB7" strokeWidth="2" fill="none"/>
+        <path d="M 5 375 A 20 20 0 0 0 25 395" stroke="#A7CCB7" strokeWidth="2" fill="none"/>
+        <path d="M 595 375 A 20 20 0 0 1 575 395" stroke="#A7CCB7" strokeWidth="2" fill="none"/>
+    </svg>
+  </div>
 );
 
-// ... (Phần còn lại giữ nguyên logic cũ)
-
+// --- Draggable Token ---
 function DraggablePlayerToken({ 
-  player, 
-  activeTool, 
-  selectedPlayerId, 
-  setSelectedPlayerId 
+    player, activeTool, selectedPlayerId, setSelectedPlayerId, onDelete 
 }: { 
-  player: Player, 
-  activeTool: Tool, 
-  selectedPlayerId: string | null, 
-  setSelectedPlayerId: React.Dispatch<React.SetStateAction<string | null>> 
+    player: Player, activeTool: Tool, 
+    selectedPlayerId: string | null, setSelectedPlayerId: React.Dispatch<React.SetStateAction<string | null>>,
+    onDelete: (id: string) => void
 }) {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: player.id,
-    data: { isPaletteToken: false },
     disabled: activeTool !== 'move',
   });
   
   const isSelected = selectedPlayerId === player.id; 
-  const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, zIndex: 20 } : undefined;
-  
+  const leftPercent = (player.pos.x / 600) * 100;
+  const topPercent = (player.pos.y / 400) * 100;
+
+  const style: React.CSSProperties = {
+    position: 'absolute',
+    left: `${leftPercent}%`,
+    top: `${topPercent}%`,
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    zIndex: isDragging ? 999 : (isSelected ? 50 : 30),
+    cursor: activeTool === 'move' ? (isDragging ? 'grabbing' : 'grab') : (activeTool === 'erase' ? 'no-drop' : 'pointer'),
+    touchAction: 'none',
+    pointerEvents: 'auto',
+    transition: 'none', 
+  };
+
   const handleClick = (e: React.MouseEvent) => {
-    if (activeTool === 'select') {
-      setSelectedPlayerId?.(player.id); 
-      e.stopPropagation();
+    e.stopPropagation();
+    if (activeTool === 'erase') {
+        onDelete(player.id);
+    } else {
+        setSelectedPlayerId?.(player.id);
     }
   };
 
   return (
-    <div 
-      ref={setNodeRef} 
-      style={{ 
-        position: 'absolute', 
-        left: player.pos.x, 
-        top: player.pos.y, 
-        ...style,
-        cursor: activeTool === 'move' ? 'grab' : (activeTool === 'select' ? 'pointer' : 'default'),
-        zIndex: 20
-      }} 
-      {...listeners} 
-      {...attributes}
-      onClick={handleClick}
+    <div ref={setNodeRef} style={style} {...listeners} {...attributes} onClick={handleClick}
+      className="origin-center w-[7.5%] aspect-square min-w-[24px] max-w-[50px] -translate-x-1/2 -translate-y-1/2"
     >
-      <PlayerToken 
-        position={player.position} 
-        label={player.label}
-        className={cn(isSelected && "shadow-lg shadow-primary ring-2 ring-primary")} 
-      />
+      <div 
+        className={cn(
+            "w-full h-full rounded-full transition-all duration-200 ease-out", 
+            isDragging ? "scale-125 drop-shadow-2xl" : "scale-100",
+            activeTool === 'erase' && "hover:opacity-50 hover:scale-95"
+        )}
+      >
+        <PlayerToken position={player.position} label={player.label} className={cn("w-full h-full", isSelected && "ring-2 ring-yellow-400 border-yellow-200")} variant="responsive" />
+      </div>
     </div>
   );
 }
 
-const DrawingLayer = ({ 
-  arrows, 
-  setArrows, 
-  activeTool,
-  currentArrowColor,
-  currentArrowStyle,
-  currentArrowType, 
-}: { 
-  arrows: Arrow[], 
-  setArrows: React.Dispatch<React.SetStateAction<Arrow[]>>, 
-  activeTool: Tool,
-  currentArrowColor: ArrowColor,
-  currentArrowStyle: ArrowStyle,
-  currentArrowType: ArrowType,
-}) => {
+// --- Tactical Layer ---
+const TacticalLayer = ({ 
+  arrows, setArrows, areas, setAreas, activeTool,
+  currentArrowColor, currentArrowStyle, currentArrowType, 
+}: any) => {
   const [drawingArrow, setDrawingArrow] = useState<Arrow | null>(null);
+  const [drawingAreaStart, setDrawingAreaStart] = useState<{x: number, y: number} | null>(null);
+  const [drawingAreaCurrent, setDrawingAreaCurrent] = useState<{x: number, y: number} | null>(null);
+  const [tempControlPoint, setTempControlPoint] = useState<{ id: string, x: number, y: number } | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
   const getPos = (e: React.MouseEvent | React.TouchEvent) => {
     if (!svgRef.current) return { x: 0, y: 0 };
     const rect = svgRef.current.getBoundingClientRect();
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    return { x: clientX - rect.left, y: clientY - rect.top };
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    const relX = clientX - rect.left;
+    const relY = clientY - rect.top;
+    const scaleX = 600 / rect.width;
+    const scaleY = 400 / rect.height;
+    return { x: relX * scaleX, y: relY * scaleY };
   };
 
-  const getPathData = (from: { x: number; y: number }, to: { x: number; y: number }, type: ArrowType) => {
-    if (type === 'straight') {
-      return `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
+  const getControlPoint = (arrow: Arrow) => {
+    if (tempControlPoint && tempControlPoint.id === arrow.id) {
+        return { x: tempControlPoint.x, y: tempControlPoint.y };
     }
-    const midX = (from.x + to.x) / 2;
-    const midY = (from.y + to.y) / 2;
-    const curveIntensity = 30;
-    const angle = Math.atan2(to.y - from.y, to.x - from.x) + Math.PI / 2;
-    const controlX = midX + Math.cos(angle) * curveIntensity;
-    const controlY = midY + Math.sin(angle) * curveIntensity;
-    return `M ${from.x} ${from.y} Q ${controlX} ${controlY}, ${to.x} ${to.y}`;
+    if (arrow.controlPoint) return arrow.controlPoint;
+    const midX = (arrow.from.x + arrow.to.x) / 2;
+    const midY = (arrow.from.y + arrow.to.y) / 2;
+    return { x: midX, y: midY };
   };
 
-  const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
-    if (activeTool !== 'draw') return;
+  const getPathData = (arrow: Arrow) => {
+    const cp = getControlPoint(arrow);
+    return `M ${arrow.from.x} ${arrow.from.y} Q ${cp.x} ${cp.y}, ${arrow.to.x} ${arrow.to.y}`;
+  };
+
+  // --- Handlers ---
+
+  const handleStart = (e: React.MouseEvent | React.TouchEvent) => {
+    if (tempControlPoint) return;
     const pos = getPos(e);
-    setDrawingArrow({
-      id: 'live-preview',
-      from: pos,
-      to: pos,
-      color: currentArrowColor,
-      style: currentArrowStyle,
-      type: currentArrowType,
-    });
-  };
-
-  const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if (activeTool !== 'draw' || !drawingArrow) return;
-    const pos = getPos(e);
-    setDrawingArrow(prev => ({ ...prev!, to: pos }));
-  };
-
-  const handleMouseUp = () => {
-    if (activeTool !== 'draw' || !drawingArrow) return;
-    const distance = Math.hypot(drawingArrow.to.x - drawingArrow.from.x, drawingArrow.to.y - drawingArrow.from.y);
-    if (distance > 10) {
-      setArrows(prev => [...prev, { ...drawingArrow, id: uuidv4() }]);
+    if (activeTool === 'draw') {
+        setDrawingArrow({ id: 'preview', from: pos, to: pos, color: currentArrowColor, style: currentArrowStyle, type: currentArrowType });
+    } else if (activeTool === 'area') {
+        setDrawingAreaStart(pos); setDrawingAreaCurrent(pos);
     }
-    setDrawingArrow(null);
   };
 
-  const handleArrowClick = (id: string) => {
+  const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
+    const pos = getPos(e);
+    if (tempControlPoint) {
+        setTempControlPoint({ ...tempControlPoint, x: pos.x, y: pos.y });
+        return;
+    }
+    if (activeTool === 'draw' && drawingArrow) setDrawingArrow(prev => ({ ...prev!, to: pos }));
+    else if (activeTool === 'area' && drawingAreaStart) setDrawingAreaCurrent(pos);
+  };
+
+  const handleEnd = () => {
+    if (tempControlPoint) {
+        setArrows((prev: Arrow[]) => prev.map((a) => {
+            if (a.id === tempControlPoint.id) {
+                return { ...a, controlPoint: { x: tempControlPoint.x, y: tempControlPoint.y }, type: 'curved' };
+            }
+            return a;
+        }));
+        setTempControlPoint(null);
+        return;
+    }
+
+    if (activeTool === 'draw' && drawingArrow) {
+        if (Math.hypot(drawingArrow.to.x - drawingArrow.from.x, drawingArrow.to.y - drawingArrow.from.y) > 15) {
+            setArrows((prev: any) => [...prev, { ...drawingArrow, id: uuidv4() }]);
+        }
+        setDrawingArrow(null);
+    } else if (activeTool === 'area' && drawingAreaStart && drawingAreaCurrent) {
+        const x = Math.min(drawingAreaStart.x, drawingAreaCurrent.x);
+        const y = Math.min(drawingAreaStart.y, drawingAreaCurrent.y);
+        const w = Math.abs(drawingAreaCurrent.x - drawingAreaStart.x);
+        const h = Math.abs(drawingAreaCurrent.y - drawingAreaStart.y);
+        if (w > 10 && h > 10) setAreas((prev: any) => [...prev, { id: uuidv4(), x, y, w, h, color: currentArrowColor }]);
+        setDrawingAreaStart(null); setDrawingAreaCurrent(null);
+    }
+  };
+
+  const handleObjectClick = (e: React.MouseEvent, id: string, type: 'arrow' | 'area') => {
+    e.stopPropagation();
     if (activeTool === 'erase') {
-      setArrows(prev => prev.filter(a => a.id !== id));
+      if (type === 'arrow') setArrows((prev: any) => prev.filter((a: any) => a.id !== id));
+      if (type === 'area') setAreas((prev: any) => prev.filter((a: any) => a.id !== id));
     }
   };
-  
-  const getDashArray = (style: ArrowStyle): string | undefined => {
-      return style === 'dashed' ? '8, 8' : undefined;
+
+  const handleArrowMouseDown = (e: React.MouseEvent | React.TouchEvent, arrowId: string) => {
+      if (activeTool === 'erase') return; 
+      e.stopPropagation(); 
+      const pos = getPos(e); 
+      setTempControlPoint({ id: arrowId, x: pos.x, y: pos.y });
   };
-  
-  const getMarkerId = (color: ArrowColor): string => {
-      const colorMap = {
-          '#6C5CE7': 'primary',
-          '#FF7F50': 'secondary',
-          '#00CED1': 'tertiary',
-          '#FF6B81': 'attack',
-          '#54A0FF': 'defend',
-      };
-      return `arrowhead-${colorMap[color] || 'default'}`;
-  };
+
+  const getMarkerId = (color: string) => `arrowhead-${color.replace('#', '')}`;
 
   return (
-    <svg
-      ref={svgRef}
-      className="absolute top-0 left-0 w-full h-full z-10"
-      style={{
-        cursor: activeTool === 'draw' ? 'crosshair' : (activeTool === 'erase' ? 'cell' : 'default'),
-        pointerEvents: activeTool === 'draw' || activeTool === 'erase' ? 'auto' : 'none' 
-      }}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onTouchStart={handleMouseDown}
-      onTouchMove={handleMouseMove}
-      onTouchEnd={handleMouseUp}
+    <svg ref={svgRef} className="absolute top-0 left-0 w-full h-full z-10"
+      viewBox="0 0 600 400" preserveAspectRatio="none"
+      style={{ cursor: (activeTool === 'draw' || activeTool === 'area') ? 'crosshair' : (activeTool === 'erase' ? 'cell' : 'default'), pointerEvents: ['draw', 'area', 'erase', 'select', 'move'].includes(activeTool) ? 'auto' : 'none' }}
+      onMouseDown={handleStart} onMouseMove={handleMove} onMouseUp={handleEnd} onMouseLeave={handleEnd}
+      onTouchStart={handleStart} onTouchMove={handleMove} onTouchEnd={handleEnd}
     >
       <defs>
-        {ARROW_COLORS.map(color => (
-            <marker 
-                key={color} 
-                id={getMarkerId(color)} 
-                viewBox="0 0 10 10" 
-                refX="8" 
-                refY="5" 
-                markerWidth="6" 
-                markerHeight="6" 
-                orient="auto-start-reverse"
-            >
+        {AREA_COLORS.map(color => (
+            <marker key={color} id={getMarkerId(color)} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                 <path d="M 0 0 L 10 5 L 0 10 z" fill={color} />
             </marker>
         ))}
       </defs>
 
-      {arrows.map(arrow => (
-        <path
-          key={arrow.id}
-          d={getPathData(arrow.from, arrow.to, arrow.type)}
-          stroke={arrow.color}
-          strokeWidth="4"
-          fill="none" 
-          markerEnd={`url(#${getMarkerId(arrow.color)})`}
-          strokeDasharray={getDashArray(arrow.style)}
-          onClick={() => handleArrowClick(arrow.id)}
-          className={cn(activeTool === 'erase' && "cursor-cell hover:stroke-danger")}
-        />
+      {/* AREAS */}
+      {areas.map((area: any) => (
+        <rect key={area.id} x={area.x} y={area.y} width={area.w} height={area.h} fill={area.color} fillOpacity="0.3" stroke={area.color} strokeWidth={activeTool === 'erase' ? 4 : 2} strokeDasharray="5,5" onClick={(e) => handleObjectClick(e, area.id, 'area')} className={cn("transition-all", activeTool === 'erase' ? "cursor-cell hover:stroke-red-500 hover:fill-red-500/20" : "")} />
       ))}
       
+      {drawingAreaStart && drawingAreaCurrent && (
+        <rect x={Math.min(drawingAreaStart.x, drawingAreaCurrent.x)} y={Math.min(drawingAreaStart.y, drawingAreaCurrent.y)} width={Math.abs(drawingAreaCurrent.x - drawingAreaStart.x)} height={Math.abs(drawingAreaCurrent.y - drawingAreaStart.y)} fill={currentArrowColor} fillOpacity="0.2" stroke={currentArrowColor} strokeWidth="2" strokeDasharray="5,5" />
+      )}
+
+      {/* ARROWS */}
+      {arrows.map((arrow: Arrow) => {
+        const d = getPathData(arrow);
+        return (
+            <g key={arrow.id} 
+               onMouseDown={(e) => handleArrowMouseDown(e, arrow.id)}
+               onTouchStart={(e) => handleArrowMouseDown(e, arrow.id)}
+               onClick={(e) => handleObjectClick(e, arrow.id, 'arrow')} 
+               className={cn("transition-all group", activeTool === 'erase' ? "cursor-cell hover:opacity-50" : "cursor-move")}
+            >
+                <path d={d} stroke="transparent" strokeWidth="30" fill="none" className="pointer-events-auto" />
+                <path d={d} stroke={arrow.color} strokeWidth="3" fill="none" markerEnd={`url(#${getMarkerId(arrow.color)})`} strokeDasharray={arrow.style === 'dashed' ? '8, 8' : undefined} strokeLinecap="round" className="pointer-events-none" />
+                {activeTool === 'erase' && <path d={d} stroke="red" strokeWidth="4" fill="none" opacity="0" className="group-hover:opacity-60 transition-opacity pointer-events-none" />}
+            </g>
+        );
+      })}
+      
       {drawingArrow && (
-        <path
-          d={getPathData(drawingArrow.from, drawingArrow.to, drawingArrow.type)}
-          stroke={drawingArrow.color}
-          strokeWidth="4"
-          fill="none"
-          markerEnd={`url(#${getMarkerId(drawingArrow.color)})`}
-          strokeDasharray={getDashArray(drawingArrow.style)}
-        />
+        <path d={getPathData(drawingArrow)} stroke={drawingArrow.color} strokeWidth="3" fill="none" markerEnd={`url(#${getMarkerId(drawingArrow.color)})`} strokeDasharray={drawingArrow.style === 'dashed' ? '8, 8' : undefined} strokeLinecap="round" className="opacity-60" />
       )}
     </svg>
   );
 };
 
-interface TacticBoardProps {
-  variant?: 'full' | 'thumbnail';
-  players?: Player[];
-  setPlayers?: React.Dispatch<React.SetStateAction<Player[]>>;
-  arrows?: Arrow[];
-  setArrows?: React.Dispatch<React.SetStateAction<Arrow[]>>;
-  activeTool?: Tool;
-  boardRect?: DOMRect | null;
-  selectedPlayerId?: string | null; 
-  setSelectedPlayerId?: React.Dispatch<React.SetStateAction<string | null>>;
-  onBoardClick?: (pos: { x: number, y: number }) => void;
-  positionToPlace?: PlayerTokenProps['position'] | null;
-  currentArrowColor?: ArrowColor; 
-  currentArrowStyle?: ArrowStyle;
-  currentArrowType?: ArrowType; 
-}
-
+// --- Main Component ---
 export const TacticBoard = ({ 
-  variant = 'full', 
-  players,
-  arrows,
-  setArrows,
-  activeTool,
-  selectedPlayerId,
-  setSelectedPlayerId,
-  onBoardClick,
-  positionToPlace,
-  currentArrowColor,
-  currentArrowStyle,
-  currentArrowType, 
-}: TacticBoardProps) => {
+  variant = 'full', players, setPlayers, arrows, setArrows, areas, setAreas,
+  activeTool, selectedPlayerId, setSelectedPlayerId, onBoardClick, positionToPlace,
+  currentArrowColor, currentArrowStyle, currentArrowType, 
+}: any) => {
 
-  const { setNodeRef } = useDroppable({
-    id: 'tactic-board-droppable-area',
-  });
-
+  const { setNodeRef } = useDroppable({ id: 'tactic-board-droppable-area' });
   const boardRef = useRef<HTMLDivElement>(null);
   
-  const setCombinedRef = (node: HTMLDivElement | null) => {
-    setNodeRef(node);
-    (boardRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
-  };
-  
+  const handleDeletePlayer = (id: string) => { setPlayers?.((prev: any) => prev.filter((p: any) => p.id !== id)); };
+
   const handleBoardClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const isPlayerTokenClick = (e.target as HTMLElement).closest('[data-dnd-kit-draggable]');
-    if (isPlayerTokenClick) {
-        return; 
-    }
-    if (!positionToPlace && (activeTool === 'select' || activeTool === 'move')) { 
-      setSelectedPlayerId?.(null); 
+    if (activeTool === 'draw' || activeTool === 'area' || activeTool === 'erase') return;
+    if (!positionToPlace && selectedPlayerId && (activeTool === 'select' || activeTool === 'move')) { 
+        setSelectedPlayerId?.(null); 
     }
     if (positionToPlace && boardRef.current) {
         const rect = boardRef.current.getBoundingClientRect();
-        const relativeX = e.clientX - rect.left;
-        const relativeY = e.clientY - rect.top;
-        const centeredX = relativeX - 20;
-        const centeredY = relativeY - 20;
-        onBoardClick?.({ x: centeredX, y: centeredY });
+        const scaleX = 600 / rect.width;
+        const scaleY = 400 / rect.height;
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
+        onBoardClick?.({ x, y });
     }
   };
 
   return (
-    <div 
-      ref={setCombinedRef} 
+    <div ref={(node) => { setNodeRef(node); (boardRef as any).current = node; }}
       className={cn(
-        "relative w-full aspect-video overflow-hidden",
-        "bg-panel border border-white/10 rounded-lg", 
-        variant === 'thumbnail' && "border-none"
+        "relative w-full aspect-[3/2] overflow-hidden shadow-2xl isolate",
+        // [FIXED] Loại bỏ border thừa để khớp nền, chỉ giữ rounded-xl
+        "bg-[#1C3D2E] rounded-xl ring-1 ring-white/10",
+        variant === 'thumbnail' && "border-none ring-0 rounded-md shadow-none cursor-pointer hover:opacity-90"
       )}
       onClick={handleBoardClick}
     >
       <FootballPitchBackground />
       
-      {variant === 'full' && players && arrows && activeTool && (
-        <DrawingLayer 
-          arrows={arrows!} 
-          setArrows={setArrows!} 
-          activeTool={activeTool} 
-          currentArrowColor={currentArrowColor!}
-          currentArrowStyle={currentArrowStyle!}
-          currentArrowType={currentArrowType!}
-        />
+      {variant === 'full' && players && arrows && areas && activeTool && (
+        <>
+            <TacticalLayer arrows={arrows} setArrows={setArrows!} areas={areas} setAreas={setAreas!} activeTool={activeTool} currentArrowColor={currentArrowColor!} currentArrowStyle={currentArrowStyle!} currentArrowType={currentArrowType!} />
+            <div className="z-20 w-full h-full absolute top-0 left-0 pointer-events-none">
+                {players.map((player: any) => (
+                    <DraggablePlayerToken key={player.id} player={player} activeTool={activeTool} selectedPlayerId={selectedPlayerId!} setSelectedPlayerId={setSelectedPlayerId!} onDelete={handleDeletePlayer} />
+                ))}
+            </div>
+        </>
       )}
-      
-      {variant === 'full' && players && (
-        <div className="z-20"> 
-            {players.map((player) => (
-            <DraggablePlayerToken 
-                key={player.id} 
-                player={player} 
-                activeTool={activeTool!}
-                selectedPlayerId={selectedPlayerId!}
-                setSelectedPlayerId={setSelectedPlayerId!}
-            />
-            ))}
-        </div>
-      )}
-      
-      {variant === 'thumbnail' && (
-        <div className="flex items-center justify-center h-full">
-          {/* Có thể thêm icon play hoặc overlay nếu muốn */}
-        </div>
-      )}
+      {variant === 'thumbnail' && <div className="flex items-center justify-center h-full"><span className="text-white/40 text-[10px] font-medium bg-black/20 px-2 py-1 rounded backdrop-blur-sm">PREVIEW</span></div>}
     </div>
   );
 };
