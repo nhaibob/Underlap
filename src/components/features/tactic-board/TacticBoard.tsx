@@ -164,7 +164,6 @@ const TacticalLayer = ({
   };
 
   // --- Handlers ---
-
   const handleStart = (e: React.MouseEvent | React.TouchEvent) => {
     if (tempControlPoint) return;
     const pos = getPos(e);
@@ -281,7 +280,7 @@ const TacticalLayer = ({
 export const TacticBoard = ({ 
   variant = 'full', players, setPlayers, arrows, setArrows, areas, setAreas,
   activeTool, selectedPlayerId, setSelectedPlayerId, onBoardClick, positionToPlace,
-  currentArrowColor, currentArrowStyle, currentArrowType, 
+  currentArrowColor, currentArrowStyle, currentArrowType, className // Thêm className
 }: any) => {
 
   const { setNodeRef } = useDroppable({ id: 'tactic-board-droppable-area' });
@@ -307,10 +306,16 @@ export const TacticBoard = ({
   return (
     <div ref={(node) => { setNodeRef(node); (boardRef as any).current = node; }}
       className={cn(
-        "relative w-full aspect-[3/2] overflow-hidden shadow-2xl isolate",
-        // [FIXED] Loại bỏ border thừa để khớp nền, chỉ giữ rounded-xl
+        "relative overflow-hidden shadow-2xl isolate",
+        // [FIXED] 
+        // 1. Loại bỏ aspect-[3/2] mặc định nếu ở chế độ 'full' (để parent quyết định)
+        // 2. Thêm w-full h-full để điền đầy container
         "bg-[#1C3D2E] rounded-xl ring-1 ring-white/10",
-        variant === 'thumbnail' && "border-none ring-0 rounded-md shadow-none cursor-pointer hover:opacity-90"
+        
+        variant === 'full' && "w-full h-full", 
+        variant === 'thumbnail' && "aspect-[3/2] border-none ring-0 rounded-md shadow-none cursor-pointer hover:opacity-90",
+        
+        className
       )}
       onClick={handleBoardClick}
     >

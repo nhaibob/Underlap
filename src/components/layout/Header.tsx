@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/Avatar';
 import { useUIStore } from '@/lib/store/uiStore';
-import { PenSquare, Search, Bell, Home, Compass, MessageCircle, User } from 'lucide-react';
+import { PenSquare, Search, Bell, Home, Compass, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
@@ -15,7 +15,7 @@ const NAV_ITEMS = [
     { href: '/community', icon: MessageCircle, label: 'Cộng đồng' },
 ];
 
-const NavLink = ({ href, icon: Icon, label }: typeof NAV_ITEMS[0]) => {
+const NavLink = ({ href, icon: Icon }: typeof NAV_ITEMS[0]) => {
     const pathname = usePathname();
     const isActive = pathname === href || (pathname.startsWith('/profile') && href === '/profile/me');
 
@@ -38,8 +38,8 @@ export const Header = () => {
   const { openCreateModal, openSettingsModal } = useUIStore();
   
   return (
-    // SỬA Ở ĐÂY: Đã đổi 'bg-background/80' thành 'bg-panel'
-    <header className="sticky top-0 z-50 w-full h-16 bg-panel backdrop-blur-md border-b border-panel">
+    // [FIX] Thêm /80 để backdrop-blur hoạt động
+    <header className="sticky top-0 z-50 w-full h-16 bg-panel/80 backdrop-blur-md border-b border-panel">
       <div className="container mx-auto flex items-center justify-between h-full px-4 md:px-6">
         
         {/* 1. LOGO & NAV */}
@@ -78,6 +78,11 @@ export const Header = () => {
             <Bell className="w-5 h-5" />
           </Button>
           
+          {/* Nút Search cho Mobile */}
+          <Button variant="ghost" size="icon" className="flex md:hidden">
+             <Search className="w-5 h-5" />
+          </Button>
+          
           <Link href="/profile/me">
             <Avatar>
               <AvatarImage src="" alt="H" /> 
@@ -87,7 +92,8 @@ export const Header = () => {
 
           <button onClick={openSettingsModal}>
              <div className="w-8 h-8 rounded-full bg-panel text-text-secondary flex items-center justify-center hover:bg-background transition-colors">
-                {/* (Nếu bạn có icon Settings, hãy thêm vào đây) */}
+                {/* Icon Settings hoặc Menu */}
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
              </div>
           </button>
         </div>

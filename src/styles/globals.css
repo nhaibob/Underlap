@@ -6,93 +6,87 @@
 
 @layer base {
   :root {
-    /* Light Theme (Mặc định) */
+    /* --- Light Mode (Nếu cần dùng sau này) --- */
     --background: 210 40% 98%;
     --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
-
+ 
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-
-    --primary: 262 83% 58%; /* Violet hiện đại */
+ 
+    --primary: 262 83% 58%; /* Underlap Violet */
     --primary-foreground: 210 40% 98%;
-
-    --secondary: 217 19% 27%;
-    --secondary-foreground: 210 40% 98%;
-
+ 
+    --secondary: 193 78% 45%; /* Underlap Cyan */
+    --secondary-foreground: 222 47% 11%;
+ 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-
+ 
     --accent: 210 40% 96.1%;
     --accent-foreground: 222 47% 11%;
-
+ 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 262 83% 58%;
-
-    --radius: 0.75rem;
+ 
+    --radius: 0.5rem;
   }
-
+ 
   .dark {
-    /* Dark Theme (Bóng đêm dịu mắt - không đen kịt) */
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
+    /* --- Dark Mode (Giao diện chính của Underlap) --- */
+    
+    /* Nền chính: #0B0E12 */
+    --background: 220 24% 6%; 
+    
+    /* Chữ chính: #E6EEF3 */
+    --foreground: 203 33% 93%; 
 
-    --card: 217 33% 17%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 263 70% 65%;
+    /* Panel/Card: #0F1720 */
+    --card: 212 36% 10%; 
+    --card-foreground: 203 33% 93%;
+ 
+    --popover: 212 36% 10%;
+    --popover-foreground: 203 33% 93%;
+ 
+    /* Primary: #6C5CE7 (Violet) */
+    --primary: 255 71% 63%; 
     --primary-foreground: 210 40% 98%;
-
-    --secondary: 217 19% 27%;
+ 
+    /* Secondary: #19A7CE (Cyan) */
+    --secondary: 193 78% 45%; 
     --secondary-foreground: 210 40% 98%;
-
-    --muted: 217 19% 27%;
+ 
+    --muted: 212 36% 15%;
     --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217 19% 27%;
+ 
+    /* Màu hover nhẹ */
+    --accent: 212 36% 15%; 
     --accent-foreground: 210 40% 98%;
-
+ 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-
-    --border: 217 19% 27%;
-    --input: 217 19% 27%;
-    --ring: 263 70% 50%;
+ 
+    /* Viền: #2C3545 (Tương phản nhẹ với nền) */
+    --border: 217 22% 22%; 
+    --input: 217 22% 22%; 
+    --ring: 255 71% 63%;
   }
 }
-
+ 
 @layer base {
   * {
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-body transition-colors duration-300;
+    @apply bg-background text-foreground font-body;
   }
   h1, h2, h3, h4, h5, h6 {
-    @apply font-headline tracking-tight;
+    @apply font-headline;
   }
-}
-
-/* Custom Scrollbar tinh tế hơn */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/20 rounded-full;
-}
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-muted-foreground/40;
 }
