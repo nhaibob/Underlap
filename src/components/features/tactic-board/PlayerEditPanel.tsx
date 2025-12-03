@@ -2,7 +2,8 @@ import React from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Player } from './TacticBoard';
-import { Tool as GlobalTool } from './CreateTacticModal'; 
+// [FIXED] Import Tool từ hook logic mới
+import { Tool as GlobalTool } from '@/lib/hooks/useTacticLogic';
 import { Trash2, Shield, Shirt } from 'lucide-react';
 import { PlayerToken, PlayerTokenProps } from './PlayerToken';
 import { POSITION_OPTIONS } from '@/lib/constants'; 

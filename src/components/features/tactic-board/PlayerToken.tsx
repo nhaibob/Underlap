@@ -1,7 +1,5 @@
-// src/components/features/tactic-board/PlayerToken.tsx
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { PlayerTokenIcon } from './PlayerTokenIcon';
 import { POSITION_CATEGORY_COLORS, POSITION_OPTIONS } from '@/lib/constants';
 
 type PositionValue = typeof POSITION_OPTIONS[number]['value'];
@@ -11,13 +9,21 @@ export interface PlayerTokenProps {
   label: string;
   className?: string;
   showLabel?: boolean;
-  variant?: 'default' | 'small' | 'responsive'; // Thêm 'responsive'
+  variant?: 'default' | 'small' | 'responsive';
 }
 
 const getPlayerCategory = (position: PositionValue) => {
 	const option = POSITION_OPTIONS.find(p => p.value === position);
 	return option ? option.category : 'FWD';
 };
+
+// [MERGED] SVG Icon Component nội bộ
+const PlayerTokenIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <circle cx="20" cy="20" r="18.5" strokeWidth="3" fill="none" />
+    <circle cx="20" cy="20" r="14" fillOpacity="0.25" />
+  </svg>
+);
 
 export const PlayerToken = ({
 	position,
@@ -29,17 +35,14 @@ export const PlayerToken = ({
 	const category = getPlayerCategory(position);
 	const colorClasses = POSITION_CATEGORY_COLORS[category]; 
 
-    // Logic Class kích thước
-    let sizeClass = 'w-10 h-10 md:w-12 md:h-12'; // Default
+    let sizeClass = 'w-10 h-10 md:w-12 md:h-12'; 
     let fontSizeClass = 'text-[10px] md:text-xs';
 
     if (variant === 'small') {
         sizeClass = 'w-8 h-8 md:w-9 md:h-9';
         fontSizeClass = 'text-[9px]';
     } else if (variant === 'responsive') {
-        // [RESPONSIVE] Tự scale theo container cha (là % của bảng)
         sizeClass = 'w-full h-full'; 
-        // Dùng container query unit hoặc clamp để font chữ không bị quá nhỏ/to
         fontSizeClass = 'text-[clamp(8px,20%,14px)]'; 
     }
 
@@ -53,7 +56,6 @@ export const PlayerToken = ({
                 'bg-slate-800', 
 				className
 			)}
-			aria-hidden={false}
 			role="button"
             aria-label={`Player position ${label}`}
 		>

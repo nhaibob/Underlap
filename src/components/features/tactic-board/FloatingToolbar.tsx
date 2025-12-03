@@ -13,7 +13,7 @@ import {
   MoreHorizontal
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Tool, ArrowColor, ArrowStyle } from './CreateTacticModal';
+import { Tool, ArrowColor, ArrowStyle } from '@/lib/hooks/useTacticLogic';
 import { ALL_ARROW_COLOR_VALUES } from '@/lib/constants';
 
 interface FloatingToolbarProps {

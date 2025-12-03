@@ -1,4 +1,3 @@
-// src/components/features/tactic-board/ToolsPalette.tsx
 "use client";
 import React from 'react';
 import { PlayerTokenProps } from './PlayerToken';
@@ -6,7 +5,7 @@ import { MousePointer, Move, Pen, Eraser, Square, Trash2, Undo2, Redo2 } from 'l
 import { Button } from '@/components/ui/Button';
 import { useDroppable } from '@dnd-kit/core';
 import { cn } from '@/lib/utils';
-import { Tool, ArrowColor, ArrowStyle } from './CreateTacticModal';
+import { ArrowColor, ArrowStyle } from '@/lib/hooks/useTacticLogic';
 import { POSITION_OPTIONS, ALL_ARROW_COLOR_VALUES } from '@/lib/constants';
 
 const ARROW_STYLES: ArrowStyle[] = ['solid', 'dashed'];
@@ -43,7 +42,9 @@ export const ToolsPalette = ({
     if (positionToPlace === pos) { setPositionToPlace(null); setActiveTool('move'); } 
     else { setPositionToPlace(pos); setActiveTool('select'); }
   };
-  const { setNodeRef } = useDroppable({ id: 'delete-zone' });
+  
+  // [FIXED] Gắn ref trực tiếp vào div bao quanh nút xóa để vùng thả chính xác hơn
+  const { setNodeRef, isOver } = useDroppable({ id: 'delete-zone' });
 
   return (
     <div className="w-full lg:w-[260px] bg-card/50 backdrop-blur-md border-r border-border/40 flex flex-col h-full overflow-hidden">
@@ -56,7 +57,8 @@ export const ToolsPalette = ({
                 <ToolButton icon={MousePointer} label="Chọn" tool="select" activeTool={activeTool} onClick={setActiveTool} />
                 <ToolButton icon={Move} label="Di chuyển" tool="move" activeTool={activeTool} onClick={setActiveTool} />
              </div>
-             <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-white/5">
+             {/* Nút Undo/Redo cho Mobile (ẩn trên desktop nếu header đã có) */}
+             <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-white/5 lg:hidden">
                 <ToolButton icon={Undo2} label="Hoàn tác" tool="clear" onClick={undo} disabled={!canUndo} />
                 <ToolButton icon={Redo2} label="Làm lại" tool="clear" onClick={redo} disabled={!canRedo} />
              </div>
@@ -72,15 +74,11 @@ export const ToolsPalette = ({
             </div>
             {(activeTool === 'draw' || activeTool === 'area') && (
                 <div className="space-y-3 pt-2 border-t border-white/5 animate-in fade-in">
-                    
-                    {/* Chọn màu (Dùng chung cho cả Arrow và Area) */}
                     <div className="flex flex-wrap gap-2 px-1 py-1 bg-black/20 rounded-lg justify-between">
                         {ALL_ARROW_COLOR_VALUES.map((c) => (
                             <ColorDot key={c} color={c} active={arrowColor === c} onClick={() => setArrowColor(c as ArrowColor)} />
                         ))}
                     </div>
-
-                    {/* [UPDATED] Chọn kiểu nét - CHỈ HIỆN KHI VẼ MŨI TÊN (DRAW) */}
                     {activeTool === 'draw' && (
                         <div className="flex bg-black/20 p-1 rounded-lg gap-1">
                             {ARROW_STYLES.map(s => (
@@ -116,16 +114,18 @@ export const ToolsPalette = ({
         </section>
       </div>
 
+      {/* VÙNG XÓA (Drop Zone) */}
       <div className="p-3 border-t border-border/40 bg-background/50">
-          <div ref={setNodeRef} className="hidden" />
-          <Button 
-            variant="ghost" 
-            onClick={onClearAll} 
-            className="w-full text-red-400 hover:text-red-500 hover:bg-red-500/10 h-10 gap-2 border border-dashed border-red-500/20 group"
-          >
-            <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" /> 
-            <span>Xóa tất cả</span>
-          </Button>
+          <div ref={setNodeRef} className={cn("rounded-md transition-colors", isOver && "ring-2 ring-red-500 bg-red-500/10")}>
+            <Button 
+                variant="ghost" 
+                onClick={onClearAll} 
+                className={cn("w-full text-red-400 hover:text-red-500 hover:bg-red-500/10 h-10 gap-2 border border-dashed border-red-500/20 group", isOver && "bg-red-500/20 text-red-500 border-red-500")}
+            >
+                <Trash2 className={cn("w-4 h-4 group-hover:scale-110 transition-transform", isOver && "scale-125 animate-bounce")} /> 
+                <span>{isOver ? 'Thả để xóa' : 'Xóa tất cả'}</span>
+            </Button>
+          </div>
       </div>
     </div>
   );

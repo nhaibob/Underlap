@@ -4,7 +4,8 @@ import React, { useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { PlayerToken } from './PlayerToken';
 import { useDroppable, useDraggable } from '@dnd-kit/core';
-import { Tool, ArrowColor, ArrowStyle, ArrowType } from './CreateTacticModal';
+// [FIXED] Import Types từ useTacticLogic thay vì CreateTacticModal
+import { Tool, ArrowColor, ArrowStyle, ArrowType } from '@/lib/hooks/useTacticLogic';
 import { v4 as uuidv4 } from 'uuid';
 import { PlayerTokenProps } from './PlayerToken'; 
 
@@ -46,7 +47,6 @@ const FootballPitchBackground = () => (
     
     {/* SVG Đường kẻ sân - Đã tinh chỉnh khớp góc */}
     <svg className="absolute top-0 left-0 w-full h-full opacity-70" viewBox="0 0 600 400" fill="none" preserveAspectRatio="none">
-        {/* [FIXED] Tăng rx lên 18 để khớp với rounded-xl của khung ngoài */}
         <rect x="5" y="5" width="590" height="390" rx="18" stroke="#A7CCB7" strokeWidth="2" />
         
         <line x1="300" y1="5" x2="300" y2="395" stroke="#A7CCB7" strokeWidth="2" />
@@ -61,7 +61,6 @@ const FootballPitchBackground = () => (
         <circle cx="540" cy="200" r="2" fill="#A7CCB7" />
         <path d="M 515 160 Q 490 200 515 240" stroke="#A7CCB7" strokeWidth="2" fill="none"/>
         
-        {/* Phạt góc - điều chỉnh lại cho khớp với bo góc lớn */}
         <path d="M 5 25 A 20 20 0 0 1 25 5" stroke="#A7CCB7" strokeWidth="2" fill="none"/>
         <path d="M 595 25 A 20 20 0 0 0 575 5" stroke="#A7CCB7" strokeWidth="2" fill="none"/>
         <path d="M 5 375 A 20 20 0 0 0 25 395" stroke="#A7CCB7" strokeWidth="2" fill="none"/>
@@ -164,6 +163,7 @@ const TacticalLayer = ({
   };
 
   // --- Handlers ---
+
   const handleStart = (e: React.MouseEvent | React.TouchEvent) => {
     if (tempControlPoint) return;
     const pos = getPos(e);
@@ -280,7 +280,7 @@ const TacticalLayer = ({
 export const TacticBoard = ({ 
   variant = 'full', players, setPlayers, arrows, setArrows, areas, setAreas,
   activeTool, selectedPlayerId, setSelectedPlayerId, onBoardClick, positionToPlace,
-  currentArrowColor, currentArrowStyle, currentArrowType, className // Thêm className
+  currentArrowColor, currentArrowStyle, currentArrowType, 
 }: any) => {
 
   const { setNodeRef } = useDroppable({ id: 'tactic-board-droppable-area' });
@@ -306,16 +306,9 @@ export const TacticBoard = ({
   return (
     <div ref={(node) => { setNodeRef(node); (boardRef as any).current = node; }}
       className={cn(
-        "relative overflow-hidden shadow-2xl isolate",
-        // [FIXED] 
-        // 1. Loại bỏ aspect-[3/2] mặc định nếu ở chế độ 'full' (để parent quyết định)
-        // 2. Thêm w-full h-full để điền đầy container
+        "relative w-full aspect-[3/2] overflow-hidden shadow-2xl isolate",
         "bg-[#1C3D2E] rounded-xl ring-1 ring-white/10",
-        
-        variant === 'full' && "w-full h-full", 
-        variant === 'thumbnail' && "aspect-[3/2] border-none ring-0 rounded-md shadow-none cursor-pointer hover:opacity-90",
-        
-        className
+        variant === 'thumbnail' && "border-none ring-0 rounded-md shadow-none cursor-pointer hover:opacity-90"
       )}
       onClick={handleBoardClick}
     >

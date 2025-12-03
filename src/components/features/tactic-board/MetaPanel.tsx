@@ -2,12 +2,12 @@ import React from 'react';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button'; 
-import { Download, FileJson } from 'lucide-react'; 
+import { Download } from 'lucide-react'; 
 import { Player, Arrow } from './TacticBoard'; 
 import { cn } from '@/lib/utils'; 
 
 const Label = ({ children }: { children: React.ReactNode }) => (
-  <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">
+  <label className="block text-sm font-medium text-text-secondary mb-2">
     {children}
   </label>
 );
@@ -24,12 +24,17 @@ export interface MetaPanelProps {
 }
 
 export const MetaPanel = ({
-    title, setTitle,
-    description, setDescription,
-    tags, setTags,
-    players, arrows,
+    title,
+    setTitle,
+    description,
+    setDescription,
+    tags,
+    setTags,
+    players,
+    arrows,
 }: MetaPanelProps) => {
     
+    // [UPDATED] Hàm Export JSON File
     const handleExport = () => {
         const tacticData = {
             metadata: {
@@ -41,59 +46,67 @@ export const MetaPanel = ({
             players,
             arrows,
         };
-        console.log(JSON.stringify(tacticData, null, 2));
-        alert("Đã xuất JSON ra Console!");
+        
+        // Tạo file Blob và tải xuống
+        const jsonString = JSON.stringify(tacticData, null, 2);
+        const blob = new Blob([jsonString], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${title.replace(/\s+/g, '_') || 'tactic'}-${Date.now()}.json`;
+        document.body.appendChild(link);
+        link.click();
+        
+        // Cleanup
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
     };
 
   return (
-    <div className="space-y-6">
-      
-      <div className="space-y-4">
-          <div>
-            <Label>Tiêu đề chiến thuật</Label>
-            <Input
-              placeholder="VD: 4-3-3 Gegenpressing"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className={cn("bg-background border-input focus-visible:ring-primary", !title.trim() && 'border-red-400 focus-visible:ring-red-400')}
-            />
-            {!title.trim() && <p className="text-[10px] text-red-500 mt-1 font-medium">Bắt buộc nhập tiêu đề.</p>}
-          </div>
+    <div className="w-72 flex-shrink-0 space-y-4">
+        <h3 className="font-headline text-xl font-bold border-b border-panel pb-3">
+            Thông tin Chiến thuật
+        </h3>
+      <div>
+        <Label>Tiêu đề</Label>
+        <Input
+          placeholder="Ví dụ: Tấn công cánh phải 4-3-3"
+           value={title}
+           onChange={(e) => setTitle(e.target.value)}
+           className={cn(!title.trim() && 'border-danger')}
+        />
+        {!title.trim() && <p className="text-xs text-danger mt-1">Tiêu đề là bắt buộc.</p>}
+      </div>
 
-          <div>
-            <Label>Mô tả chi tiết</Label>
-            <Textarea
-              placeholder="Mô tả cách vận hành, vai trò từng vị trí..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="min-h-[120px] bg-background resize-none text-sm"
-            />
-          </div>
+      <div>
+        <Label>Mô tả</Label>
+        <Textarea
+          placeholder="Giải thích cách vận hành chiến thuật..."
+           value={description}
+           onChange={(e) => setDescription(e.target.value)}
+        />
+      </div>
 
-          <div>
-            <Label>Tags (Hashtags)</Label>
-            <Input
-              placeholder="#attack, #defense"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              className="bg-background text-sm"
-            />
-          </div>
+      <div>
+        <Label>Tags (cách nhau bằng dấu phẩy)</Label>
+        <Input
+          placeholder="#4-3-3, #pressing, #counter"
+           value={tags}
+           onChange={(e) => setTags(e.target.value)}
+        />
       </div>
       
-      <div className="pt-4 border-t border-border border-dashed">
-          <Button 
-            variant="outline" 
-            className="w-full justify-center gap-2 text-xs h-9 border-dashed border-border hover:border-primary hover:text-primary transition-colors"
-            onClick={handleExport}
-          >
-            <FileJson className="w-4 h-4" />
-            Export JSON Data
-          </Button>
-          <p className="text-[10px] text-muted-foreground text-center mt-2">
-            Dữ liệu bao gồm {players.length} cầu thủ và {arrows.length} mũi tên.
-          </p>
-      </div>
+      <hr className="my-4 border-panel" />
+      
+      <Button 
+        variant="ghost" 
+        className="w-full justify-center gap-2 border border-panel hover:border-primary"
+        onClick={handleExport}
+      >
+        <Download className="w-4 h-4" />
+        Xuất JSON ({players.length} cầu thủ)
+      </Button>
     </div>
   );
 };
