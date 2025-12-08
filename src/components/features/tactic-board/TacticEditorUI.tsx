@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { TacticBoard, Player, Arrow, Area } from './TacticBoard';
 import { Button } from '@/components/ui/Button';
-import { ToolsPalette } from './ToolsPalette';
+import { CompactToolbar } from './CompactToolbar';
 import { MetaPanel, MetaPanelProps } from '@/components/features/tactic-board/MetaPanel'; 
 import { useDndMonitor } from '@dnd-kit/core';
 import { useUIStore } from '@/lib/store/uiStore';
@@ -10,9 +10,9 @@ import { Tool, ArrowColor, ArrowStyle, ArrowType } from '@/lib/hooks/useTacticLo
 import { PlayerEditPanel } from './PlayerEditPanel';
 import { PlayerTokenProps } from './PlayerToken'; 
 import { cn } from '@/lib/utils'; 
-import { Settings2, X, ChevronLeft, Save, Undo2, Redo2 } from 'lucide-react';
+import { X, Save, PanelRightClose, PanelRight } from 'lucide-react';
+import { FloatingToolbar } from './FloatingToolbar';
 
-// Props đã được đơn giản hóa nhờ logic hook, nhưng ở đây ta vẫn define đầy đủ để nhận từ Modal
 interface TacticEditorUIProps {
   players: Player[]; setPlayers: React.Dispatch<React.SetStateAction<Player[]>>;
   arrows: Arrow[]; setArrows: React.Dispatch<React.SetStateAction<Arrow[]>>;
@@ -47,7 +47,7 @@ export const TacticEditorUI = ({
 }: TacticEditorUIProps) => {
     
   const { closeCreateModal } = useUIStore();
-  const [isMobilePaletteOpen, setIsMobilePaletteOpen] = useState(false);
+  const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
 
   useDndMonitor({
     onDragMove(event) {
@@ -60,86 +60,187 @@ export const TacticEditorUI = ({
   const handlePlayerUpdate = (id: string, updates: Partial<Player>) => {
     setPlayers(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
   };
+
+  const canPost = metaProps.players.length > 0 && metaProps.title.trim().length > 0;
   
   return (
     <div className="flex flex-col h-full bg-background text-foreground overflow-hidden">
-      <header className="h-14 flex items-center justify-between px-4 border-b border-border bg-card/80 backdrop-blur-sm z-50 shrink-0">
-          <div className="flex items-center gap-2">
-             <Button variant="ghost" size="icon" onClick={closeCreateModal} className="lg:hidden text-muted-foreground"><ChevronLeft className="w-6 h-6" /></Button>
-             <h2 className="text-lg font-bold font-headline tracking-tight hidden sm:block">Tạo Chiến Thuật</h2>
-             
-             {/* [UPDATED] Undo/Redo luôn hiển thị để dễ thao tác */}
-             <div className="flex items-center gap-1 border-l border-white/10 pl-2 ml-2">
-                <Button variant="ghost" size="icon" onClick={undo} disabled={!canUndo} className="h-8 w-8">
-                    <Undo2 className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={redo} disabled={!canRedo} className="h-8 w-8">
-                    <Redo2 className="w-4 h-4" />
-                </Button>
-             </div>
+      {/* === HEADER === */}
+      <header className="h-16 flex items-center justify-between px-4 sm:px-6 border-b border-border/50 bg-gradient-to-r from-violet-500/10 via-purple-500/5 to-transparent backdrop-blur-md z-50 shrink-0">
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={closeCreateModal} 
+            className="text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-all"
+            title="Đóng"
+          >
+            <X className="w-5 h-5" />
+          </Button>
+          <div className="border-l border-border/50 h-8 hidden sm:block" />
+          <div>
+            <h2 className="text-lg font-bold font-headline tracking-tight bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
+              Tạo Chiến Thuật
+            </h2>
+            <p className="text-xs text-muted-foreground flex items-center gap-2">
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-violet-500"></span>
+                {players.length} cầu thủ
+              </span>
+              <span className="text-muted-foreground/50">•</span>
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-500"></span>
+                {arrows.length} mũi tên
+              </span>
+            </p>
           </div>
+        </div>
 
-          <div className="flex items-center gap-2">
-               <Button variant="secondary" size="sm" className="lg:hidden h-9 px-3" onClick={() => setIsMobilePaletteOpen(!isMobilePaletteOpen)}>
-                    {isMobilePaletteOpen ? <X size={18}/> : <Settings2 size={18}/>}
-                    <span className="ml-2 text-xs">Công cụ</span>
-                </Button>
-                <div className="hidden lg:flex gap-2">
-                    <Button variant="ghost" onClick={closeCreateModal} size="sm">Hủy</Button>
-                    <Button variant="default" onClick={metaProps.onPost} disabled={metaProps.isPosting || metaProps.players.length === 0 || !metaProps.title.trim()} className="gap-2 min-w-[120px]" size="sm">
-                        {metaProps.isPosting ? 'Đang lưu...' : <><Save size={16}/> Đăng bài</>}
-                    </Button>
-                </div>
-                {/* Mobile Save Button */}
-                <Button variant="default" size="icon" className="lg:hidden h-9 w-9" onClick={metaProps.onPost} disabled={metaProps.isPosting || metaProps.players.length === 0}><Save size={18}/></Button>
-          </div>
+        <div className="flex items-center gap-2">
+          {/* Toggle Panel Button (Desktop) */}
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => setIsPanelCollapsed(!isPanelCollapsed)}
+            className="hidden xl:flex text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-all"
+            title={isPanelCollapsed ? "Mở panel" : "Đóng panel"}
+          >
+            {isPanelCollapsed ? <PanelRight className="w-5 h-5" /> : <PanelRightClose className="w-5 h-5" />}
+          </Button>
+          
+          <Button 
+            variant="default" 
+            onClick={metaProps.onPost} 
+            disabled={metaProps.isPosting || !canPost} 
+            className="gap-2 min-w-[100px] bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 shadow-lg shadow-violet-500/20" 
+            size="sm"
+          >
+            {metaProps.isPosting ? (
+              <span className="animate-pulse">Đang lưu...</span>
+            ) : (
+              <>
+                <Save size={16} />
+                <span className="hidden sm:inline">Đăng bài</span>
+                <span className="sm:hidden">Lưu</span>
+              </>
+            )}
+          </Button>
+        </div>
       </header>
       
-      <div className="flex flex-1 overflow-hidden relative">
-        <aside className={cn("absolute inset-y-0 left-0 z-40 w-64 lg:w-auto bg-background/95 backdrop-blur-xl border-r border-border transform transition-transform duration-300 lg:relative lg:translate-x-0 lg:bg-transparent lg:border-none", isMobilePaletteOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full")}>
-            <ToolsPalette
+      {/* === MAIN CONTENT === */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Board Area */}
+        <main className="flex-1 flex flex-col overflow-hidden">
+          {/* Compact Toolbar (Desktop) */}
+          <div className="hidden xl:block z-50">
+            <CompactToolbar
+              activeTool={activeTool}
+              setActiveTool={setActiveTool}
+              arrowColor={arrowColor}
+              setArrowColor={setArrowColor}
+              arrowStyle={arrowStyle}
+              setArrowStyle={setArrowStyle}
+              positionToPlace={positionToPlace}
+              setPositionToPlace={setPositionToPlace}
+              undo={undo}
+              redo={redo}
+              canUndo={canUndo}
+              canRedo={canRedo}
+              onClearAll={onClearAll}
+            />
+          </div>
+
+          {/* Board Container */}
+          <div className={cn(
+            "flex-1 relative overflow-hidden flex flex-col items-center justify-center p-2 sm:p-4 lg:p-6 select-none",
+            "bg-gradient-to-br from-neutral-800/40 to-neutral-900/30",
+            positionToPlace && "cursor-crosshair"
+          )}>
+            {/* Subtle Grid Pattern */}
+            <div className="absolute inset-0 opacity-[0.02] pointer-events-none" 
+                 style={{ 
+                   backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
+                   backgroundSize: '24px 24px'
+                 }} 
+            />
+            
+            {/* Tactic Board */}
+            <div className="w-full max-w-[85%] sm:max-w-[75%] lg:max-w-[70%] xl:max-w-[65%] transition-all duration-300">
+              <TacticBoard 
+                players={players} setPlayers={setPlayers}
+                arrows={arrows} setArrows={setArrows}
+                areas={areas} setAreas={setAreas}
                 activeTool={activeTool}
-                setActiveTool={(t: any) => { setActiveTool(t); setIsMobilePaletteOpen(false); }}
-                positionToPlace={positionToPlace} setPositionToPlace={setPositionToPlace}
+                boardRect={boardRect}
+                selectedPlayerId={selectedPlayerId} setSelectedPlayerId={setSelectedPlayerId}
+                onBoardClick={onBoardClick}
+                positionToPlace={positionToPlace}
+                currentArrowColor={arrowColor} currentArrowStyle={arrowStyle} currentArrowType={arrowType}
+              />
+            </div>
+            
+            {/* Hint when placing player */}
+            {positionToPlace && (
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-primary/90 text-primary-foreground text-sm font-medium rounded-full shadow-lg animate-pulse z-30">
+                👆 Click vào sân để đặt {positionToPlace}
+              </div>
+            )}
+            
+            {/* Help Text */}
+            <div className="mt-3 text-[10px] text-muted-foreground/60 hidden lg:flex items-center gap-4">
+              <span>💡 Ctrl+Z hoàn tác</span>
+              <span>•</span>
+              <span>Kéo mũi tên để bẻ cong</span>
+              <span>•</span>
+              <span>Click vào cầu thủ để chỉnh sửa</span>
+            </div>
+
+            {/* Floating Toolbar (Mobile) */}
+            <div className="xl:hidden">
+              <FloatingToolbar 
+                activeTool={activeTool} setActiveTool={setActiveTool}
                 arrowColor={arrowColor} setArrowColor={setArrowColor}
                 arrowStyle={arrowStyle} setArrowStyle={setArrowStyle}
-                arrowType={arrowType} setArrowType={setArrowType}
-                onClearAll={onClearAll}
                 undo={undo} redo={redo} canUndo={canUndo} canRedo={canRedo}
-            />
-        </aside>
-        <main className="flex-1 bg-neutral-900/50 relative overflow-hidden flex flex-col items-center justify-center p-4 lg:p-8 select-none">
-            <div className="absolute inset-0 bg-[url('/assets/images/grid-pattern.png')] opacity-[0.03] pointer-events-none" />
-            <div className="w-full max-w-5xl transition-all duration-300">
-                <TacticBoard 
-                  players={players} setPlayers={setPlayers}
-                  arrows={arrows} setArrows={setArrows}
-                  areas={areas} setAreas={setAreas}
-                  activeTool={activeTool}
-                  boardRect={boardRect}
-                  selectedPlayerId={selectedPlayerId} setSelectedPlayerId={setSelectedPlayerId}
-                  onBoardClick={onBoardClick}
-                  positionToPlace={positionToPlace}
-                  currentArrowColor={arrowColor} currentArrowStyle={arrowStyle} currentArrowType={arrowType}
-                />
+              />
             </div>
-            <div className="mt-4 text-xs text-muted-foreground hidden lg:block">
-                Mẹo: Dùng Ctrl+Z để hoàn tác, Click vào điểm trắng để bẻ cong mũi tên.
-            </div>
+          </div>
         </main>
-        <aside className="hidden lg:block w-80 bg-card/30 backdrop-blur-sm border-l border-border p-0 overflow-y-auto">
+
+        {/* === RIGHT PANEL (Collapsible) === */}
+        <aside className={cn(
+          "hidden xl:flex flex-col bg-card/50 backdrop-blur-sm border-l border-border transition-all duration-300 overflow-hidden",
+          isPanelCollapsed ? "w-0 border-l-0" : "w-80"
+        )}>
+          <div className={cn(
+            "h-full p-4 overflow-y-auto transition-opacity duration-200",
+            isPanelCollapsed ? "opacity-0" : "opacity-100"
+          )}>
             {selectedPlayer && activeTool === 'select' ? (
-                <div className="h-full p-4 animate-in slide-in-from-right-4 fade-in duration-200">
-                    <PlayerEditPanel player={selectedPlayer} onUpdate={handlePlayerUpdate} onDelete={onPlayerDelete} setActiveTool={setActiveTool} />
-                </div>
+              <div className="animate-in slide-in-from-right-4 fade-in duration-200">
+                <PlayerEditPanel 
+                  player={selectedPlayer} 
+                  onUpdate={handlePlayerUpdate} 
+                  onDelete={onPlayerDelete} 
+                  setActiveTool={setActiveTool} 
+                />
+              </div>
             ) : (
-                <div className="h-full p-4">
-                    <MetaPanel title={metaProps.title} setTitle={metaProps.setTitle} description={metaProps.description} setDescription={metaProps.setDescription} tags={metaProps.tags} setTags={metaProps.setTags} players={metaProps.players} arrows={metaProps.arrows} />
-                </div>
+              <MetaPanel 
+                title={metaProps.title} 
+                setTitle={metaProps.setTitle} 
+                description={metaProps.description} 
+                setDescription={metaProps.setDescription} 
+                tags={metaProps.tags} 
+                setTags={metaProps.setTags} 
+                players={metaProps.players} 
+                arrows={metaProps.arrows} 
+              />
             )}
+          </div>
         </aside>
       </div>
-      {isMobilePaletteOpen && <div className="fixed inset-0 z-30 bg-black/60 backdrop-blur-[1px] lg:hidden animate-in fade-in duration-200" onClick={() => setIsMobilePaletteOpen(false)} />}
     </div>
   );
 };

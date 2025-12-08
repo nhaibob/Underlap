@@ -1,4 +1,3 @@
-// src/components/features/tactic-board/TacticBoard.tsx
 "use client"; 
 import React, { useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -38,38 +37,59 @@ export interface Area {
 // --- Background ---
 const FootballPitchBackground = () => (
   <div className="absolute inset-0 w-full h-full overflow-hidden select-none pointer-events-none">
-    {/* Nền cỏ */}
-    <div className="absolute inset-0 bg-[#1C3D2E] bg-gradient-to-br from-[#1e4533] to-[#11291e]" />
+    {/* Enhanced grass background - more vibrant and realistic */}
+    <div className="absolute inset-0 bg-gradient-to-br from-[#2E7D47] via-[#25683D] to-[#1D5432]" />
     
-    {/* Họa tiết sọc cỏ */}
-    <div className="absolute inset-0 opacity-[0.07]" 
-         style={{ backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 50px, #000 50px, #000 100px)' }} />
+    {/* Grass stripes pattern - more pronounced */}
+    <div className="absolute inset-0 opacity-[0.15]" 
+         style={{ backgroundImage: 'repeating-linear-gradient(90deg, rgba(0,0,0,0.2) 0px, transparent 40px, transparent 80px, rgba(0,0,0,0.2) 80px, rgba(0,0,0,0.2) 120px)' }} />
     
-    {/* SVG Đường kẻ sân - Đã tinh chỉnh khớp góc */}
-    <svg className="absolute top-0 left-0 w-full h-full opacity-70" viewBox="0 0 600 400" fill="none" preserveAspectRatio="none">
-        <rect x="5" y="5" width="590" height="390" rx="18" stroke="#A7CCB7" strokeWidth="2" />
+    {/* Subtle noise texture for realism */}
+    <div className="absolute inset-0 opacity-[0.03]"
+         style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")' }} />
+    
+    {/* Field markings - clearer and more visible */}
+    <svg className="absolute top-0 left-0 w-full h-full" viewBox="0 0 600 400" fill="none" preserveAspectRatio="none">
+        {/* Outer boundary */}
+        <rect x="5" y="5" width="590" height="390" rx="18" stroke="#FFFFFF" strokeWidth="2.5" opacity="0.95" />
         
-        <line x1="300" y1="5" x2="300" y2="395" stroke="#A7CCB7" strokeWidth="2" />
-        <circle cx="300" cy="200" r="50" stroke="#A7CCB7" strokeWidth="2" />
-        <circle cx="300" cy="200" r="3" fill="#A7CCB7" />
-        <rect x="5" y="80" width="80" height="240" stroke="#A7CCB7" strokeWidth="2" />
-        <rect x="5" y="140" width="30" height="120" stroke="#A7CCB7" strokeWidth="2" />
-        <circle cx="60" cy="200" r="2" fill="#A7CCB7" />
-        <path d="M 85 160 Q 110 200 85 240" stroke="#A7CCB7" strokeWidth="2" fill="none"/>
-        <rect x="515" y="80" width="80" height="240" stroke="#A7CCB7" strokeWidth="2" />
-        <rect x="565" y="140" width="30" height="120" stroke="#A7CCB7" strokeWidth="2" />
-        <circle cx="540" cy="200" r="2" fill="#A7CCB7" />
-        <path d="M 515 160 Q 490 200 515 240" stroke="#A7CCB7" strokeWidth="2" fill="none"/>
+        {/* Center line */}
+        <line x1="300" y1="5" x2="300" y2="395" stroke="#FFFFFF" strokeWidth="2.5" opacity="0.95" />
         
-        <path d="M 5 25 A 20 20 0 0 1 25 5" stroke="#A7CCB7" strokeWidth="2" fill="none"/>
-        <path d="M 595 25 A 20 20 0 0 0 575 5" stroke="#A7CCB7" strokeWidth="2" fill="none"/>
-        <path d="M 5 375 A 20 20 0 0 0 25 395" stroke="#A7CCB7" strokeWidth="2" fill="none"/>
-        <path d="M 595 375 A 20 20 0 0 1 575 395" stroke="#A7CCB7" strokeWidth="2" fill="none"/>
+        {/* Center circle */}
+        <circle cx="300" cy="200" r="50" stroke="#FFFFFF" strokeWidth="2.5" opacity="0.95" />
+        <circle cx="300" cy="200" r="4" fill="#FFFFFF" opacity="0.95" />
+        
+        {/* Left penalty area */}
+        <rect x="5" y="80" width="80" height="240" stroke="#FFFFFF" strokeWidth="2.5" opacity="0.95" />
+        {/* Left goal area */}
+        <rect x="5" y="140" width="30" height="120" stroke="#FFFFFF" strokeWidth="2.5" opacity="0.95" />
+        {/* Left penalty spot */}
+        <circle cx="60" cy="200" r="3" fill="#FFFFFF" opacity="0.95" />
+        {/* Left penalty arc */}
+        <path d="M 85 160 Q 110 200 85 240" stroke="#FFFFFF" strokeWidth="2.5" fill="none" opacity="0.95"/>
+        
+        {/* Right penalty area */}
+        <rect x="515" y="80" width="80" height="240" stroke="#FFFFFF" strokeWidth="2.5" opacity="0.95" />
+        {/* Right goal area */}
+        <rect x="565" y="140" width="30" height="120" stroke="#FFFFFF" strokeWidth="2.5" opacity="0.95" />
+        {/* Right penalty spot */}
+        <circle cx="540" cy="200" r="3" fill="#FFFFFF" opacity="0.95" />
+        {/* Right penalty arc */}
+        <path d="M 515 160 Q 490 200 515 240" stroke="#FFFFFF" strokeWidth="2.5" fill="none" opacity="0.95"/>
+        
+        {/* Corner arcs */}
+        <path d="M 5 25 A 20 20 0 0 1 25 5" stroke="#FFFFFF" strokeWidth="2.5" fill="none" opacity="0.95"/>
+        <path d="M 595 25 A 20 20 0 0 0 575 5" stroke="#FFFFFF" strokeWidth="2.5" fill="none" opacity="0.95"/>
+        <path d="M 5 375 A 20 20 0 0 0 25 395" stroke="#FFFFFF" strokeWidth="2.5" fill="none" opacity="0.95"/>
+        <path d="M 595 375 A 20 20 0 0 1 575 395" stroke="#FFFFFF" strokeWidth="2.5" fill="none" opacity="0.95"/>
     </svg>
   </div>
 );
 
 // --- Draggable Token ---
+import { motion } from 'framer-motion';
+
 function DraggablePlayerToken({ 
     player, activeTool, selectedPlayerId, setSelectedPlayerId, onDelete 
 }: { 
@@ -95,12 +115,12 @@ function DraggablePlayerToken({
     cursor: activeTool === 'move' ? (isDragging ? 'grabbing' : 'grab') : (activeTool === 'erase' ? 'no-drop' : 'pointer'),
     touchAction: 'none',
     pointerEvents: 'auto',
-    transition: 'none', 
   };
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (activeTool === 'erase') {
+        // Animation out before delete could be handled by parent AnimatePresence, but simple callback is fast
         onDelete(player.id);
     } else {
         setSelectedPlayerId?.(player.id);
@@ -111,15 +131,22 @@ function DraggablePlayerToken({
     <div ref={setNodeRef} style={style} {...listeners} {...attributes} onClick={handleClick}
       className="origin-center w-[7.5%] aspect-square min-w-[24px] max-w-[50px] -translate-x-1/2 -translate-y-1/2"
     >
-      <div 
+      <motion.div 
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ 
+            scale: isDragging ? 1.2 : 1, 
+            opacity: 1,
+            rotate: isDragging ? 5 : 0 // Tilt effect when dragging
+        }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
         className={cn(
             "w-full h-full rounded-full transition-all duration-200 ease-out", 
-            isDragging ? "scale-125 drop-shadow-2xl" : "scale-100",
+            isDragging ? "drop-shadow-2xl" : "",
             activeTool === 'erase' && "hover:opacity-50 hover:scale-95"
         )}
       >
         <PlayerToken position={player.position} label={player.label} className={cn("w-full h-full", isSelected && "ring-2 ring-yellow-400 border-yellow-200")} variant="responsive" />
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -127,7 +154,8 @@ function DraggablePlayerToken({
 // --- Tactical Layer ---
 const TacticalLayer = ({ 
   arrows, setArrows, areas, setAreas, activeTool,
-  currentArrowColor, currentArrowStyle, currentArrowType, 
+  currentArrowColor, currentArrowStyle, currentArrowType,
+  positionToPlace, // NEW: for click-through when placing player
 }: any) => {
   const [drawingArrow, setDrawingArrow] = useState<Arrow | null>(null);
   const [drawingAreaStart, setDrawingAreaStart] = useState<{x: number, y: number} | null>(null);
@@ -231,7 +259,11 @@ const TacticalLayer = ({
   return (
     <svg ref={svgRef} className="absolute top-0 left-0 w-full h-full z-10"
       viewBox="0 0 600 400" preserveAspectRatio="none"
-      style={{ cursor: (activeTool === 'draw' || activeTool === 'area') ? 'crosshair' : (activeTool === 'erase' ? 'cell' : 'default'), pointerEvents: ['draw', 'area', 'erase', 'select', 'move'].includes(activeTool) ? 'auto' : 'none' }}
+      style={{ 
+        cursor: (activeTool === 'draw' || activeTool === 'area') ? 'crosshair' : (activeTool === 'erase' ? 'cell' : 'default'), 
+        // Disable pointer events when placing player to allow click-through to board
+        pointerEvents: positionToPlace ? 'none' : (['draw', 'area', 'erase'].includes(activeTool) ? 'auto' : 'none') 
+      }}
       onMouseDown={handleStart} onMouseMove={handleMove} onMouseUp={handleEnd} onMouseLeave={handleEnd}
       onTouchStart={handleStart} onTouchMove={handleMove} onTouchEnd={handleEnd}
     >
@@ -262,7 +294,7 @@ const TacticalLayer = ({
                onClick={(e) => handleObjectClick(e, arrow.id, 'arrow')} 
                className={cn("transition-all group", activeTool === 'erase' ? "cursor-cell hover:opacity-50" : "cursor-move")}
             >
-                <path d={d} stroke="transparent" strokeWidth="30" fill="none" className="pointer-events-auto" />
+                <path d={d} stroke="transparent" strokeWidth="60" fill="none" className="pointer-events-auto" />
                 <path d={d} stroke={arrow.color} strokeWidth="3" fill="none" markerEnd={`url(#${getMarkerId(arrow.color)})`} strokeDasharray={arrow.style === 'dashed' ? '8, 8' : undefined} strokeLinecap="round" className="pointer-events-none" />
                 {activeTool === 'erase' && <path d={d} stroke="red" strokeWidth="4" fill="none" opacity="0" className="group-hover:opacity-60 transition-opacity pointer-events-none" />}
             </g>
@@ -308,7 +340,8 @@ export const TacticBoard = ({
       className={cn(
         "relative w-full aspect-[3/2] overflow-hidden shadow-2xl isolate",
         "bg-[#1C3D2E] rounded-xl ring-1 ring-white/10",
-        variant === 'thumbnail' && "border-none ring-0 rounded-md shadow-none cursor-pointer hover:opacity-90"
+        variant === 'thumbnail' && "border-none ring-0 rounded-md shadow-none cursor-pointer hover:opacity-90",
+        positionToPlace && "cursor-crosshair ring-2 ring-primary/50"
       )}
       onClick={handleBoardClick}
     >
@@ -316,7 +349,7 @@ export const TacticBoard = ({
       
       {variant === 'full' && players && arrows && areas && activeTool && (
         <>
-            <TacticalLayer arrows={arrows} setArrows={setArrows!} areas={areas} setAreas={setAreas!} activeTool={activeTool} currentArrowColor={currentArrowColor!} currentArrowStyle={currentArrowStyle!} currentArrowType={currentArrowType!} />
+            <TacticalLayer arrows={arrows} setArrows={setArrows!} areas={areas} setAreas={setAreas!} activeTool={activeTool} currentArrowColor={currentArrowColor!} currentArrowStyle={currentArrowStyle!} currentArrowType={currentArrowType!} positionToPlace={positionToPlace} />
             <div className="z-20 w-full h-full absolute top-0 left-0 pointer-events-none">
                 {players.map((player: any) => (
                     <DraggablePlayerToken key={player.id} player={player} activeTool={activeTool} selectedPlayerId={selectedPlayerId!} setSelectedPlayerId={setSelectedPlayerId!} onDelete={handleDeletePlayer} />

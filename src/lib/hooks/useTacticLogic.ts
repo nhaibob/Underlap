@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useTacticHistory } from '@/lib/hooks/useTacticHistory';
+// Import type Player, Arrow, Area từ file TacticBoard (đảm bảo file TacticBoard export chúng)
 import { Player, Arrow, Area } from '@/components/features/tactic-board/TacticBoard';
 import { PlayerTokenProps } from '@/components/features/tactic-board/PlayerToken';
 import { ALL_ARROW_COLOR_VALUES } from '@/lib/constants';
 import { v4 as uuidv4 } from 'uuid';
 
-// Định nghĩa lại các types ở đây hoặc import từ file types chung nếu có
+// Định nghĩa các types dùng chung tại đây để các component khác import
 export type ArrowColor = typeof ALL_ARROW_COLOR_VALUES[number];
 export type ArrowStyle = 'solid' | 'dashed';
 export type ArrowType = 'straight' | 'curved';
@@ -31,6 +32,7 @@ export const useTacticLogic = () => {
     const [boardRect, setBoardRect] = useState<DOMRect | null>(null);
 
     // 3. Wrappers để tương thích với component cũ (Setters)
+    // Các hàm này giúp update state thông qua history hook
     const setPlayers = (action: React.SetStateAction<Player[]>) => {
         const newPlayers = typeof action === 'function' ? action(players) : action;
         setState({ ...state, players: newPlayers });
@@ -56,19 +58,20 @@ export const useTacticLogic = () => {
 
     // Xóa toàn bộ (Reset)
     const clearAll = () => {
-        if (confirm('Bạn có chắc chắn muốn xóa toàn bộ sa bàn không?')) {
-            reset({ players: [], arrows: [], areas: [] });
-            setSelectedPlayerId(null);
-            setPositionToPlace(null);
-            setActiveTool('move');
-        }
+        reset({ players: [], arrows: [], areas: [] });
+        setSelectedPlayerId(null);
+        setPositionToPlace(null);
+        setActiveTool('move');
     };
 
     // Thêm cầu thủ khi click vào sân
     const addPlayerAtPosition = (pos: { x: number, y: number }) => {
         if (!positionToPlace) return;
+        
+        // Tự động đánh số nếu có nhiều cầu thủ cùng vị trí (VD: CM1, CM2)
         const count = players.filter(p => p.position === positionToPlace).length;
         const finalLabel = count > 0 ? `${positionToPlace}${count + 1}` : positionToPlace;
+        
         const newPlayer: Player = { 
             id: uuidv4(), 
             position: positionToPlace, 

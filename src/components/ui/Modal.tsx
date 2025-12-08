@@ -8,9 +8,10 @@ interface ModalProps {
   onClose: () => void;
   children: React.ReactNode;
   className?: string;
+  hideCloseButton?: boolean;
 }
 
-export const Modal = ({ isOpen, onClose, children, className }: ModalProps) => {
+export const Modal = ({ isOpen, onClose, children, className, hideCloseButton = false }: ModalProps) => {
   if (!isOpen) return null; // Nếu không mở, không render gì cả
 
   return (
@@ -30,13 +31,15 @@ export const Modal = ({ isOpen, onClose, children, className }: ModalProps) => {
           className
         )}
       >
-        {/* Nút đóng (Close) */}
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 p-1 rounded-full text-text-secondary hover:bg-white/10"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        {/* Nút đóng (Close) - chỉ hiện khi không có hideCloseButton */}
+        {!hideCloseButton && (
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 p-1 rounded-full text-text-secondary hover:bg-white/10 z-10"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
         
         {/* Nơi chứa nội dung (TacticBoard sẽ vào đây) */}
         <div className="p-6">

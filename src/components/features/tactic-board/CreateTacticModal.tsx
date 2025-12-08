@@ -9,10 +9,10 @@ import { useTacticLogic } from '@/lib/hooks/useTacticLogic';
 export const CreateTacticModal = () => {
   const { isCreateModalOpen, closeCreateModal } = useUIStore();
   
-  // Sử dụng custom hook logic
+  // Sử dụng custom hook logic đã tách biệt
   const logic = useTacticLogic();
 
-  // State riêng cho form metadata (không thuộc về tactic logic thuần túy)
+  // State riêng cho form metadata
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState('');
@@ -20,13 +20,13 @@ export const CreateTacticModal = () => {
 
   // Xử lý kéo thả (Drag End)
   function handleDragEnd(event: DragEndEvent) {
-    const { activeTool, activeTool: tool, players, setPlayers, deletePlayer, boardRect } = logic;
+    const { activeTool, players, setPlayers, deletePlayer, boardRect } = logic;
     
-    if (tool !== 'move') return; 
+    if (activeTool !== 'move') return; 
     const { active, over, delta } = event;
     if (!over) return; 
     
-    // Kéo vào thùng rác
+    // Kéo vào thùng rác (delete-zone)
     if (over.id === 'delete-zone') {
       if (!active.data.current?.isPaletteToken) deletePlayer(active.id as string);
       return;
@@ -102,16 +102,18 @@ export const CreateTacticModal = () => {
   };
 
   return (
-    <Modal isOpen={isCreateModalOpen} onClose={closeCreateModal} className="max-w-full w-[95vw] h-[95vh] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-      <DndContext onDragEnd={handleDragEnd} measuring={{ droppable: { strategy: MeasuringStrategy.WhileDragging } }}>
-        <TacticEditorUI
-          {...logic} // Truyền toàn bộ state và handlers từ hook
-          onPlayerDelete={logic.deletePlayer}
-          onBoardClick={logic.addPlayerAtPosition}
-          onClearAll={logic.clearAll}
-          metaProps={metaProps}
-        />
-      </DndContext>
+    <Modal isOpen={isCreateModalOpen} onClose={closeCreateModal} hideCloseButton={true} className="max-w-full w-[95vw] h-[95vh] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-0 border-none bg-transparent shadow-none">
+      <div className="w-full h-full bg-background rounded-lg border border-border shadow-2xl overflow-hidden">
+        <DndContext onDragEnd={handleDragEnd} measuring={{ droppable: { strategy: MeasuringStrategy.WhileDragging } }}>
+            <TacticEditorUI
+            {...logic}
+            onPlayerDelete={logic.deletePlayer}
+            onBoardClick={logic.addPlayerAtPosition}
+            onClearAll={logic.clearAll}
+            metaProps={metaProps}
+            />
+        </DndContext>
+      </div>
     </Modal>
   );
 };

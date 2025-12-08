@@ -1,76 +1,78 @@
+"use client";
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { POSITION_CATEGORY_COLORS, POSITION_OPTIONS } from '@/lib/constants';
 
-type PositionValue = typeof POSITION_OPTIONS[number]['value'];
+// Position types based on POSITION_OPTIONS from constants
+export type PlayerPosition = 'GK' | 'RB' | 'LB' | 'CB' | 'LWB' | 'RWB' | 'DM' | 'CM' | 'AM' | 'RW' | 'LW' | 'CF' | 'ST';
 
 export interface PlayerTokenProps {
-  position: PositionValue;
-  label: string;
+  position: PlayerPosition;
+  label?: string;
   className?: string;
-  showLabel?: boolean;
-  variant?: 'default' | 'small' | 'responsive';
+  variant?: 'default' | 'responsive';
 }
 
-const getPlayerCategory = (position: PositionValue) => {
-	const option = POSITION_OPTIONS.find(p => p.value === position);
-	return option ? option.category : 'FWD';
+// Color mapping based on position category
+const POSITION_COLORS: Record<string, {
+  bg: string;
+  border: string;
+  text: string;
+}> = {
+  // Goalkeeper
+  GK: { bg: 'bg-amber-500', border: 'border-amber-400', text: 'text-white' },
+  
+  // Defenders
+  RB: { bg: 'bg-blue-500', border: 'border-blue-400', text: 'text-white' },
+  LB: { bg: 'bg-blue-500', border: 'border-blue-400', text: 'text-white' },
+  CB: { bg: 'bg-blue-500', border: 'border-blue-400', text: 'text-white' },
+  LWB: { bg: 'bg-blue-400', border: 'border-blue-300', text: 'text-white' },
+  RWB: { bg: 'bg-blue-400', border: 'border-blue-300', text: 'text-white' },
+  
+  // Midfielders
+  DM: { bg: 'bg-green-500', border: 'border-green-400', text: 'text-white' },
+  CM: { bg: 'bg-green-500', border: 'border-green-400', text: 'text-white' },
+  AM: { bg: 'bg-green-400', border: 'border-green-300', text: 'text-white' },
+  
+  // Forwards
+  RW: { bg: 'bg-rose-500', border: 'border-rose-400', text: 'text-white' },
+  LW: { bg: 'bg-rose-500', border: 'border-rose-400', text: 'text-white' },
+  CF: { bg: 'bg-rose-600', border: 'border-rose-500', text: 'text-white' },
+  ST: { bg: 'bg-red-500', border: 'border-red-400', text: 'text-white' },
 };
 
-// [MERGED] SVG Icon Component nội bộ
-const PlayerTokenIcon = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <circle cx="20" cy="20" r="18.5" strokeWidth="3" fill="none" />
-    <circle cx="20" cy="20" r="14" fillOpacity="0.25" />
-  </svg>
-);
-
 export const PlayerToken = ({
-	position,
-	label,
-	className,
-    showLabel = true,
-    variant = 'default'
+  position,
+  label,
+  className,
+  variant = 'default',
 }: PlayerTokenProps) => {
-	const category = getPlayerCategory(position);
-	const colorClasses = POSITION_CATEGORY_COLORS[category]; 
+  const colors = POSITION_COLORS[position] || { 
+    bg: 'bg-neutral-500', 
+    border: 'border-neutral-400', 
+    text: 'text-white' 
+  };
 
-    let sizeClass = 'w-10 h-10 md:w-12 md:h-12'; 
-    let fontSizeClass = 'text-[10px] md:text-xs';
+  const displayLabel = label || position;
 
-    if (variant === 'small') {
-        sizeClass = 'w-8 h-8 md:w-9 md:h-9';
-        fontSizeClass = 'text-[9px]';
-    } else if (variant === 'responsive') {
-        sizeClass = 'w-full h-full'; 
-        fontSizeClass = 'text-[clamp(8px,20%,14px)]'; 
-    }
-
-	return (
-		<div
-			className={cn(
-				sizeClass,
-				'relative flex items-center justify-center cursor-pointer transition-all duration-200 transform-gpu',
-				'rounded-full shadow-lg z-30 group select-none',
-                'border-[2px] border-white ring-1 ring-black/20',
-                'bg-slate-800', 
-				className
-			)}
-			role="button"
-            aria-label={`Player position ${label}`}
-		>
-            <div className={cn("absolute inset-0 rounded-full opacity-90", colorClasses.fill?.replace('fill-', 'bg-').replace('/20', ''))} />
-			<PlayerTokenIcon className={cn('w-full h-full absolute transition-all p-1', colorClasses.stroke)} />
-            
-            {showLabel && (
-			    <span className={cn(
-                    "relative z-10 font-bold text-white drop-shadow-md select-none pointer-events-none font-mono uppercase leading-none",
-                    fontSizeClass
-                )}>
-				    {label}
-			    </span>
-            )}
-            <div className="absolute top-0 left-0 w-full h-1/2 rounded-t-full bg-gradient-to-b from-white/30 to-transparent pointer-events-none" />
-		</div>
-	);
+  return (
+    <div
+      className={cn(
+        "relative flex items-center justify-center rounded-full font-bold shadow-lg border-2 select-none",
+        colors.bg,
+        colors.border,
+        colors.text,
+        variant === 'responsive' ? 'w-full h-full text-[clamp(8px,2vw,12px)]' : 'w-10 h-10 text-xs',
+        "transition-all duration-200",
+        className
+      )}
+    >
+      {/* Inner glow effect */}
+      <div className="absolute inset-0.5 rounded-full bg-gradient-to-b from-white/30 to-transparent pointer-events-none" />
+      
+      {/* Label */}
+      <span className="relative z-10 drop-shadow-sm">
+        {displayLabel}
+      </span>
+    </div>
+  );
 };
