@@ -24,10 +24,10 @@ export default function MainLayout({
     <div className="flex flex-col min-h-screen">
       <Header /> 
       
-      <div className="flex flex-1 container mx-auto">
+      <div className="flex flex-1 container mx-auto gap-6">
         <SidebarLeft />
         
-        <main className="flex-1 min-w-0">
+        <main className="flex-1 min-w-0 px-4 md:px-6">
           <div className="pb-[4.5rem] md:pb-0"> 
             
             <AnimatePresence mode="wait">
