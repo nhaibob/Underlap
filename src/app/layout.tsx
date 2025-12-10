@@ -1,9 +1,9 @@
 // src/app/layout.tsx
 
 import type { Metadata } from 'next';
-import '@/styles/globals.css'; // Import Global Styles
+import '@/styles/globals.css';
 import React from 'react';
-// Import Modal component
+import { SessionProvider } from '@/components/providers/SessionProvider';
 import { CreateTacticModal } from '@/components/features/tactic-board/CreateTacticModal';
 import { SettingsModal } from '@/components/core/SettingsModal';
 
@@ -20,11 +20,13 @@ export default function RootLayout({
     return (
         <html lang="vi" className="dark bg-background text-text-primary">
             <body>
-                {children}
+                <SessionProvider>
+                    {children}
 
-                {/* Render Modals */}
-                <CreateTacticModal />
-                <SettingsModal />
+                    {/* Render Modals */}
+                    <CreateTacticModal />
+                    <SettingsModal />
+                </SessionProvider>
             </body>
         </html>
     );

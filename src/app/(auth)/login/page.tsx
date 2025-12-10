@@ -3,15 +3,20 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get('callbackUrl') || '/feed';
+  
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -20,12 +25,31 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
     
-    // Simulate login - replace with actual auth logic
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    setIsLoading(false);
-    router.push('/feed');
+    try {
+      const result = await signIn('credentials', {
+        email: formData.email,
+        password: formData.password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError('Email hoặc mật khẩu không đúng');
+        setIsLoading(false);
+      } else {
+        router.push(callbackUrl);
+        router.refresh();
+      }
+    } catch (err) {
+      setError('Đã có lỗi xảy ra. Vui lòng thử lại.');
+      setIsLoading(false);
+    }
+  };
+
+  const handleSocialLogin = async (provider: 'google' | 'facebook') => {
+    setIsLoading(true);
+    await signIn(provider, { callbackUrl });
   };
 
   return (
@@ -41,6 +65,19 @@ export default function LoginPage() {
         <p className="text-muted-foreground mt-2">
           Đăng nhập để tiếp tục thiết kế chiến thuật
         </p>
+      </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm text-center">
+          {error}
+        </div>
+      )}
+
+      {/* Demo Account Info */}
+      <div className="mb-6 p-3 rounded-lg bg-primary/10 border border-primary/20 text-sm text-center">
+        <p className="text-primary font-medium">Demo Account</p>
+        <p className="text-muted-foreground">Email: demo@underlap.com | Password: demo123</p>
       </div>
 
       {/* Form */}
@@ -143,6 +180,8 @@ export default function LoginPage() {
         <Button 
           type="button" 
           variant="outline" 
+          onClick={() => handleSocialLogin('google')}
+          disabled={isLoading}
           className="h-11 bg-background/50 border-white/10 hover:bg-white/5 hover:border-white/20 transition-all"
         >
           <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
@@ -156,6 +195,8 @@ export default function LoginPage() {
         <Button 
           type="button" 
           variant="outline" 
+          onClick={() => handleSocialLogin('facebook')}
+          disabled={isLoading}
           className="h-11 bg-background/50 border-white/10 hover:bg-white/5 hover:border-white/20 transition-all"
         >
           <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
