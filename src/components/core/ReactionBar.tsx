@@ -1,47 +1,143 @@
-import React from 'react';
-import { Heart, MessageCircle, Bookmark, GitFork } from 'lucide-react';
-import { cn } from '@/lib/utils';
+// src/components/core/ReactionBar.tsx
+'use client';
 
-// [ĐÃ SỬA] Chuyển đổi props sang dạng phẳng để khớp với PostCard
+import React, { useState, useEffect } from 'react';
+import { Heart, MessageCircle, Bookmark, GitFork, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { supabaseAuth } from '@/lib/supabase';
+
 export interface ReactionBarProps {
+    tacticId?: string;
     likes: number;
     comments: number;
-    forks?: number; // Optional (có thể không có)
+    forks?: number;
     className?: string;
+    onCommentClick?: () => void;
 }
 
-const ReactionButton = ({ 
-  icon: Icon, 
-  count,
-  className 
-}: { 
-  icon: React.ElementType, 
-  count: number,
-  className?: string
-}) => {
-  return (
-    <button className={cn(
-      "flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary transition-colors",
-      className
-    )}>
-      <Icon className="w-4 h-4" />
-      <span>{count}</span>
-    </button>
-  );
-};
+export const ReactionBar = ({ 
+  tacticId,
+  likes: initialLikes, 
+  comments, 
+  forks = 0, 
+  className,
+  onCommentClick
+}: ReactionBarProps) => {
+  const [liked, setLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(initialLikes);
+  const [saved, setSaved] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
 
-// [ĐÃ SỬA] Destructuring trực tiếp likes, comments, forks
-export const ReactionBar = ({ likes, comments, forks = 0, className }: ReactionBarProps) => {
+  // Get current user on mount
+  useEffect(() => {
+    const getUser = async () => {
+      const user = await supabaseAuth.getUser();
+      if (user) {
+        setUserId(user.id);
+        setUsername(user.user_metadata?.username || user.email?.split('@')[0]);
+      }
+    };
+    getUser();
+  }, []);
+
+  // Check if already liked
+  useEffect(() => {
+    if (tacticId && userId) {
+      fetch(`/api/tactic/${tacticId}/like?userId=${userId}`)
+        .then(res => res.json())
+        .then(data => setLiked(data.liked))
+        .catch(() => {});
+    }
+  }, [tacticId, userId]);
+
+  const handleLike = async () => {
+    if (!tacticId || !userId || isLoading) return;
+    
+    setIsLoading(true);
+    
+    try {
+      if (liked) {
+        // Unlike
+        await fetch(`/api/tactic/${tacticId}/like`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId })
+        });
+        setLiked(false);
+        setLikesCount(prev => Math.max(0, prev - 1));
+      } else {
+        // Like
+        await fetch(`/api/tactic/${tacticId}/like`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, username })
+        });
+        setLiked(true);
+        setLikesCount(prev => prev + 1);
+      }
+    } catch (error) {
+      console.error('Like error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSave = () => {
+    setSaved(!saved);
+  };
+
   return (
-    <div className={cn("flex items-center gap-6 pt-4 mt-4 border-t border-panel", className)}>
-      <ReactionButton icon={Heart} count={likes} className="hover:text-danger" />
-      <ReactionButton icon={MessageCircle} count={comments} />
-      
-      {/* Giả lập Save count (Demo: likes + 2) */}
-      <ReactionButton icon={Bookmark} count={likes + 2} className="hover:text-secondary" /> 
-      
-      {/* Forks có giá trị mặc định là 0 nếu không được truyền */}
-      <ReactionButton icon={GitFork} count={forks} className="hover:text-primary" />
+    <div className={cn("flex items-center gap-6 pt-4 mt-4 border-t border-white/5", className)}>
+      {/* Like Button */}
+      <button 
+        onClick={handleLike}
+        disabled={isLoading || !userId}
+        className={cn(
+          "flex items-center gap-2 text-sm transition-all duration-200 group",
+          liked 
+            ? "text-red-500" 
+            : "text-muted-foreground hover:text-red-500",
+          isLoading && "opacity-50"
+        )}
+      >
+        {isLoading ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <Heart className={cn("w-4 h-4 transition-transform group-hover:scale-110", liked && "fill-current")} />
+        )}
+        <span>{likesCount}</span>
+      </button>
+
+      {/* Comment Button */}
+      <button 
+        onClick={onCommentClick}
+        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
+      >
+        <MessageCircle className="w-4 h-4 group-hover:scale-110 transition-transform" />
+        <span>{comments}</span>
+      </button>
+
+      {/* Save Button */}
+      <button 
+        onClick={handleSave}
+        className={cn(
+          "flex items-center gap-2 text-sm transition-all duration-200 group",
+          saved 
+            ? "text-secondary" 
+            : "text-muted-foreground hover:text-secondary"
+        )}
+      >
+        <Bookmark className={cn("w-4 h-4 group-hover:scale-110 transition-transform", saved && "fill-current")} />
+        <span>{saved ? 'Đã lưu' : 'Lưu'}</span>
+      </button>
+
+      {/* Fork Button */}
+      <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors group">
+        <GitFork className="w-4 h-4 group-hover:scale-110 transition-transform" />
+        <span>{forks}</span>
+      </button>
     </div>
   );
 };

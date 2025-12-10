@@ -35,6 +35,7 @@ export interface ProfileHeaderProps {
     tactics: number;
   };
   isOwnProfile?: boolean;
+  onEditProfile?: () => void;
 }
 
 const StatItem = ({ value, label }: { value: number, label: string }) => (
@@ -57,7 +58,8 @@ export const ProfileHeader = ({
   joinedDate,
   isVerified = false,
   stats,
-  isOwnProfile = false 
+  isOwnProfile = false,
+  onEditProfile
 }: ProfileHeaderProps) => {
   const [isFollowing, setIsFollowing] = useState(false);
 
@@ -127,6 +129,7 @@ export const ProfileHeader = ({
                 <Button 
                   variant="outline" 
                   className="gap-2 bg-card/50 border-white/10 hover:bg-white/5"
+                  onClick={onEditProfile}
                 >
                   <Edit3 className="w-4 h-4" />
                   Chỉnh sửa hồ sơ

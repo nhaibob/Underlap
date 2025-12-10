@@ -1,11 +1,13 @@
 // src/app/(main)/profile/[username]/page.tsx
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ProfileHeader } from '@/components/features/profile/ProfileHeader';
-import { PostCard, PostCardProps } from '@/components/core/PostCard';
+import { PostCard } from '@/components/core/PostCard';
+import { EditProfileModal } from '@/components/core/EditProfileModal';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs';
 import { Button } from '@/components/ui/Button';
+import { supabaseAuth } from '@/lib/supabase';
 import { 
   Grid3X3, 
   FileText, 
@@ -13,91 +15,75 @@ import {
   Heart,
   Plus,
   TrendingUp,
-  Eye
+  Eye,
+  Loader2
 } from 'lucide-react';
 
-// Mock Data
-const USER_POSTS: PostCardProps[] = [
-  {
-    author: {
-      name: "Huy Sơn",
-      username: "HuySon",
-      avatar: "/assets/avatars/huyson.png"
-    },
-    content: "**Sơ đồ 3-5-2 (Cá nhân hóa)**\n\nPhân tích vai trò của LWB và RWB trong hệ thống 3 hậu vệ. Yêu cầu thể lực cực cao để lên công về thủ liên tục.",
-    timestamp: "1 ngày trước",
-    likes: 45,
-    comments: 12,
-    tacticData: {
-      players: [
-        { id: '1', position: 'GK', label: 'GK', pos: { x: 45, y: 200 } },
-        { id: '2', position: 'CB', label: 'LCB', pos: { x: 100, y: 150 } },
-        { id: '3', position: 'CB', label: 'CB', pos: { x: 100, y: 200 } },
-        { id: '4', position: 'CB', label: 'RCB', pos: { x: 100, y: 250 } },
-      ],
-      arrows: []
-    }
-  },
-  {
-    author: {
-      name: "Huy Sơn",
-      username: "HuySon",
-      avatar: "/assets/avatars/huyson.png"
-    },
-    content: "**Pressing Trap ở biên**\n\nCách dụ đối phương chuyền bóng ra biên rồi tổ chức vây ráp số đông để đoạt bóng.",
-    timestamp: "3 ngày trước",
-    likes: 128,
-    comments: 34
-  },
-  {
-    author: {
-      name: "Huy Sơn",
-      username: "HuySon",
-      avatar: "/assets/avatars/huyson.png"
-    },
-    content: "**Build-up từ GK (4-3-3)**\n\nHướng dẫn chi tiết cách triển khai bóng từ thủ môn với đội hình 4-3-3. Phù hợp cho các đội muốn kiểm soát bóng.",
-    timestamp: "1 tuần trước",
-    likes: 256,
-    comments: 67
-  }
-];
+interface TacticPost {
+  id: string;
+  title: string;
+  description: string;
+  formation: string;
+  createdAt: string;
+  tags: string[];
+  author: {
+    username: string;
+    name: string;
+    avatarUrl: string;
+  };
+  stats: {
+    likes: number;
+    comments: number;
+    views: number;
+  };
+  tacticData: {
+    players: any[];
+    arrows: any[];
+  };
+}
+
+interface UserProfile {
+  username: string;
+  name: string;
+  bio: string;
+  avatar_url: string;
+  location: string;
+  website: string;
+  created_at: string;
+}
 
 // Tactic Card for Grid View
 const TacticGridCard = ({ 
+  id,
   title, 
   formation, 
   views, 
-  likes 
+  likes,
+  onClick
 }: { 
+  id: string;
   title: string; 
   formation: string; 
   views: number; 
   likes: number;
-}) => (
-  <div className="group relative aspect-[4/3] rounded-xl overflow-hidden bg-card border border-white/10 hover:border-primary/50 transition-all cursor-pointer">
-    {/* Tactic Preview Background */}
-    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-secondary/10">
-      {/* Simplified pitch pattern */}
-      <div className="absolute inset-4 border border-white/20 rounded-lg">
-        <div className="absolute top-1/2 left-0 right-0 h-px bg-white/20" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 border border-white/20 rounded-full" />
+  onClick?: () => void;
+}) => {
+  return (
+    <div 
+      onClick={onClick}
+      className="group relative aspect-[4/3] rounded-xl bg-gradient-to-br from-emerald-800 to-emerald-950 border border-white/10 overflow-hidden cursor-pointer hover:border-primary/40 transition-all hover:shadow-lg hover:shadow-primary/10"
+    >
+      {/* Field pattern */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute inset-4 border border-white/50 rounded" />
+        <div className="absolute top-1/2 left-0 right-0 h-px bg-white/50" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 border border-white/50 rounded-full" />
       </div>
-    </div>
-    
-    {/* Hover Overlay */}
-    <div className="absolute inset-0 bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-      <Button variant="default" size="sm" className="gap-2">
-        <Eye className="w-4 h-4" />
-        Xem chi tiết
-      </Button>
-    </div>
-    
-    {/* Info Bar */}
-    <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-background to-transparent">
-      <p className="font-medium text-sm text-foreground truncate">{title}</p>
-      <div className="flex items-center justify-between mt-1">
-        <span className="text-xs text-primary font-medium">{formation}</span>
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+      
+      {/* Overlay info */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
+        <h3 className="font-medium text-white text-sm line-clamp-1">{title}</h3>
+        <div className="flex items-center gap-3 text-xs text-white/70 mt-1">
           <span className="flex items-center gap-1">
             <Eye className="w-3 h-3" />
             {views}
@@ -108,9 +94,14 @@ const TacticGridCard = ({
           </span>
         </div>
       </div>
+      
+      {/* Formation badge */}
+      <div className="absolute top-2 right-2 px-2 py-1 bg-black/50 rounded text-[10px] font-bold text-white">
+        {formation}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Empty State Component
 const EmptyState = ({ 
@@ -125,182 +116,289 @@ const EmptyState = ({
   description: string;
   actionLabel?: string;
   onAction?: () => void;
-}) => (
-  <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-    <div className="w-16 h-16 rounded-2xl bg-card border border-white/10 flex items-center justify-center mb-4">
-      <Icon className="w-8 h-8 text-muted-foreground" />
+}) => {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+        <Icon className="w-8 h-8 text-muted-foreground" />
+      </div>
+      <h3 className="text-lg font-medium text-foreground mb-2">{title}</h3>
+      <p className="text-sm text-muted-foreground max-w-xs mb-4">{description}</p>
+      {actionLabel && onAction && (
+        <Button onClick={onAction} variant="secondary" size="sm">
+          <Plus className="w-4 h-4 mr-2" />
+          {actionLabel}
+        </Button>
+      )}
     </div>
-    <h3 className="font-headline text-lg font-semibold text-foreground mb-1">{title}</h3>
-    <p className="text-sm text-muted-foreground max-w-sm mb-4">{description}</p>
-    {actionLabel && onAction && (
-      <Button variant="default" onClick={onAction} className="gap-2">
-        <Plus className="w-4 h-4" />
-        {actionLabel}
-      </Button>
-    )}
-  </div>
-);
+  );
+};
 
 export default function ProfilePage({ params }: { params: { username: string } }) {
-  const decodedUsername = decodeURIComponent(params.username);
-  const [activeTab, setActiveTab] = useState('posts');
-  
-  // Check if viewing own profile (mock - replace with real auth check)
-  const isOwnProfile = decodedUsername.toLowerCase() === 'huyson';
+  const rawUsername = decodeURIComponent(params.username);
+  const [activeTab, setActiveTab] = useState('tactics');
+  const [isLoading, setIsLoading] = useState(true);
+  const [tactics, setTactics] = useState<TacticPost[]>([]);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isOwnProfile, setIsOwnProfile] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [actualUsername, setActualUsername] = useState(rawUsername);
 
-  // Mock tactics data for grid view
-  const userTactics = [
-    { title: "Phản công cánh phải", formation: "4-3-3", views: 1240, likes: 89 },
-    { title: "Pressing cao", formation: "4-2-3-1", views: 856, likes: 67 },
-    { title: "Build-up chậm", formation: "3-5-2", views: 2100, likes: 156 },
-    { title: "Tấn công biên", formation: "4-4-2", views: 743, likes: 45 },
-    { title: "Phòng ngự phản công", formation: "5-3-2", views: 1890, likes: 112 },
-    { title: "Kiểm soát bóng", formation: "4-3-3", views: 567, likes: 34 },
-  ];
+  // Fetch user data
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      
+      try {
+        // Get current logged-in user
+        const user = await supabaseAuth.getUser();
+        setCurrentUser(user);
+        
+        // Determine actual username to fetch
+        let usernameToFetch = rawUsername;
+        
+        // Special case: if URL is "me", use current user's username
+        if (rawUsername.toLowerCase() === 'me' && user) {
+          usernameToFetch = user.user_metadata?.username || user.email?.split('@')[0] || 'me';
+          setActualUsername(usernameToFetch);
+          setIsOwnProfile(true); // "me" route is always own profile
+        } else {
+          setActualUsername(rawUsername);
+          
+          // Get all possible usernames for the current user
+          const currentUsernames = [
+            user?.user_metadata?.username,
+            user?.email?.split('@')[0],
+            user?.email
+          ].filter(Boolean).map(u => u?.toLowerCase());
+          
+          // Check if viewing own profile
+          setIsOwnProfile(currentUsernames.includes(rawUsername.toLowerCase()));
+        }
+
+        // Fetch profile data (might not exist yet)
+        const profileRes = await fetch(`/api/user/profile?username=${usernameToFetch}`);
+        if (profileRes.ok) {
+          const profileData = await profileRes.json();
+          if (!profileData.error) {
+            setProfile(profileData);
+          } else if (rawUsername.toLowerCase() === 'me' && user) {
+            // Create mock profile from user session for "me" route
+            setProfile({
+              username: usernameToFetch,
+              name: user.user_metadata?.name || usernameToFetch,
+              bio: '',
+              avatar_url: user.user_metadata?.avatar_url || '',
+              location: '',
+              website: '',
+              created_at: user.created_at || new Date().toISOString()
+            });
+          }
+        } else if (rawUsername.toLowerCase() === 'me' && user) {
+          // Profile doesn't exist, create mock from session
+          setProfile({
+            username: usernameToFetch,
+            name: user.user_metadata?.name || usernameToFetch,
+            bio: '',
+            avatar_url: user.user_metadata?.avatar_url || '',
+            location: '',
+            website: '',
+            created_at: user.created_at || new Date().toISOString()
+          });
+        }
+
+        // Fetch user's tactics
+        const tacticsRes = await fetch(`/api/user/${usernameToFetch}/tactics`);
+        if (tacticsRes.ok) {
+          const tacticsData = await tacticsRes.json();
+          setTactics(tacticsData);
+        }
+      } catch (error) {
+        console.error('Error fetching profile data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [rawUsername]);
+
+  const formatJoinDate = (dateStr: string) => {
+    if (!dateStr) return 'Không rõ';
+    const date = new Date(dateStr);
+    return `Tháng ${date.getMonth() + 1}, ${date.getFullYear()}`;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto pb-10">
       
       {/* Profile Header */}
       <ProfileHeader 
-        username={decodedUsername}
-        name="Huy Sơn"
-        avatar="/assets/avatars/huyson.png"
-        bio="⚽ Chiến thuật gia đam mê bóng đá | Đang khám phá các hệ thống chiến thuật hiện đại | Chia sẻ kiến thức cùng cộng đồng"
-        location="Hà Nội, Việt Nam"
-        website="https://underlap.com"
-        joinedDate="Tháng 12, 2024"
-        isVerified={true}
+        username={actualUsername}
+        name={profile?.name || actualUsername}
+        avatar={profile?.avatar_url || '/assets/avatars/default.png'}
+        bio={profile?.bio || 'Chưa có mô tả'}
+        location={profile?.location}
+        website={profile?.website}
+        joinedDate={formatJoinDate(profile?.created_at || '')}
+        isVerified={false}
         isOwnProfile={isOwnProfile}
+        onEditProfile={() => setEditModalOpen(true)}
         stats={{
-          followers: 1250,
-          following: 89,
-          likes: 3420,
-          tactics: 24
+          followers: 0,
+          following: 0,
+          likes: tactics.reduce((sum, t) => sum + t.stats.likes, 0),
+          tactics: tactics.length
         }}
       />
 
-      {/* Tabs */}
-      <div className="mt-8 px-4 md:px-0">
-        <Tabs 
-          defaultValue="posts" 
-          value={activeTab} 
-          onValueChange={setActiveTab}
-          className="w-full"
-        >
-          <TabsList className="w-full justify-start bg-card/50 border border-white/10 rounded-xl p-1 gap-1">
-            <TabsTrigger 
-              value="posts" 
-              className="flex-1 md:flex-none gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
-            >
-              <FileText className="w-4 h-4" />
-              <span className="hidden sm:inline">Bài đăng</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="tactics" 
-              className="flex-1 md:flex-none gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
-            >
-              <Grid3X3 className="w-4 h-4" />
-              <span className="hidden sm:inline">Chiến thuật</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="liked" 
-              className="flex-1 md:flex-none gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
-            >
-              <Heart className="w-4 h-4" />
-              <span className="hidden sm:inline">Đã thích</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="saved" 
-              className="flex-1 md:flex-none gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
-            >
-              <Bookmark className="w-4 h-4" />
-              <span className="hidden sm:inline">Đã lưu</span>
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Posts Tab */}
-          <TabsContent value="posts" className="mt-6 space-y-6">
-            {USER_POSTS.length > 0 ? (
-              USER_POSTS.map((post, index) => (
-                <PostCard key={index} {...post} />
-              ))
-            ) : (
-              <EmptyState 
-                icon={FileText}
-                title="Chưa có bài đăng"
-                description="Bạn chưa đăng bài viết nào. Hãy chia sẻ chiến thuật đầu tiên của bạn!"
-                actionLabel="Tạo bài đăng"
-                onAction={() => {}}
-              />
-            )}
-          </TabsContent>
-
-          {/* Tactics Grid Tab */}
-          <TabsContent value="tactics" className="mt-6">
-            {userTactics.length > 0 ? (
-              <>
-                {/* Stats Bar */}
-                <div className="flex items-center justify-between mb-6 p-4 rounded-xl bg-card/50 border border-white/10">
-                  <div className="flex items-center gap-6">
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5 text-primary" />
-                      <span className="text-sm text-muted-foreground">
-                        <span className="font-semibold text-foreground">6</span> chiến thuật
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Eye className="w-5 h-5 text-secondary" />
-                      <span className="text-sm text-muted-foreground">
-                        <span className="font-semibold text-foreground">7.4K</span> lượt xem
-                      </span>
-                    </div>
-                  </div>
-                  {isOwnProfile && (
-                    <Button variant="default" size="sm" className="gap-2">
-                      <Plus className="w-4 h-4" />
-                      Tạo mới
-                    </Button>
-                  )}
-                </div>
-                
-                {/* Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {userTactics.map((tactic, index) => (
-                    <TacticGridCard key={index} {...tactic} />
-                  ))}
-                </div>
-              </>
-            ) : (
-              <EmptyState 
-                icon={Grid3X3}
-                title="Chưa có chiến thuật"
-                description="Bạn chưa tạo chiến thuật nào. Hãy bắt đầu thiết kế ngay!"
-                actionLabel="Tạo chiến thuật"
-                onAction={() => {}}
-              />
-            )}
-          </TabsContent>
-
-          {/* Liked Tab */}
-          <TabsContent value="liked" className="mt-6">
-            <EmptyState 
-              icon={Heart}
-              title="Chưa thích bài viết nào"
-              description="Các bài viết bạn thích sẽ hiển thị ở đây."
-            />
-          </TabsContent>
-
-          {/* Saved Tab */}
-          <TabsContent value="saved" className="mt-6">
-            <EmptyState 
-              icon={Bookmark}
-              title="Chưa lưu bài viết nào"
-              description="Lưu các chiến thuật hay để xem lại sau."
-            />
-          </TabsContent>
-        </Tabs>
+      {/* Stats Bar */}
+      <div className="flex items-center justify-around py-4 px-6 bg-panel/50 border-y border-white/5 my-4">
+        <div className="text-center">
+          <div className="text-xl font-bold text-foreground">{tactics.length}</div>
+          <div className="text-xs text-muted-foreground">Chiến thuật</div>
+        </div>
+        <div className="text-center">
+          <div className="text-xl font-bold text-foreground">
+            {tactics.reduce((sum, t) => sum + (t.stats.views || 0), 0)}
+          </div>
+          <div className="text-xs text-muted-foreground">Lượt xem</div>
+        </div>
+        <div className="text-center">
+          <div className="text-xl font-bold text-foreground">
+            {tactics.reduce((sum, t) => sum + t.stats.likes, 0)}
+          </div>
+          <div className="text-xs text-muted-foreground">Lượt thích</div>
+        </div>
       </div>
+
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
+        <TabsList className="w-full grid grid-cols-4 bg-panel/50 p-1 rounded-lg">
+          <TabsTrigger value="tactics" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white rounded-md transition-all">
+            <Grid3X3 className="w-4 h-4" />
+            <span className="hidden sm:inline">Chiến thuật</span>
+          </TabsTrigger>
+          <TabsTrigger value="posts" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white rounded-md transition-all">
+            <FileText className="w-4 h-4" />
+            <span className="hidden sm:inline">Bài viết</span>
+          </TabsTrigger>
+          <TabsTrigger value="saved" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white rounded-md transition-all">
+            <Bookmark className="w-4 h-4" />
+            <span className="hidden sm:inline">Đã lưu</span>
+          </TabsTrigger>
+          <TabsTrigger value="liked" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white rounded-md transition-all">
+            <Heart className="w-4 h-4" />
+            <span className="hidden sm:inline">Đã thích</span>
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Tactics Grid */}
+        <TabsContent value="tactics" className="mt-6">
+          {tactics.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {tactics.map((tactic) => (
+                <TacticGridCard 
+                  key={tactic.id}
+                  id={tactic.id}
+                  title={tactic.title} 
+                  formation={tactic.formation} 
+                  views={tactic.stats.views || 0}
+                  likes={tactic.stats.likes}
+                />
+              ))}
+            </div>
+          ) : (
+            <EmptyState 
+              icon={Grid3X3}
+              title="Chưa có chiến thuật"
+              description={isOwnProfile ? "Bạn chưa tạo chiến thuật nào. Hãy bắt đầu tạo chiến thuật đầu tiên!" : "Người dùng này chưa tạo chiến thuật nào."}
+              actionLabel={isOwnProfile ? "Tạo chiến thuật" : undefined}
+              onAction={isOwnProfile ? () => {} : undefined}
+            />
+          )}
+        </TabsContent>
+
+        {/* Posts - Full Cards */}
+        <TabsContent value="posts" className="mt-6">
+          {tactics.length > 0 ? (
+            <div className="space-y-6">
+              {tactics.map((post) => (
+                <PostCard 
+                  key={post.id}
+                  id={post.id}
+                  author={{
+                    name: post.author.name,
+                    username: post.author.username,
+                    avatar: post.author.avatarUrl
+                  }}
+                  content={`**${post.title}**\n\n${post.description}`}
+                  timestamp={post.createdAt ? new Date(post.createdAt).toLocaleDateString('vi-VN') : 'Vừa xong'}
+                  likes={post.stats.likes}
+                  comments={post.stats.comments}
+                  tacticData={post.tacticData}
+                  formation={post.formation}
+                  tags={post.tags}
+                />
+              ))}
+            </div>
+          ) : (
+            <EmptyState 
+              icon={FileText}
+              title="Chưa có bài viết"
+              description="Chưa có bài viết nào được chia sẻ."
+            />
+          )}
+        </TabsContent>
+
+        {/* Saved */}
+        <TabsContent value="saved" className="mt-6">
+          <EmptyState 
+            icon={Bookmark}
+            title="Chưa có chiến thuật đã lưu"
+            description="Các chiến thuật bạn lưu sẽ xuất hiện ở đây."
+          />
+        </TabsContent>
+
+        {/* Liked */}
+        <TabsContent value="liked" className="mt-6">
+          <EmptyState 
+            icon={Heart}
+            title="Chưa thích chiến thuật nào"
+            description="Các chiến thuật bạn thích sẽ xuất hiện ở đây."
+          />
+        </TabsContent>
+      </Tabs>
+
+      {/* Edit Profile Modal */}
+      <EditProfileModal 
+        isOpen={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        onSave={() => {
+          // Refresh profile data
+          fetch(`/api/user/profile?username=${actualUsername}`)
+            .then(res => res.json())
+            .then(data => {
+              if (!data.error) setProfile(data);
+            });
+        }}
+        currentData={profile ? {
+          name: profile.name || '',
+          bio: profile.bio || '',
+          avatar_url: profile.avatar_url || '',
+          location: profile.location || '',
+          website: profile.website || ''
+        } : undefined}
+      />
     </div>
   );
 }

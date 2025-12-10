@@ -1,33 +1,15 @@
 // src/middleware.ts
-import { auth } from "@/auth"
+// Middleware disabled - using Supabase Auth client-side instead
+// To re-enable NextAuth middleware, uncomment the code below
+
 import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
 
-export default auth((req) => {
-  const isLoggedIn = !!req.auth
-  const { pathname } = req.nextUrl
-
-  // Protected routes - require authentication
-  const protectedRoutes = ["/feed", "/profile", "/community", "/explore"]
-  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
-
-  // Auth routes - redirect to feed if already logged in
-  const authRoutes = ["/login", "/register"]
-  const isAuthRoute = authRoutes.includes(pathname)
-
-  // Redirect to login if accessing protected route without auth
-  if (isProtectedRoute && !isLoggedIn) {
-    const loginUrl = new URL("/login", req.nextUrl.origin)
-    loginUrl.searchParams.set("callbackUrl", pathname)
-    return NextResponse.redirect(loginUrl)
-  }
-
-  // Redirect to feed if accessing auth routes while logged in
-  if (isAuthRoute && isLoggedIn) {
-    return NextResponse.redirect(new URL("/feed", req.nextUrl.origin))
-  }
-
+export function middleware(request: NextRequest) {
+  // Currently allowing all routes - Supabase Auth is handled client-side
+  // Protected routes can check for session in their components
   return NextResponse.next()
-})
+}
 
 // Configure which routes the middleware should run on
 export const config = {
@@ -36,3 +18,31 @@ export const config = {
     "/((?!api|_next/static|_next/image|favicon.ico|assets).*)"
   ]
 }
+
+/* 
+// To enable NextAuth middleware protection, replace the above with:
+import { auth } from "@/auth"
+
+export default auth((req) => {
+  const isLoggedIn = !!req.auth
+  const { pathname } = req.nextUrl
+
+  const protectedRoutes = ["/feed", "/profile", "/community", "/explore"]
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
+
+  const authRoutes = ["/login", "/register"]
+  const isAuthRoute = authRoutes.includes(pathname)
+
+  if (isProtectedRoute && !isLoggedIn) {
+    const loginUrl = new URL("/login", req.nextUrl.origin)
+    loginUrl.searchParams.set("callbackUrl", pathname)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  if (isAuthRoute && isLoggedIn) {
+    return NextResponse.redirect(new URL("/feed", req.nextUrl.origin))
+  }
+
+  return NextResponse.next()
+})
+*/

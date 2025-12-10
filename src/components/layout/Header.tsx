@@ -1,12 +1,13 @@
 // src/components/layout/Header.tsx
 "use client"; 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { supabase, supabaseAuth } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/Avatar';
 import { useUIStore } from '@/lib/store/uiStore';
-import { PenSquare, Search, Bell, Home, Compass, MessageCircle } from 'lucide-react';
+import { PenSquare, Search, Bell, Home, Compass, MessageCircle, LogOut, User, Settings, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
@@ -35,12 +36,46 @@ const NavLink = ({ href, icon: Icon }: typeof NAV_ITEMS[0]) => {
 };
 
 export const Header = () => {
+  const router = useRouter();
   const { openCreateModal, openSettingsModal } = useUIStore();
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [user, setUser] = useState<any>(null);
   
+  // Get current user on mount
+  useEffect(() => {
+    const getUser = async () => {
+      const currentUser = await supabaseAuth.getUser();
+      setUser(currentUser);
+    };
+    getUser();
+
+    // Listen for auth changes
+    if (supabase) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        setUser(session?.user || null);
+      });
+
+      return () => subscription.unsubscribe();
+    }
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await supabaseAuth.signOut();
+      router.push('/');
+      router.refresh();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
+  const displayName = user?.user_metadata?.username || user?.email?.split('@')[0] || 'User';
+  const displayEmail = user?.email || '';
+  const avatarUrl = user?.user_metadata?.avatar_url || '';
+
   return (
-    // [FIX] Thêm /80 để backdrop-blur hoạt động
     <header className="sticky top-0 z-50 w-full h-16 bg-panel/80 backdrop-blur-md border-b border-panel">
-      <div className="container mx-auto flex items-center justify-between h-full px-4 md:px-6">
+      <div className="flex items-center justify-between h-full px-4 md:px-6">
         
         {/* 1. LOGO & NAV */}
         <div className="flex items-center gap-6">
@@ -54,7 +89,7 @@ export const Header = () => {
           </nav>
         </div>
 
-        {/* 2. THANH TÌM KIẾM (Ẩn trên mobile) */}
+        {/* 2. THANH TÌM KIẾM */}
         <div className="flex-1 max-w-sm mx-6 hidden md:block">
           <div className="relative flex items-center bg-background rounded-full px-4 py-2 border border-transparent focus-within:border-primary transition-colors">
             <Search className="w-5 h-5 text-text-secondary mr-3" />
@@ -78,24 +113,76 @@ export const Header = () => {
             <Bell className="w-5 h-5" />
           </Button>
           
-          {/* Nút Search cho Mobile */}
           <Button variant="ghost" size="icon" className="flex md:hidden">
              <Search className="w-5 h-5" />
           </Button>
           
-          <Link href="/profile/me">
-            <Avatar>
-              <AvatarImage src="" alt="H" /> 
-              <AvatarFallback>H</AvatarFallback>
-            </Avatar>
-          </Link>
-
-          <button onClick={openSettingsModal}>
-             <div className="w-8 h-8 rounded-full bg-panel text-text-secondary flex items-center justify-center hover:bg-background transition-colors">
-                {/* Icon Settings hoặc Menu */}
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-             </div>
-          </button>
+          {/* Combined Avatar + Menu Button */}
+          <div className="relative">
+            <button 
+              onClick={() => setShowDropdown(!showDropdown)}
+              className="flex items-center gap-2 p-1 rounded-full hover:bg-white/5 transition-colors focus:outline-none"
+            >
+              <Avatar className="w-8 h-8">
+                <AvatarImage src={avatarUrl} alt={displayName} /> 
+                <AvatarFallback className="text-sm">{displayName[0]?.toUpperCase() || "U"}</AvatarFallback>
+              </Avatar>
+              <Menu className="w-5 h-5 text-muted-foreground" />
+            </button>
+            
+            {/* Dropdown Menu */}
+            {showDropdown && (
+              <>
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={() => setShowDropdown(false)}
+                />
+                
+                <div className="absolute right-0 mt-2 w-56 bg-card rounded-xl shadow-xl border border-white/10 py-2 z-50">
+                  <div className="px-4 py-3 border-b border-white/10">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {displayName}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {displayEmail}
+                    </p>
+                  </div>
+                  
+                  <div className="py-1">
+                    <Link 
+                      href="/profile/me"
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-white/5 transition-colors"
+                      onClick={() => setShowDropdown(false)}
+                    >
+                      <User className="w-4 h-4 text-muted-foreground" />
+                      Trang cá nhân
+                    </Link>
+                    
+                    <button
+                      onClick={() => {
+                        setShowDropdown(false);
+                        openSettingsModal();
+                      }}
+                      className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-foreground hover:bg-white/5 transition-colors"
+                    >
+                      <Settings className="w-4 h-4 text-muted-foreground" />
+                      Cài đặt
+                    </button>
+                  </div>
+                  
+                  <div className="border-t border-white/10 pt-1">
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Đăng xuất
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </header>

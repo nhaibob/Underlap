@@ -310,9 +310,9 @@ const TacticalLayer = ({
 
 // --- Main Component ---
 export const TacticBoard = ({ 
-  variant = 'full', players, setPlayers, arrows, setArrows, areas, setAreas,
-  activeTool, selectedPlayerId, setSelectedPlayerId, onBoardClick, positionToPlace,
-  currentArrowColor, currentArrowStyle, currentArrowType, 
+  variant = 'full', players = [], setPlayers, arrows = [], setArrows, areas = [], setAreas,
+  activeTool = 'select', selectedPlayerId, setSelectedPlayerId, onBoardClick, positionToPlace,
+  currentArrowColor, currentArrowStyle, currentArrowType, readOnly = false,
 }: any) => {
 
   const { setNodeRef } = useDroppable({ id: 'tactic-board-droppable-area' });
@@ -321,6 +321,7 @@ export const TacticBoard = ({
   const handleDeletePlayer = (id: string) => { setPlayers?.((prev: any) => prev.filter((p: any) => p.id !== id)); };
 
   const handleBoardClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (readOnly) return;
     if (activeTool === 'draw' || activeTool === 'area' || activeTool === 'erase') return;
     if (!positionToPlace && selectedPlayerId && (activeTool === 'select' || activeTool === 'move')) { 
         setSelectedPlayerId?.(null); 
@@ -335,29 +336,99 @@ export const TacticBoard = ({
     }
   };
 
+  const isInteractive = variant === 'full' && !readOnly;
+  const showContent = players.length > 0 || arrows.length > 0;
+
   return (
     <div ref={(node) => { setNodeRef(node); (boardRef as any).current = node; }}
       className={cn(
         "relative w-full aspect-[3/2] overflow-hidden shadow-2xl isolate",
         "bg-[#1C3D2E] rounded-xl ring-1 ring-white/10",
-        variant === 'thumbnail' && "border-none ring-0 rounded-md shadow-none cursor-pointer hover:opacity-90",
+        variant === 'thumbnail' && "border-none ring-0 rounded-md shadow-none",
         positionToPlace && "cursor-crosshair ring-2 ring-primary/50"
       )}
       onClick={handleBoardClick}
     >
       <FootballPitchBackground />
       
-      {variant === 'full' && players && arrows && areas && activeTool && (
-        <>
-            <TacticalLayer arrows={arrows} setArrows={setArrows!} areas={areas} setAreas={setAreas!} activeTool={activeTool} currentArrowColor={currentArrowColor!} currentArrowStyle={currentArrowStyle!} currentArrowType={currentArrowType!} positionToPlace={positionToPlace} />
-            <div className="z-20 w-full h-full absolute top-0 left-0 pointer-events-none">
-                {players.map((player: any) => (
-                    <DraggablePlayerToken key={player.id} player={player} activeTool={activeTool} selectedPlayerId={selectedPlayerId!} setSelectedPlayerId={setSelectedPlayerId!} onDelete={handleDeletePlayer} />
-                ))}
-            </div>
-        </>
+      {/* Render tactical layer for interactive mode */}
+      {isInteractive && setArrows && setAreas && (
+        <TacticalLayer 
+          arrows={arrows} 
+          setArrows={setArrows} 
+          areas={areas} 
+          setAreas={setAreas} 
+          activeTool={activeTool} 
+          currentArrowColor={currentArrowColor} 
+          currentArrowStyle={currentArrowStyle} 
+          currentArrowType={currentArrowType} 
+          positionToPlace={positionToPlace} 
+        />
       )}
-      {variant === 'thumbnail' && <div className="flex items-center justify-center h-full"><span className="text-white/40 text-[10px] font-medium bg-black/20 px-2 py-1 rounded backdrop-blur-sm">PREVIEW</span></div>}
+      
+      {/* Render read-only arrows for thumbnail/view mode */}
+      {(variant === 'thumbnail' || readOnly) && arrows.length > 0 && (
+        <svg className="absolute top-0 left-0 w-full h-full z-10 pointer-events-none"
+          viewBox="0 0 600 400" preserveAspectRatio="none">
+          <defs>
+            {AREA_COLORS.map(color => (
+              <marker key={color} id={`arrowhead-ro-${color.replace('#', '')}`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill={color} />
+              </marker>
+            ))}
+          </defs>
+          {arrows.map((arrow: Arrow) => {
+            const cp = arrow.controlPoint || { x: (arrow.from.x + arrow.to.x) / 2, y: (arrow.from.y + arrow.to.y) / 2 };
+            const d = `M ${arrow.from.x} ${arrow.from.y} Q ${cp.x} ${cp.y}, ${arrow.to.x} ${arrow.to.y}`;
+            return (
+              <path key={arrow.id} d={d} stroke={arrow.color} strokeWidth="3" fill="none" 
+                markerEnd={`url(#arrowhead-ro-${arrow.color.replace('#', '')})`} 
+                strokeDasharray={arrow.style === 'dashed' ? '8, 8' : undefined} 
+                strokeLinecap="round" />
+            );
+          })}
+        </svg>
+      )}
+      
+      {/* Render players for all modes */}
+      {players.length > 0 && (
+        <div className="z-20 w-full h-full absolute top-0 left-0 pointer-events-none">
+          {isInteractive ? (
+            players.map((player: any) => (
+              <DraggablePlayerToken 
+                key={player.id} 
+                player={player} 
+                activeTool={activeTool} 
+                selectedPlayerId={selectedPlayerId} 
+                setSelectedPlayerId={setSelectedPlayerId} 
+                onDelete={handleDeletePlayer} 
+              />
+            ))
+          ) : (
+            // Static player tokens for thumbnail/view mode
+            players.map((player: any) => {
+              const leftPercent = (player.pos.x / 600) * 100;
+              const topPercent = (player.pos.y / 400) * 100;
+              return (
+                <div 
+                  key={player.id}
+                  className="absolute w-[7.5%] aspect-square min-w-[24px] max-w-[50px] -translate-x-1/2 -translate-y-1/2"
+                  style={{ left: `${leftPercent}%`, top: `${topPercent}%` }}
+                >
+                  <PlayerToken position={player.position} label={player.label} className="w-full h-full" variant="responsive" />
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+      
+      {/* Empty state for thumbnail */}
+      {variant === 'thumbnail' && !showContent && (
+        <div className="flex items-center justify-center h-full">
+          <span className="text-white/40 text-[10px] font-medium bg-black/20 px-2 py-1 rounded backdrop-blur-sm">PREVIEW</span>
+        </div>
+      )}
     </div>
   );
 };

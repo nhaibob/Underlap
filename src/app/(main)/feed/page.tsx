@@ -1,5 +1,6 @@
 import React from 'react';
 import { PostCard } from '@/components/core/PostCard'; 
+import { CreatePostButton } from '@/components/core/CreatePostButton';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 
@@ -12,6 +13,8 @@ interface PostData {
     title: string;
     description: string;
     createdAt?: string;
+    formation?: string;
+    tags?: string[];
     author: { 
         username: string; 
         avatarUrl: string; 
@@ -76,21 +79,16 @@ export default async function FeedPage() {
             
             <h1 className="font-headline text-2xl font-bold mb-6">Feed</h1>
             
-            <div className="p-4 rounded-lg bg-panel mb-6 border border-white/10">
-                <textarea
-                    className="w-full bg-transparent text-text-primary placeholder:text-text-secondary focus:outline-none resize-none"
-                    placeholder="Bạn đang nghĩ gì về chiến thuật hôm nay?"
-                    rows={2}
-                />
-                <div className="flex justify-end mt-3">
-                    <Button variant="secondary">Bắt đầu đăng</Button>
-                </div>
+            {/* New Post Button - Opens Tactic Board */}
+            <div className="mb-6">
+                <CreatePostButton />
             </div>
 
             <div className="space-y-6">
                 {feedData.map((post) => (
                     <PostCard 
-                        key={post.id} 
+                        key={post.id}
+                        id={post.id}
                         author={{
                             name: post.author.name || post.author.username,
                             username: post.author.username,
@@ -101,6 +99,8 @@ export default async function FeedPage() {
                         likes={post.stats.likes}
                         comments={post.stats.comments}
                         tacticData={post.tacticData}
+                        formation={post.formation || "4-4-2"}
+                        tags={post.tags || ["pressing", "phản công"]}
                     />
                 ))}
             </div>
