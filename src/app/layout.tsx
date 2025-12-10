@@ -18,7 +18,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="vi" className="bg-background text-text-primary">
+        <html lang="vi" className="dark bg-background text-text-primary">
             <body>
                 {children}
 
