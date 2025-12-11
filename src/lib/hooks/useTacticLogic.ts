@@ -4,6 +4,7 @@ import { useTacticHistory } from '@/lib/hooks/useTacticHistory';
 import { Player, Arrow, Area, Ball, Team } from '@/components/features/tactic-board/TacticBoard';
 import { PlayerTokenProps } from '@/components/features/tactic-board/PlayerToken';
 import { ALL_ARROW_COLOR_VALUES } from '@/lib/constants';
+import { FORMATIONS } from '@/lib/constants/formations';
 import { v4 as uuidv4 } from 'uuid';
 
 // Định nghĩa các types dùng chung tại đây để các component khác import
@@ -123,6 +124,30 @@ export const useTacticLogic = () => {
             [layer]: !prev[layer]
         }));
     };
+    
+    // NEW: Load formation preset
+    const loadFormation = (formationKey: string, team: Team = 'home') => {
+        const formation = FORMATIONS[formationKey];
+        if (!formation) return;
+        
+        // Clear existing players of this team and add formation players
+        const otherTeamPlayers = players.filter(p => p.team !== team);
+        const newPlayers: Player[] = formation.players.map((fp, idx) => {
+            // For away team, mirror the X position (field is 600 wide)
+            const x = team === 'away' ? 600 - fp.x : fp.x;
+            
+            return {
+                id: uuidv4(),
+                position: fp.position,
+                label: fp.position,
+                pos: { x, y: fp.y },
+                team: team
+            };
+        });
+        
+        setPlayers([...otherTeamPlayers, ...newPlayers]);
+        setActiveTool('select');
+    };
 
     return {
         // Data State
@@ -150,6 +175,7 @@ export const useTacticLogic = () => {
         deletePlayer,
         clearAll,
         addPlayerAtPosition,
-        addBallAtPosition
+        addBallAtPosition,
+        loadFormation
     };
 };

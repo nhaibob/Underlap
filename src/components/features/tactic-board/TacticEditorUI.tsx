@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { TacticBoard, Player, Arrow, Area } from './TacticBoard';
 import { Button } from '@/components/ui/Button';
 import { CompactToolbar } from './CompactToolbar';
@@ -13,6 +13,7 @@ import { PlayerTokenProps } from './PlayerToken';
 import { cn } from '@/lib/utils'; 
 import { X, Save, PanelRightClose, PanelRight } from 'lucide-react';
 import { FloatingToolbar } from './FloatingToolbar';
+import { toPng } from 'html-to-image';
 
 interface TacticEditorUIProps {
   players: Player[]; setPlayers: React.Dispatch<React.SetStateAction<Player[]>>;
@@ -46,6 +47,8 @@ interface TacticEditorUIProps {
   layerVisibility: LayerVisibility;
   toggleLayerVisibility: (layer: keyof LayerVisibility) => void;
   addBallAtPosition: (pos: { x: number, y: number }) => void;
+  // NEW: Formation
+  loadFormation?: (formationKey: string, team?: Team) => void;
 }
 
 export const TacticEditorUI = ({ 
@@ -60,11 +63,81 @@ export const TacticEditorUI = ({
   ball, setBall,
   isPlacingBall, setIsPlacingBall,
   layerVisibility, toggleLayerVisibility,
-  addBallAtPosition
+  addBallAtPosition,
+  loadFormation
 }: TacticEditorUIProps) => {
     
   const { closeCreateModal } = useUIStore();
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
+  const boardContainerRef = useRef<HTMLDivElement>(null);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if in input field
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      
+      // Tool shortcuts
+      if (!e.ctrlKey && !e.metaKey) {
+        switch (e.key.toLowerCase()) {
+          case 'v': setActiveTool('select'); break;
+          case 'd': case 'p': setActiveTool('draw'); break;
+          case 'a': setActiveTool('area'); break;
+          case 'e': setActiveTool('erase'); break;
+          case 'escape': 
+            setSelectedPlayerId(null); 
+            setPositionToPlace(null);
+            setIsPlacingBall(false);
+            break;
+          case 'delete': case 'backspace':
+            if (selectedPlayerId) {
+              e.preventDefault();
+              onPlayerDelete(selectedPlayerId);
+            }
+            break;
+        }
+      }
+      
+      // Ctrl shortcuts
+      if (e.ctrlKey || e.metaKey) {
+        switch (e.key.toLowerCase()) {
+          case 'z':
+            e.preventDefault();
+            if (e.shiftKey) redo();
+            else undo();
+            break;
+          case 'y':
+            e.preventDefault();
+            redo();
+            break;
+        }
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [setActiveTool, selectedPlayerId, onPlayerDelete, undo, redo, setSelectedPlayerId, setPositionToPlace, setIsPlacingBall]);
+
+  // Export as PNG
+  const handleExport = useCallback(async () => {
+    const boardEl = boardContainerRef.current?.querySelector('[data-board]') as HTMLElement;
+    if (!boardEl) return;
+    
+    try {
+      const dataUrl = await toPng(boardEl, {
+        quality: 1,
+        pixelRatio: 2,
+        backgroundColor: '#1C3D2E'
+      });
+      
+      const link = document.createElement('a');
+      link.download = `tactic-${Date.now()}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error('Export failed:', err);
+    }
+  }, []);
 
   useDndMonitor({
     onDragMove(event) {
@@ -171,15 +244,19 @@ export const TacticEditorUI = ({
               setIsPlacingBall={setIsPlacingBall}
               layerVisibility={layerVisibility}
               toggleLayerVisibility={toggleLayerVisibility}
+              loadFormation={loadFormation}
+              onExport={handleExport}
             />
           </div>
 
           {/* Board Container */}
-          <div className={cn(
-            "flex-1 relative overflow-hidden flex flex-col items-center justify-center p-2 sm:p-4 lg:p-6 select-none",
-            "bg-gradient-to-br from-neutral-800/40 to-neutral-900/30",
-            positionToPlace && "cursor-crosshair"
-          )}>
+          <div 
+            ref={boardContainerRef}
+            className={cn(
+              "flex-1 relative overflow-hidden flex flex-col items-center justify-center p-2 sm:p-4 lg:p-6 select-none",
+              "bg-gradient-to-br from-neutral-800/40 to-neutral-900/30",
+              positionToPlace && "cursor-crosshair"
+            )}>
             {/* Subtle Grid Pattern */}
             <div className="absolute inset-0 opacity-[0.02] pointer-events-none" 
                  style={{ 

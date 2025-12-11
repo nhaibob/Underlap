@@ -59,6 +59,7 @@ export const PostCard = ({
 }: PostCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const [layerVisibility, setLayerVisibility] = useState({ home: true, away: true, ball: true });
   const { title, description } = parseContent(content);
   const playerCount = tacticData?.players?.length || 0;
 
@@ -183,12 +184,52 @@ export const PostCard = ({
                   </div>
                 </div>
               </div>
-              <button 
-                onClick={() => setIsExpanded(false)}
-                className="p-2 rounded-full hover:bg-white/10 transition-colors"
-              >
-                <X className="w-5 h-5 text-muted-foreground" />
-              </button>
+              
+              {/* Layer Toggle Buttons */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setLayerVisibility(prev => ({ ...prev, home: !prev.home }))}
+                  className={`px-2 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors ${
+                    layerVisibility.home 
+                      ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' 
+                      : 'bg-gray-700/50 text-gray-500 border border-gray-600/30'
+                  }`}
+                  title="Toggle home team visibility"
+                >
+                  <div className="w-2 h-2 rounded-full bg-blue-500" />
+                  Đội nhà
+                </button>
+                <button
+                  onClick={() => setLayerVisibility(prev => ({ ...prev, away: !prev.away }))}
+                  className={`px-2 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors ${
+                    layerVisibility.away 
+                      ? 'bg-red-500/20 text-red-400 border border-red-500/30' 
+                      : 'bg-gray-700/50 text-gray-500 border border-gray-600/30'
+                  }`}
+                  title="Toggle away team visibility"
+                >
+                  <div className="w-2 h-2 rounded-full bg-red-500" />
+                  Đội khách
+                </button>
+                <button
+                  onClick={() => setLayerVisibility(prev => ({ ...prev, ball: !prev.ball }))}
+                  className={`px-2 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors ${
+                    layerVisibility.ball 
+                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' 
+                      : 'bg-gray-700/50 text-gray-500 border border-gray-600/30'
+                  }`}
+                  title="Toggle ball visibility"
+                >
+                  ⚽
+                </button>
+                
+                <button 
+                  onClick={() => setIsExpanded(false)}
+                  className="p-2 rounded-full hover:bg-white/10 transition-colors ml-2"
+                >
+                  <X className="w-5 h-5 text-muted-foreground" />
+                </button>
+              </div>
             </div>
 
             {/* Tactic Board */}
@@ -201,6 +242,7 @@ export const PostCard = ({
                     arrows={tacticData.arrows}
                     areas={[]}
                     readOnly={true}
+                    layerVisibility={layerVisibility}
                   />
                 </div>
               </div>

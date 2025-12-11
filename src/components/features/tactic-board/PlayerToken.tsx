@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { Team } from './TacticBoard';
 
 // Position types based on POSITION_OPTIONS from constants
-export type PlayerPosition = 'GK' | 'RB' | 'LB' | 'CB' | 'LWB' | 'RWB' | 'DM' | 'CM' | 'AM' | 'RW' | 'LW' | 'CF' | 'ST';
+export type PlayerPosition = 'GK' | 'RB' | 'LB' | 'CB' | 'LWB' | 'RWB' | 'CDM' | 'DM' | 'CM' | 'LM' | 'RM' | 'CAM' | 'AM' | 'RW' | 'LW' | 'CF' | 'ST';
 
 export interface PlayerTokenProps {
   position: PlayerPosition;
@@ -14,60 +14,68 @@ export interface PlayerTokenProps {
   team?: Team;
 }
 
-// Color mapping based on position category - HOME TEAM (vibrant colors)
+// Color mapping based on position category - HOME TEAM (BLUE theme)
 const HOME_POSITION_COLORS: Record<string, {
   bg: string;
   border: string;
   text: string;
 }> = {
-  // Goalkeeper
-  GK: { bg: 'bg-amber-500', border: 'border-amber-400', text: 'text-white' },
+  // Goalkeeper - Yellow/Gold (classic GK color)
+  GK: { bg: 'bg-yellow-500', border: 'border-yellow-400', text: 'text-black' },
   
-  // Defenders
-  RB: { bg: 'bg-blue-500', border: 'border-blue-400', text: 'text-white' },
-  LB: { bg: 'bg-blue-500', border: 'border-blue-400', text: 'text-white' },
-  CB: { bg: 'bg-blue-500', border: 'border-blue-400', text: 'text-white' },
-  LWB: { bg: 'bg-blue-400', border: 'border-blue-300', text: 'text-white' },
-  RWB: { bg: 'bg-blue-400', border: 'border-blue-300', text: 'text-white' },
+  // Defenders - Dark Blue
+  RB: { bg: 'bg-blue-700', border: 'border-blue-600', text: 'text-white' },
+  LB: { bg: 'bg-blue-700', border: 'border-blue-600', text: 'text-white' },
+  CB: { bg: 'bg-blue-700', border: 'border-blue-600', text: 'text-white' },
+  LWB: { bg: 'bg-blue-600', border: 'border-blue-500', text: 'text-white' },
+  RWB: { bg: 'bg-blue-600', border: 'border-blue-500', text: 'text-white' },
   
-  // Midfielders
-  DM: { bg: 'bg-green-500', border: 'border-green-400', text: 'text-white' },
-  CM: { bg: 'bg-green-500', border: 'border-green-400', text: 'text-white' },
-  AM: { bg: 'bg-green-400', border: 'border-green-300', text: 'text-white' },
+  // Midfielders - Medium Blue
+  CDM: { bg: 'bg-blue-600', border: 'border-blue-500', text: 'text-white' },
+  DM: { bg: 'bg-blue-600', border: 'border-blue-500', text: 'text-white' },
+  CM: { bg: 'bg-blue-500', border: 'border-blue-400', text: 'text-white' },
+  LM: { bg: 'bg-blue-500', border: 'border-blue-400', text: 'text-white' },
+  RM: { bg: 'bg-blue-500', border: 'border-blue-400', text: 'text-white' },
+  CAM: { bg: 'bg-sky-500', border: 'border-sky-400', text: 'text-white' },
+  AM: { bg: 'bg-sky-500', border: 'border-sky-400', text: 'text-white' },
   
-  // Forwards
-  RW: { bg: 'bg-rose-500', border: 'border-rose-400', text: 'text-white' },
-  LW: { bg: 'bg-rose-500', border: 'border-rose-400', text: 'text-white' },
-  CF: { bg: 'bg-rose-600', border: 'border-rose-500', text: 'text-white' },
-  ST: { bg: 'bg-red-500', border: 'border-red-400', text: 'text-white' },
+  // Forwards - Light Blue/Cyan
+  RW: { bg: 'bg-cyan-500', border: 'border-cyan-400', text: 'text-white' },
+  LW: { bg: 'bg-cyan-500', border: 'border-cyan-400', text: 'text-white' },
+  CF: { bg: 'bg-cyan-600', border: 'border-cyan-500', text: 'text-white' },
+  ST: { bg: 'bg-sky-600', border: 'border-sky-500', text: 'text-white' },
 };
 
-// Color mapping - AWAY TEAM (darker/alternate colors)
+// Color mapping - AWAY TEAM (RED/CRIMSON theme)
 const AWAY_POSITION_COLORS: Record<string, {
   bg: string;
   border: string;
   text: string;
 }> = {
-  // Goalkeeper
-  GK: { bg: 'bg-orange-700', border: 'border-orange-600', text: 'text-white' },
+  // Goalkeeper - Lime/Green (contrast with red)
+  GK: { bg: 'bg-lime-500', border: 'border-lime-400', text: 'text-black' },
   
-  // Defenders
-  RB: { bg: 'bg-slate-600', border: 'border-slate-500', text: 'text-white' },
-  LB: { bg: 'bg-slate-600', border: 'border-slate-500', text: 'text-white' },
-  CB: { bg: 'bg-slate-600', border: 'border-slate-500', text: 'text-white' },
-  LWB: { bg: 'bg-slate-500', border: 'border-slate-400', text: 'text-white' },
-  RWB: { bg: 'bg-slate-500', border: 'border-slate-400', text: 'text-white' },
+  // Defenders - Dark Red
+  RB: { bg: 'bg-red-700', border: 'border-red-600', text: 'text-white' },
+  LB: { bg: 'bg-red-700', border: 'border-red-600', text: 'text-white' },
+  CB: { bg: 'bg-red-700', border: 'border-red-600', text: 'text-white' },
+  LWB: { bg: 'bg-red-600', border: 'border-red-500', text: 'text-white' },
+  RWB: { bg: 'bg-red-600', border: 'border-red-500', text: 'text-white' },
   
-  // Midfielders
-  DM: { bg: 'bg-teal-700', border: 'border-teal-600', text: 'text-white' },
-  CM: { bg: 'bg-teal-700', border: 'border-teal-600', text: 'text-white' },
-  AM: { bg: 'bg-teal-600', border: 'border-teal-500', text: 'text-white' },
+  // Midfielders - Medium Red/Rose
+  CDM: { bg: 'bg-red-600', border: 'border-red-500', text: 'text-white' },
+  DM: { bg: 'bg-red-600', border: 'border-red-500', text: 'text-white' },
+  CM: { bg: 'bg-rose-500', border: 'border-rose-400', text: 'text-white' },
+  LM: { bg: 'bg-rose-500', border: 'border-rose-400', text: 'text-white' },
+  RM: { bg: 'bg-rose-500', border: 'border-rose-400', text: 'text-white' },
+  CAM: { bg: 'bg-orange-500', border: 'border-orange-400', text: 'text-white' },
+  AM: { bg: 'bg-orange-500', border: 'border-orange-400', text: 'text-white' },
   
-  // Forwards
-  RW: { bg: 'bg-purple-600', border: 'border-purple-500', text: 'text-white' },
-  LW: { bg: 'bg-purple-600', border: 'border-purple-500', text: 'text-white' },
-  CF: { bg: 'bg-purple-700', border: 'border-purple-600', text: 'text-white' },
-  ST: { bg: 'bg-fuchsia-600', border: 'border-fuchsia-500', text: 'text-white' },
+  // Forwards - Orange/Amber
+  RW: { bg: 'bg-orange-600', border: 'border-orange-500', text: 'text-white' },
+  LW: { bg: 'bg-orange-600', border: 'border-orange-500', text: 'text-white' },
+  CF: { bg: 'bg-amber-600', border: 'border-amber-500', text: 'text-white' },
+  ST: { bg: 'bg-amber-500', border: 'border-amber-400', text: 'text-white' },
 };
 
 export const PlayerToken = ({

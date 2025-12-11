@@ -4,11 +4,13 @@ import { Button } from '@/components/ui/Button';
 import { 
   MousePointer2, PenTool, SquareDashed, Eraser, 
   Undo2, Redo2, Trash2, UserPlus, ChevronDown,
-  Minus, MoreHorizontal, X, Circle, Layers, Eye, EyeOff
+  Minus, MoreHorizontal, X, Circle, Layers, Eye, EyeOff,
+  Download, LayoutGrid
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tool, ArrowColor, ArrowStyle, LayerVisibility } from '@/lib/hooks/useTacticLogic';
 import { ALL_ARROW_COLOR_VALUES } from '@/lib/constants';
+import { FORMATION_KEYS, FORMATIONS } from '@/lib/constants/formations';
 import { PlayerTokenProps } from './PlayerToken';
 import { Team } from './TacticBoard';
 
@@ -34,6 +36,9 @@ interface CompactToolbarProps {
   setIsPlacingBall: (placing: boolean) => void;
   layerVisibility: LayerVisibility;
   toggleLayerVisibility: (layer: keyof LayerVisibility) => void;
+  // NEW: Formation and Export
+  loadFormation?: (formationKey: string, team?: Team) => void;
+  onExport?: () => void;
 }
 
 // --- Position Groups ---
@@ -319,9 +324,11 @@ export const CompactToolbar = ({
   onClearAll,
   selectedTeam, setSelectedTeam,
   isPlacingBall, setIsPlacingBall,
-  layerVisibility, toggleLayerVisibility
+  layerVisibility, toggleLayerVisibility,
+  loadFormation, onExport
 }: CompactToolbarProps) => {
   const [showLayerMenu, setShowLayerMenu] = useState(false);
+  const [showFormationMenu, setShowFormationMenu] = useState(false);
 
   return (
     <div className="flex items-center justify-between gap-2 px-3 py-2 bg-card/80 backdrop-blur-md border-b border-border/50">
@@ -480,6 +487,101 @@ export const CompactToolbar = ({
           selectedTeam={selectedTeam}
           setSelectedTeam={setSelectedTeam}
         />
+        
+        {/* Formation Picker */}
+        {loadFormation && (
+          <div className="relative">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowFormationMenu(!showFormationMenu)}
+              className={cn(
+                "h-9 px-2 rounded-lg flex items-center gap-1 transition-colors",
+                showFormationMenu 
+                  ? "bg-primary text-primary-foreground" 
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              )}
+              title="Đội hình mẫu"
+            >
+              <LayoutGrid className="w-4 h-4" />
+              <span className="text-xs font-medium hidden sm:inline">Đội hình</span>
+              <ChevronDown className="w-3 h-3" />
+            </motion.button>
+            
+            <AnimatePresence>
+              {showFormationMenu && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowFormationMenu(false)} />
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    className="absolute right-0 top-full mt-2 z-50 bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-xl p-2 shadow-xl min-w-[280px]"
+                  >
+                    <div className="flex gap-4">
+                      {/* Home Team */}
+                      <div className="flex-1">
+                        <div className="text-xs text-blue-400 px-2 py-1 mb-1 font-medium flex items-center gap-1.5">
+                          <div className="w-2 h-2 rounded-full bg-blue-500" />
+                          Đội nhà
+                        </div>
+                        {FORMATION_KEYS.map((key) => (
+                          <button
+                            key={`home-${key}`}
+                            onClick={() => {
+                              loadFormation(key, 'home');
+                              setShowFormationMenu(false);
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-blue-500/20 transition-colors text-left"
+                          >
+                            <span className="text-sm text-white">{FORMATIONS[key].name}</span>
+                          </button>
+                        ))}
+                      </div>
+                      
+                      {/* Divider */}
+                      <div className="w-px bg-white/10" />
+                      
+                      {/* Away Team */}
+                      <div className="flex-1">
+                        <div className="text-xs text-orange-400 px-2 py-1 mb-1 font-medium flex items-center gap-1.5">
+                          <div className="w-2 h-2 rounded-full bg-orange-500" />
+                          Đội khách
+                        </div>
+                        {FORMATION_KEYS.map((key) => (
+                          <button
+                            key={`away-${key}`}
+                            onClick={() => {
+                              loadFormation(key, 'away');
+                              setShowFormationMenu(false);
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-orange-500/20 transition-colors text-left"
+                          >
+                            <span className="text-sm text-white">{FORMATIONS[key].name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+        
+        {/* Export Button */}
+        {onExport && (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onExport}
+            className="h-9 px-2 rounded-lg flex items-center gap-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            title="Xuất ảnh (PNG)"
+          >
+            <Download className="w-4 h-4" />
+            <span className="text-xs font-medium hidden sm:inline">Xuất</span>
+          </motion.button>
+        )}
         
         <ToolButton 
           icon={Trash2} 

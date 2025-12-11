@@ -19,9 +19,9 @@ const MOCK_POSTS: PostCardProps[] = [
     // Có thể thêm tacticData nếu muốn hiển thị sa bàn
     tacticData: {
         players: [
-            { id: '1', position: 'gk', label: 'GK', pos: { x: 45, y: 200 } },
-            { id: '2', position: 'def', label: 'LCB', pos: { x: 120, y: 150 } },
-            { id: '3', position: 'def', label: 'RCB', pos: { x: 120, y: 250 } },
+            { id: '1', position: 'GK', label: 'GK', pos: { x: 45, y: 200 } },
+            { id: '2', position: 'CB', label: 'LCB', pos: { x: 120, y: 150 } },
+            { id: '3', position: 'CB', label: 'RCB', pos: { x: 120, y: 250 } },
         ],
         arrows: []
     }

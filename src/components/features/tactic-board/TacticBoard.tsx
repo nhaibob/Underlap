@@ -119,8 +119,8 @@ function DraggablePlayerToken({
   // This avoids conflicts between CSS transform and dnd-kit transform
   const style: React.CSSProperties = {
     position: 'absolute',
-    left: `calc(${leftPercent}% - 3.75%)`, // Offset by half the width (7.5% / 2)
-    top: `calc(${topPercent}% - 3.75%)`,   // Offset by half the height
+    left: `calc(${leftPercent}% - 2.75%)`, // Offset by half the width (5.5% / 2)
+    top: `calc(${topPercent}% - 2.75%)`,   // Offset by half the height
     transform: transform 
       ? `translate3d(${transform.x}px, ${transform.y}px, 0)` 
       : undefined,
@@ -142,7 +142,7 @@ function DraggablePlayerToken({
   return (
     <div ref={setNodeRef} style={style} {...listeners} {...attributes} onClick={handleClick}
       className={cn(
-        "w-[7.5%] aspect-square min-w-[24px] max-w-[50px]",
+        "w-[5.5%] aspect-square min-w-[20px] max-w-[38px]",
         activeTool === 'erase' && "hover:opacity-50"
       )}
     >
@@ -508,7 +508,9 @@ export const TacticBoard = ({
   const showContent = players.length > 0 || arrows.length > 0;
 
   return (
-    <div ref={(node) => { setNodeRef(node); (boardRef as any).current = node; }}
+    <div 
+      ref={(node) => { setNodeRef(node); (boardRef as any).current = node; }}
+      data-board
       className={cn(
         "relative w-full aspect-[3/2] overflow-hidden shadow-2xl isolate",
         "bg-[#1C3D2E] rounded-xl ring-1 ring-white/10",
@@ -580,7 +582,7 @@ export const TacticBoard = ({
               return (
                 <div 
                   key={player.id}
-                  className="absolute w-[7.5%] aspect-square min-w-[24px] max-w-[50px] -translate-x-1/2 -translate-y-1/2"
+                  className="absolute w-[5.5%] aspect-square min-w-[20px] max-w-[38px] -translate-x-1/2 -translate-y-1/2"
                   style={{ left: `${leftPercent}%`, top: `${topPercent}%` }}
                 >
                   <PlayerToken position={player.position} label={player.label} team={player.team} className="w-full h-full" variant="responsive" />

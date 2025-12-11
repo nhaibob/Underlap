@@ -19,9 +19,9 @@ const POST_DETAIL: PostCardProps = {
     comments: 342,
     tacticData: {
         players: [
-            { id: '1', position: 'gk', label: 'GK', pos: { x: 300, y: 350 } },
-            { id: '2', position: 'mid', label: 'Rodri', pos: { x: 300, y: 200 } },
-            { id: '3', position: 'mid', label: 'Odegaard', pos: { x: 280, y: 180 } },
+            { id: '1', position: 'GK', label: 'GK', pos: { x: 300, y: 350 } },
+            { id: '2', position: 'CM', label: 'Rodri', pos: { x: 300, y: 200 } },
+            { id: '3', position: 'CAM', label: 'Odegaard', pos: { x: 280, y: 180 } },
         ],
         arrows: []
     }
