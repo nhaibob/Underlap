@@ -1,6 +1,7 @@
 "use client";
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { Team } from './TacticBoard';
 
 // Position types based on POSITION_OPTIONS from constants
 export type PlayerPosition = 'GK' | 'RB' | 'LB' | 'CB' | 'LWB' | 'RWB' | 'DM' | 'CM' | 'AM' | 'RW' | 'LW' | 'CF' | 'ST';
@@ -10,10 +11,11 @@ export interface PlayerTokenProps {
   label?: string;
   className?: string;
   variant?: 'default' | 'responsive';
+  team?: Team;
 }
 
-// Color mapping based on position category
-const POSITION_COLORS: Record<string, {
+// Color mapping based on position category - HOME TEAM (vibrant colors)
+const HOME_POSITION_COLORS: Record<string, {
   bg: string;
   border: string;
   text: string;
@@ -40,13 +42,43 @@ const POSITION_COLORS: Record<string, {
   ST: { bg: 'bg-red-500', border: 'border-red-400', text: 'text-white' },
 };
 
+// Color mapping - AWAY TEAM (darker/alternate colors)
+const AWAY_POSITION_COLORS: Record<string, {
+  bg: string;
+  border: string;
+  text: string;
+}> = {
+  // Goalkeeper
+  GK: { bg: 'bg-orange-700', border: 'border-orange-600', text: 'text-white' },
+  
+  // Defenders
+  RB: { bg: 'bg-slate-600', border: 'border-slate-500', text: 'text-white' },
+  LB: { bg: 'bg-slate-600', border: 'border-slate-500', text: 'text-white' },
+  CB: { bg: 'bg-slate-600', border: 'border-slate-500', text: 'text-white' },
+  LWB: { bg: 'bg-slate-500', border: 'border-slate-400', text: 'text-white' },
+  RWB: { bg: 'bg-slate-500', border: 'border-slate-400', text: 'text-white' },
+  
+  // Midfielders
+  DM: { bg: 'bg-teal-700', border: 'border-teal-600', text: 'text-white' },
+  CM: { bg: 'bg-teal-700', border: 'border-teal-600', text: 'text-white' },
+  AM: { bg: 'bg-teal-600', border: 'border-teal-500', text: 'text-white' },
+  
+  // Forwards
+  RW: { bg: 'bg-purple-600', border: 'border-purple-500', text: 'text-white' },
+  LW: { bg: 'bg-purple-600', border: 'border-purple-500', text: 'text-white' },
+  CF: { bg: 'bg-purple-700', border: 'border-purple-600', text: 'text-white' },
+  ST: { bg: 'bg-fuchsia-600', border: 'border-fuchsia-500', text: 'text-white' },
+};
+
 export const PlayerToken = ({
   position,
   label,
   className,
   variant = 'default',
+  team = 'home',
 }: PlayerTokenProps) => {
-  const colors = POSITION_COLORS[position] || { 
+  const colorMap = team === 'away' ? AWAY_POSITION_COLORS : HOME_POSITION_COLORS;
+  const colors = colorMap[position] || { 
     bg: 'bg-neutral-500', 
     border: 'border-neutral-400', 
     text: 'text-white' 
@@ -76,3 +108,4 @@ export const PlayerToken = ({
     </div>
   );
 };
+

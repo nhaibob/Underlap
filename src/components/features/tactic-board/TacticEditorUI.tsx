@@ -6,7 +6,8 @@ import { CompactToolbar } from './CompactToolbar';
 import { MetaPanel, MetaPanelProps } from '@/components/features/tactic-board/MetaPanel'; 
 import { useDndMonitor } from '@dnd-kit/core';
 import { useUIStore } from '@/lib/store/uiStore';
-import { Tool, ArrowColor, ArrowStyle, ArrowType } from '@/lib/hooks/useTacticLogic';
+import { Team, Ball } from './TacticBoard';
+import { Tool, ArrowColor, ArrowStyle, ArrowType, LayerVisibility } from '@/lib/hooks/useTacticLogic';
 import { PlayerEditPanel } from './PlayerEditPanel';
 import { PlayerTokenProps } from './PlayerToken'; 
 import { cn } from '@/lib/utils'; 
@@ -34,6 +35,17 @@ interface TacticEditorUIProps {
   redo: () => void;
   canUndo: boolean;
   canRedo: boolean;
+  
+  // NEW: Team, Ball, Layer props
+  selectedTeam: Team;
+  setSelectedTeam: (team: Team) => void;
+  ball: Ball | null;
+  setBall: (ball: Ball | null) => void;
+  isPlacingBall: boolean;
+  setIsPlacingBall: (placing: boolean) => void;
+  layerVisibility: LayerVisibility;
+  toggleLayerVisibility: (layer: keyof LayerVisibility) => void;
+  addBallAtPosition: (pos: { x: number, y: number }) => void;
 }
 
 export const TacticEditorUI = ({ 
@@ -43,7 +55,12 @@ export const TacticEditorUI = ({
   positionToPlace, setPositionToPlace, onBoardClick,
   arrowColor, setArrowColor, arrowStyle, setArrowStyle, arrowType, setArrowType, onClearAll,
   metaProps,
-  undo, redo, canUndo, canRedo 
+  undo, redo, canUndo, canRedo,
+  selectedTeam, setSelectedTeam,
+  ball, setBall,
+  isPlacingBall, setIsPlacingBall,
+  layerVisibility, toggleLayerVisibility,
+  addBallAtPosition
 }: TacticEditorUIProps) => {
     
   const { closeCreateModal } = useUIStore();
@@ -148,6 +165,12 @@ export const TacticEditorUI = ({
               canUndo={canUndo}
               canRedo={canRedo}
               onClearAll={onClearAll}
+              selectedTeam={selectedTeam}
+              setSelectedTeam={setSelectedTeam}
+              isPlacingBall={isPlacingBall}
+              setIsPlacingBall={setIsPlacingBall}
+              layerVisibility={layerVisibility}
+              toggleLayerVisibility={toggleLayerVisibility}
             />
           </div>
 
@@ -165,8 +188,17 @@ export const TacticEditorUI = ({
                  }} 
             />
             
-            {/* Tactic Board */}
-            <div className="w-full max-w-[85%] sm:max-w-[75%] lg:max-w-[70%] xl:max-w-[65%] transition-all duration-300">
+            {/* Tactic Board - constrained by height to prevent overflow */}
+            <div 
+              className="w-full transition-all duration-300"
+              style={{ 
+                // Use CSS calc to properly size based on available height
+                // The board has 3:2 aspect ratio, so width = height * 1.5
+                // 230px offset = header(64px) + toolbar(~50px) + padding + bottom margin
+                maxWidth: 'min(calc((100vh - 230px) * 1.5), 100%)',
+                maxHeight: 'calc(100vh - 230px)'
+              }}
+            >
               <TacticBoard 
                 players={players} setPlayers={setPlayers}
                 arrows={arrows} setArrows={setArrows}
@@ -177,6 +209,11 @@ export const TacticEditorUI = ({
                 onBoardClick={onBoardClick}
                 positionToPlace={positionToPlace}
                 currentArrowColor={arrowColor} currentArrowStyle={arrowStyle} currentArrowType={arrowType}
+                ball={ball}
+                setBall={setBall}
+                layerVisibility={layerVisibility}
+                isPlacingBall={isPlacingBall}
+                addBallAtPosition={addBallAtPosition}
               />
             </div>
             

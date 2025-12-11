@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { 
-  MousePointer2, Move, PenTool, SquareDashed, Eraser, 
+  MousePointer2, PenTool, SquareDashed, Eraser, 
   Undo2, Redo2, Minus, MoreHorizontal, UserPlus, X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -43,7 +43,6 @@ export const FloatingToolbar = ({
 
   const tools = [
     { id: 'select', icon: MousePointer2, label: 'Chọn' },
-    { id: 'move', icon: Move, label: 'Di chuyển' },
     { separator: true },
     { id: 'draw', icon: PenTool, label: 'Vẽ mũi tên' },
     { id: 'area', icon: SquareDashed, label: 'Vẽ vùng' },

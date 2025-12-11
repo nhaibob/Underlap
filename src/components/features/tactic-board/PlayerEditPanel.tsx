@@ -33,7 +33,7 @@ export const PlayerEditPanel = ({ player, onUpdate, onDelete, setActiveTool }: P
   
   const handleDelete = () => {
     onDelete(player.id); 
-    setActiveTool('move'); 
+    setActiveTool('select'); 
   };
 
   return (
