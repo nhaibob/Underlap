@@ -2,12 +2,13 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { Avatar } from '@/components/ui/Avatar'; 
 import { ReactionBar } from '@/components/core/ReactionBar';
 import { CommentsModal } from '@/components/core/CommentsModal';
 import { TacticBoard } from '@/components/features/tactic-board/TacticBoard';
 import type { Player, Arrow } from '@/components/features/tactic-board/TacticBoard';
-import { X, Maximize2, Swords, Users } from 'lucide-react';
+import { X, Maximize2, Swords, Users, ExternalLink } from 'lucide-react';
 
 export interface PostCardProps {
     id?: string;
@@ -20,6 +21,7 @@ export interface PostCardProps {
     timestamp: string;
     likes: number;
     comments: number;
+    forks?: number;
     tacticData?: {
         players: Player[];
         arrows: Arrow[];
@@ -53,6 +55,7 @@ export const PostCard = ({
   timestamp, 
   likes, 
   comments,
+  forks = 0,
   tacticData,
   formation = "4-3-3",
   tags = ["pressing", "phản công"]
@@ -82,10 +85,14 @@ export const PostCard = ({
             
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-headline font-bold text-foreground hover:text-primary cursor-pointer transition-colors">
-                  {author.name}
-                </h3>
-                <span className="text-xs text-muted-foreground">@{author.username}</span>
+                <Link href={`/profile/${author.username}`}>
+                  <h3 className="font-headline font-bold text-foreground hover:text-primary cursor-pointer transition-colors">
+                    {author.name}
+                  </h3>
+                </Link>
+                <Link href={`/profile/${author.username}`} className="text-xs text-muted-foreground hover:text-primary transition-colors">
+                  @{author.username}
+                </Link>
                 <span className="text-xs text-muted-foreground/60">• {timestamp}</span>
               </div>
               
@@ -115,6 +122,17 @@ export const PostCard = ({
             <p className="text-muted-foreground text-sm leading-relaxed mb-3 line-clamp-2">
               {description}
             </p>
+          )}
+
+          {/* View Detail Link */}
+          {id && (
+            <Link 
+              href={`/post/${id}`}
+              className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 font-medium mb-3 group"
+            >
+              Xem chi tiết
+              <ExternalLink className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
           )}
 
           {/* Tags */}
@@ -154,6 +172,7 @@ export const PostCard = ({
             tacticId={id}
             likes={likes} 
             comments={comments}
+            forks={forks}
             onCommentClick={() => setCommentsOpen(true)}
           />
         </div>

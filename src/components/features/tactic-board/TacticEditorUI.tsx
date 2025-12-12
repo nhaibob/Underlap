@@ -30,7 +30,7 @@ interface TacticEditorUIProps {
   arrowStyle: ArrowStyle; setArrowStyle: React.Dispatch<React.SetStateAction<ArrowStyle>>;
   arrowType: ArrowType; setArrowType: React.Dispatch<React.SetStateAction<ArrowType>>;
   onClearAll: () => void;
-  metaProps: MetaPanelProps & { onPost: () => void, isPosting: boolean };
+  metaProps: MetaPanelProps & { onPost: () => void, isPosting: boolean, onSaveDraft?: () => void };
   
   undo: () => void;
   redo: () => void;
@@ -49,6 +49,8 @@ interface TacticEditorUIProps {
   addBallAtPosition: (pos: { x: number, y: number }) => void;
   // NEW: Formation
   loadFormation?: (formationKey: string, team?: Team) => void;
+  // Optional close handler for standalone pages (not modals)
+  onClose?: () => void;
 }
 
 export const TacticEditorUI = ({ 
@@ -64,7 +66,8 @@ export const TacticEditorUI = ({
   isPlacingBall, setIsPlacingBall,
   layerVisibility, toggleLayerVisibility,
   addBallAtPosition,
-  loadFormation
+  loadFormation,
+  onClose
 }: TacticEditorUIProps) => {
     
   const { closeCreateModal } = useUIStore();
@@ -161,7 +164,7 @@ export const TacticEditorUI = ({
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={closeCreateModal} 
+            onClick={onClose || closeCreateModal} 
             className="text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-all"
             title="Đóng"
           >
@@ -198,6 +201,21 @@ export const TacticEditorUI = ({
             {isPanelCollapsed ? <PanelRight className="w-5 h-5" /> : <PanelRightClose className="w-5 h-5" />}
           </Button>
           
+          {/* Save Draft Button */}
+          {metaProps.onSaveDraft && (
+            <Button 
+              variant="outline" 
+              onClick={metaProps.onSaveDraft} 
+              disabled={metaProps.isPosting} 
+              className="gap-2 border-white/10 hover:bg-white/5" 
+              size="sm"
+            >
+              <Save size={16} />
+              <span className="hidden sm:inline">Lưu nháp</span>
+            </Button>
+          )}
+          
+          {/* Publish Button */}
           <Button 
             variant="default" 
             onClick={metaProps.onPost} 

@@ -20,6 +20,7 @@ import {
 
 export interface ProfileHeaderProps {
   username: string;
+  userId?: string; // For creating conversations
   name?: string;
   avatar?: string;
   banner?: string;
@@ -36,6 +37,7 @@ export interface ProfileHeaderProps {
   };
   isOwnProfile?: boolean;
   onEditProfile?: () => void;
+  onMessage?: () => void; // Handler for messaging
 }
 
 const StatItem = ({ value, label }: { value: number, label: string }) => (
@@ -49,6 +51,7 @@ const StatItem = ({ value, label }: { value: number, label: string }) => (
 
 export const ProfileHeader = ({ 
   username, 
+  userId,
   name, 
   avatar, 
   banner,
@@ -59,7 +62,8 @@ export const ProfileHeader = ({
   isVerified = false,
   stats,
   isOwnProfile = false,
-  onEditProfile
+  onEditProfile,
+  onMessage
 }: ProfileHeaderProps) => {
   const [isFollowing, setIsFollowing] = useState(false);
 
@@ -168,6 +172,7 @@ export const ProfileHeader = ({
                 <Button 
                   variant="secondary" 
                   className="gap-2"
+                  onClick={onMessage}
                 >
                   <MessageCircle className="w-4 h-4" />
                   Nhắn tin

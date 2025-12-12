@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    /* --- Light Mode (Nếu cần dùng sau này) --- */
+    /* --- Light Mode --- */
     --background: 210 40% 98%;
     --foreground: 222 47% 11%;
 
@@ -16,24 +16,24 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
  
-    --primary: 262 83% 58%; /* Underlap Violet */
-    --primary-foreground: 210 40% 98%;
+    --primary: 153 53% 24%; /* Underlap Green */
+    --primary-foreground: 0 0% 100%;
  
-    --secondary: 193 78% 45%; /* Underlap Cyan */
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 146 50% 36%; /* Sea Green */
+    --secondary-foreground: 0 0% 100%;
  
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
  
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 153 20% 90%;
+    --accent-foreground: 153 53% 24%;
  
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 262 83% 58%;
+    --ring: 153 53% 24%;
  
     --radius: 0.5rem;
   }
@@ -54,20 +54,20 @@
     --popover: 212 36% 10%;
     --popover-foreground: 203 33% 93%;
  
-    /* Primary: #6C5CE7 (Violet) */
-    --primary: 255 71% 63%; 
-    --primary-foreground: 210 40% 98%;
+    /* Primary: #1C5D3F (Underlap Green from logo) */
+    --primary: 153 53% 24%; 
+    --primary-foreground: 0 0% 100%;
  
-    /* Secondary: #19A7CE (Cyan) */
-    --secondary: 193 78% 45%; 
-    --secondary-foreground: 210 40% 98%;
+    /* Secondary: #2E8B57 (Sea Green) */
+    --secondary: 146 50% 36%; 
+    --secondary-foreground: 0 0% 100%;
  
     --muted: 212 36% 15%;
     --muted-foreground: 215 20.2% 65.1%;
  
     /* Màu hover nhẹ */
-    --accent: 212 36% 15%; 
-    --accent-foreground: 210 40% 98%;
+    --accent: 153 30% 20%; 
+    --accent-foreground: 0 0% 100%;
  
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
@@ -75,7 +75,7 @@
     /* Viền: #2C3545 (Tương phản nhẹ với nền) */
     --border: 217 22% 22%; 
     --input: 217 22% 22%; 
-    --ring: 255 71% 63%;
+    --ring: 153 53% 24%;
   }
 }
  

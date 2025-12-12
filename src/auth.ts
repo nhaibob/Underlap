@@ -22,20 +22,43 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        // TODO: Replace with actual database validation
-        // This is a demo - in production, validate against your database
-        if (credentials?.email && credentials?.password) {
-          // Demo user for testing
-          if (credentials.email === "demo@underlap.com" && credentials.password === "demo123") {
+        // Import supabase dynamically to avoid module issues
+        const { supabaseAuth } = await import("@/lib/supabase");
+        
+        try {
+          if (!credentials?.email || !credentials?.password) {
+            return null;
+          }
+          
+          // Try to sign in with Supabase
+          const { user } = await supabaseAuth.signIn(
+            credentials.email as string,
+            credentials.password as string
+          );
+          
+          if (user) {
             return {
-              id: "1",
+              id: user.id,
+              name: user.user_metadata?.name || user.user_metadata?.username || user.email?.split('@')[0],
+              email: user.email,
+              image: user.user_metadata?.avatar_url || '/assets/avatars/default.png'
+            };
+          }
+          
+          return null;
+        } catch (error) {
+          console.error('Auth error:', error);
+          // Fallback to demo user for development
+          if (credentials?.email === "demo@underlap.com" && credentials?.password === "demo123") {
+            return {
+              id: "demo-user-id",
               name: "Demo User",
               email: "demo@underlap.com",
-              image: "/assets/avatars/huyson.png"
-            }
+              image: "/assets/avatars/default.png"
+            };
           }
+          return null;
         }
-        return null
       }
     })
   ],

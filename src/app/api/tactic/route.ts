@@ -1,7 +1,14 @@
 // src/app/api/tactic/route.ts
 import { NextResponse } from 'next/server';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { isSupabaseConfigured } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import { MOCK_POST_DATA } from '@/lib/mock-data';
+
+// Use service role key to bypass RLS
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 // GET - Fetch all public tactics for feed
 export async function GET() {
@@ -89,19 +96,43 @@ export async function POST(request: Request) {
       }, { status: 201 });
     }
 
-    // Insert tactic without user_id foreign key (simplified for demo)
+    // Get user ID from header if provided, else lookup from metadata
+    const userId = request.headers.get('x-user-id');
+    let authorUsername = data.metadata.authorUsername || 'Anonymous';
+    let authorName = data.metadata.authorName || 'Anonymous';
+    let authorAvatar = data.metadata.authorAvatar || '/assets/avatars/default.png';
+
+    // If userId is provided, lookup profile to get correct author info
+    if (userId) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username, name, avatar_url')
+        .eq('id', userId)
+        .single();
+      
+      if (profile) {
+        authorUsername = profile.username || authorUsername;
+        authorName = profile.name || profile.username || authorName;
+        authorAvatar = profile.avatar_url || authorAvatar;
+      }
+    }
+
+    console.log('Creating tactic for user:', authorUsername, 'status:', data.status || 'published');
+
+    // Insert tactic with correct author info
     const { data: newTactic, error } = await supabase
       .from('tactics')
       .insert({
         title: data.metadata.title || 'Untitled Tactic',
         description: data.metadata.description || null,
         formation: data.metadata.formation || null,
-        author_username: data.metadata.authorUsername || 'HuySon',
-        author_name: data.metadata.authorName || 'Huy Sơn',
-        author_avatar: data.metadata.authorAvatar || '/assets/avatars/huyson.png',
+        author_username: authorUsername,
+        author_name: authorName,
+        author_avatar: authorAvatar,
         players: data.players,
         arrows: data.arrows,
-        is_public: data.metadata.isPublic !== false,
+        is_public: data.status !== 'draft' && data.metadata.isPublic !== false,
+        status: data.status || 'published',
       })
       .select()
       .single();

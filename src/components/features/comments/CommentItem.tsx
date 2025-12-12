@@ -77,13 +77,13 @@ export const CommentItem: React.FC<CommentItemProps> = ({ comment, contextId }) 
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editedContent.trim() && editedContent.trim() !== comment.content) {
-      editComment(comment.id, editedContent.trim());
+      editComment(contextId, comment.id, editedContent.trim());
     }
     setIsEditing(false);
   };
 
   const handleDelete = () => {
-    deleteComment(comment.id);
+    deleteComment(contextId, comment.id);
   };
 
   const onEmojiClick = (emojiData: EmojiClickData) => {

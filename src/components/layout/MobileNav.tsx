@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/Button';
 const NAV_ITEMS = [
     { href: '/feed', icon: Home, label: 'Feed' },
     { href: '/explore', icon: Compass, label: 'Khám phá' },
-    { href: '/community', icon: MessageCircle, label: 'Cộng đồng' },
+    { href: '/dm', icon: MessageCircle, label: 'Tin nhắn' },
     { href: '/profile/me', icon: User, label: 'Hồ sơ' },
 ];
 

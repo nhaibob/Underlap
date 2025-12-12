@@ -1,7 +1,8 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { useUIStore } from '@/lib/store/uiStore';
+import { supabaseAuth } from '@/lib/supabase';
 import { 
   DndContext, 
   DragEndEvent, 
@@ -25,6 +26,16 @@ export const CreateTacticModal = () => {
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState('');
   const [isPosting, setIsPosting] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Get current user on mount
+  useEffect(() => {
+    const getUser = async () => {
+      const user = await supabaseAuth.getUser();
+      if (user?.id) setUserId(user.id);
+    };
+    getUser();
+  }, []);
 
   // Sensors with distance constraint - drag only starts after moving 5px
   // This allows clicks to work properly without accidentally starting a drag
@@ -112,13 +123,17 @@ export const CreateTacticModal = () => {
         }, 
         players: logic.players, 
         arrows: logic.arrows, 
-        areas: logic.areas 
+        areas: logic.areas,
+        status: 'published'
     };
 
     try {
         const response = await fetch('/api/tactic', { 
             method: 'POST', 
-            headers: { 'Content-Type': 'application/json' }, 
+            headers: { 
+              'Content-Type': 'application/json',
+              ...(userId && { 'x-user-id': userId })
+            }, 
             body: JSON.stringify(payload) 
         });
         const result = await response.json();
@@ -136,6 +151,50 @@ export const CreateTacticModal = () => {
     }
   };
 
+  // Save as draft
+  const handleSaveDraft = async () => {
+    if (logic.players.length === 0) {
+      alert('Vui lòng thêm ít nhất một cầu thủ');
+      return;
+    }
+    setIsPosting(true);
+    
+    const payload = { 
+        metadata: { 
+            title: title.trim() || 'Bản nháp chưa đặt tên', 
+            description, 
+            tags: tags.split(',').map(t => t.trim()).filter(t => t) 
+        }, 
+        players: logic.players, 
+        arrows: logic.arrows, 
+        areas: logic.areas,
+        status: 'draft'
+    };
+
+    try {
+        const response = await fetch('/api/tactic', { 
+            method: 'POST', 
+            headers: { 
+              'Content-Type': 'application/json',
+              ...(userId && { 'x-user-id': userId })
+            }, 
+            body: JSON.stringify(payload) 
+        });
+        const result = await response.json();
+        console.log("Draft saved:", result);
+        
+        alert('✅ Đã lưu bản nháp!');
+        logic.reset({ players: [], arrows: [], areas: [] });
+        setTitle(''); setDescription(''); setTags(''); 
+        closeCreateModal();
+    } catch (error) { 
+        console.error("Save draft failed:", error); 
+        alert("Lưu nháp thất bại."); 
+    } finally { 
+        setIsPosting(false); 
+    }
+  };
+
   const metaProps = { 
       title, setTitle, 
       description, setDescription, 
@@ -143,7 +202,8 @@ export const CreateTacticModal = () => {
       players: logic.players, 
       arrows: logic.arrows, 
       onPost: handlePostTactic, 
-      isPosting 
+      isPosting,
+      onSaveDraft: handleSaveDraft
   };
 
   return (

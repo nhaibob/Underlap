@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 const NAV_ITEMS = [
     { href: '/feed', icon: Home, label: 'Feed' },
     { href: '/explore', icon: Compass, label: 'Khám phá' },
-    { href: '/community', icon: MessageCircle, label: 'Cộng đồng' },
+    { href: '/dm', icon: MessageCircle, label: 'Tin nhắn' },
 ];
 
 const NavLink = ({ href, icon: Icon }: typeof NAV_ITEMS[0]) => {
@@ -79,8 +79,12 @@ export const Header = () => {
         
         {/* 1. LOGO & NAV */}
         <div className="flex items-center gap-6">
-          <Link href="/feed" className="font-headline text-xl font-semibold text-text-primary flex-shrink-0">
-            Underlap
+          <Link href="/feed" className="flex items-center gap-2 flex-shrink-0">
+            <img 
+              src="/logo.png" 
+              alt="Underlap" 
+              className="h-8 w-auto"
+            />
           </Link>
           <nav className="hidden lg:flex items-center gap-4">
             {NAV_ITEMS.map((item) => (

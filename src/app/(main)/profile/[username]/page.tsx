@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { ProfileHeader } from '@/components/features/profile/ProfileHeader';
 import { PostCard } from '@/components/core/PostCard';
 import { EditProfileModal } from '@/components/core/EditProfileModal';
@@ -16,7 +17,11 @@ import {
   Plus,
   TrendingUp,
   Eye,
-  Loader2
+  Loader2,
+  GitFork,
+  FilePlus2,
+  Edit,
+  Trash2
 } from 'lucide-react';
 
 interface TacticPost {
@@ -135,11 +140,15 @@ const EmptyState = ({
 };
 
 export default function ProfilePage({ params }: { params: { username: string } }) {
+  const router = useRouter();
   const rawUsername = decodeURIComponent(params.username);
   const [activeTab, setActiveTab] = useState('tactics');
   const [isLoading, setIsLoading] = useState(true);
   const [tactics, setTactics] = useState<TacticPost[]>([]);
+  const [forkedTactics, setForkedTactics] = useState<TacticPost[]>([]);
+  const [draftTactics, setDraftTactics] = useState<TacticPost[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profileUserId, setProfileUserId] = useState<string | null>(null);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -183,6 +192,10 @@ export default function ProfilePage({ params }: { params: { username: string } }
           const profileData = await profileRes.json();
           if (!profileData.error) {
             setProfile(profileData);
+            // Set profile user ID for messaging
+            if (profileData.id) {
+              setProfileUserId(profileData.id);
+            }
           } else if (rawUsername.toLowerCase() === 'me' && user) {
             // Create mock profile from user session for "me" route
             setProfile({
@@ -208,11 +221,19 @@ export default function ProfilePage({ params }: { params: { username: string } }
           });
         }
 
-        // Fetch user's tactics
+        // Fetch user's tactics (all tactics, then filter by status client-side)
         const tacticsRes = await fetch(`/api/user/${usernameToFetch}/tactics`);
         if (tacticsRes.ok) {
           const tacticsData = await tacticsRes.json();
-          setTactics(tacticsData);
+          
+          // Filter tactics by status
+          const published = tacticsData.filter((t: any) => !t.status || t.status === 'published');
+          const forked = tacticsData.filter((t: any) => t.status === 'forked');
+          const drafts = tacticsData.filter((t: any) => t.status === 'draft');
+          
+          setTactics(published);
+          setForkedTactics(forked);
+          setDraftTactics(drafts);
         }
       } catch (error) {
         console.error('Error fetching profile data:', error);
@@ -223,6 +244,83 @@ export default function ProfilePage({ params }: { params: { username: string } }
 
     fetchData();
   }, [rawUsername]);
+
+  // Handle sending a message to this user
+  const handleMessage = async () => {
+    // Check if user is logged in
+    if (!currentUser) {
+      router.push('/login');
+      return;
+    }
+
+    // Check if we have the profile user's ID
+    if (!profileUserId) {
+      alert('Không thể tạo cuộc trò chuyện. Vui lòng thử lại.');
+      console.error('Profile user ID not found');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': currentUser.id
+        },
+        body: JSON.stringify({ participantId: profileUserId })
+      });
+
+      if (res.ok) {
+        const { conversationId } = await res.json();
+        router.push(`/messages/${conversationId}`);
+      } else {
+        const error = await res.json();
+        alert(`Lỗi: ${error.error || 'Không thể tạo cuộc trò chuyện'}`);
+      }
+    } catch (error) {
+      console.error('Failed to create conversation:', error);
+      alert('Đã xảy ra lỗi khi tạo cuộc trò chuyện');
+    }
+  };
+
+  // Delete a tactic
+  const handleDeleteTactic = async (tacticId: string, type: 'published' | 'forked' | 'draft') => {
+    if (!currentUser?.id) {
+      alert('Vui lòng đăng nhập để xóa');
+      return;
+    }
+
+    if (!confirm('Bạn có chắc chắn muốn xóa chiến thuật này?')) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/tactic/${tacticId}`, {
+        method: 'DELETE',
+        headers: {
+          'x-user-id': currentUser.id
+        }
+      });
+
+      if (res.ok) {
+        // Remove from appropriate list
+        if (type === 'published') {
+          setTactics(prev => prev.filter(t => t.id !== tacticId));
+        } else if (type === 'forked') {
+          setForkedTactics(prev => prev.filter(t => t.id !== tacticId));
+        } else if (type === 'draft') {
+          setDraftTactics(prev => prev.filter(t => t.id !== tacticId));
+        }
+        alert('✅ Đã xóa chiến thuật!');
+      } else {
+        const error = await res.json();
+        alert(`Lỗi: ${error.error || 'Không thể xóa'}`);
+      }
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert('Có lỗi xảy ra khi xóa');
+    }
+  };
 
   const formatJoinDate = (dateStr: string) => {
     if (!dateStr) return 'Không rõ';
@@ -244,6 +342,7 @@ export default function ProfilePage({ params }: { params: { username: string } }
       {/* Profile Header */}
       <ProfileHeader 
         username={actualUsername}
+        userId={profileUserId || undefined}
         name={profile?.name || actualUsername}
         avatar={profile?.avatar_url || '/assets/avatars/default.png'}
         bio={profile?.bio || 'Chưa có mô tả'}
@@ -253,6 +352,7 @@ export default function ProfilePage({ params }: { params: { username: string } }
         isVerified={false}
         isOwnProfile={isOwnProfile}
         onEditProfile={() => setEditModalOpen(true)}
+        onMessage={handleMessage}
         stats={{
           followers: 0,
           following: 0,
@@ -283,19 +383,26 @@ export default function ProfilePage({ params }: { params: { username: string } }
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-        <TabsList className="w-full grid grid-cols-4 bg-panel/50 p-1 rounded-lg">
+        <TabsList className={`w-full grid ${isOwnProfile ? 'grid-cols-4' : 'grid-cols-2'} bg-panel/50 p-1 rounded-lg`}>
           <TabsTrigger value="tactics" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white rounded-md transition-all">
             <Grid3X3 className="w-4 h-4" />
             <span className="hidden sm:inline">Chiến thuật</span>
+            {tactics.length > 0 && <span className="text-xs opacity-70">({tactics.length})</span>}
           </TabsTrigger>
-          <TabsTrigger value="posts" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white rounded-md transition-all">
-            <FileText className="w-4 h-4" />
-            <span className="hidden sm:inline">Bài viết</span>
-          </TabsTrigger>
-          <TabsTrigger value="saved" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white rounded-md transition-all">
-            <Bookmark className="w-4 h-4" />
-            <span className="hidden sm:inline">Đã lưu</span>
-          </TabsTrigger>
+          {isOwnProfile && (
+            <TabsTrigger value="forked" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white rounded-md transition-all">
+              <GitFork className="w-4 h-4" />
+              <span className="hidden sm:inline">Đã fork</span>
+              {forkedTactics.length > 0 && <span className="text-xs opacity-70">({forkedTactics.length})</span>}
+            </TabsTrigger>
+          )}
+          {isOwnProfile && (
+            <TabsTrigger value="drafts" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white rounded-md transition-all">
+              <FilePlus2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Bản nháp</span>
+              {draftTactics.length > 0 && <span className="text-xs opacity-70">({draftTactics.length})</span>}
+            </TabsTrigger>
+          )}
           <TabsTrigger value="liked" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white rounded-md transition-all">
             <Heart className="w-4 h-4" />
             <span className="hidden sm:inline">Đã thích</span>
@@ -307,14 +414,41 @@ export default function ProfilePage({ params }: { params: { username: string } }
           {tactics.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {tactics.map((tactic) => (
-                <TacticGridCard 
-                  key={tactic.id}
-                  id={tactic.id}
-                  title={tactic.title} 
-                  formation={tactic.formation} 
-                  views={tactic.stats.views || 0}
-                  likes={tactic.stats.likes}
-                />
+                <div key={tactic.id} className="relative group">
+                  <TacticGridCard 
+                    id={tactic.id}
+                    title={tactic.title} 
+                    formation={tactic.formation} 
+                    views={tactic.stats.views || 0}
+                    likes={tactic.stats.likes}
+                    onClick={() => router.push(`/post/${tactic.id}`)}
+                  />
+                  {/* Edit button overlay - only for own profile */}
+                  {isOwnProfile && (
+                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/tactic/edit/${tactic.id}`);
+                        }}
+                        className="p-2 bg-black/60 rounded-lg hover:bg-black/80"
+                        title="Chỉnh sửa"
+                      >
+                        <Edit className="w-4 h-4 text-white" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteTactic(tactic.id, 'published');
+                        }}
+                        className="p-2 bg-red-600/80 rounded-lg hover:bg-red-600"
+                        title="Xóa"
+                      >
+                        <Trash2 className="w-4 h-4 text-white" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           ) : (
@@ -328,46 +462,111 @@ export default function ProfilePage({ params }: { params: { username: string } }
           )}
         </TabsContent>
 
-        {/* Posts - Full Cards */}
-        <TabsContent value="posts" className="mt-6">
-          {tactics.length > 0 ? (
-            <div className="space-y-6">
-              {tactics.map((post) => (
-                <PostCard 
-                  key={post.id}
-                  id={post.id}
-                  author={{
-                    name: post.author.name,
-                    username: post.author.username,
-                    avatar: post.author.avatarUrl
-                  }}
-                  content={`**${post.title}**\n\n${post.description}`}
-                  timestamp={post.createdAt ? new Date(post.createdAt).toLocaleDateString('vi-VN') : 'Vừa xong'}
-                  likes={post.stats.likes}
-                  comments={post.stats.comments}
-                  tacticData={post.tacticData}
-                  formation={post.formation}
-                  tags={post.tags}
-                />
-              ))}
-            </div>
-          ) : (
-            <EmptyState 
-              icon={FileText}
-              title="Chưa có bài viết"
-              description="Chưa có bài viết nào được chia sẻ."
-            />
-          )}
-        </TabsContent>
+        {/* Forked Tactics - Only for own profile */}
+        {isOwnProfile && (
+          <TabsContent value="forked" className="mt-6">
+            {forkedTactics.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {forkedTactics.map((tactic) => (
+                  <div key={tactic.id} className="relative group">
+                    <TacticGridCard 
+                      id={tactic.id}
+                      title={tactic.title} 
+                      formation={tactic.formation} 
+                      views={tactic.stats.views || 0}
+                      likes={tactic.stats.likes}
+                      onClick={() => router.push(`/post/${tactic.id}`)}
+                    />
+                    {/* Edit and Delete button overlay */}
+                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/tactic/edit/${tactic.id}`);
+                        }}
+                        className="p-2 bg-black/60 rounded-lg hover:bg-black/80"
+                        title="Chỉnh sửa"
+                      >
+                        <Edit className="w-4 h-4 text-white" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteTactic(tactic.id, 'forked');
+                        }}
+                        className="p-2 bg-red-600/80 rounded-lg hover:bg-red-600"
+                        title="Xóa"
+                      >
+                        <Trash2 className="w-4 h-4 text-white" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState 
+                icon={GitFork}
+                title="Chưa có chiến thuật đã fork"
+                description="Fork chiến thuật từ tin nhắn hoặc bài viết để lưu vào bộ sưu tập của bạn."
+              />
+            )}
+          </TabsContent>
+        )}
 
-        {/* Saved */}
-        <TabsContent value="saved" className="mt-6">
-          <EmptyState 
-            icon={Bookmark}
-            title="Chưa có chiến thuật đã lưu"
-            description="Các chiến thuật bạn lưu sẽ xuất hiện ở đây."
-          />
-        </TabsContent>
+        {/* Drafts - Only for own profile */}
+        {isOwnProfile && (
+          <TabsContent value="drafts" className="mt-6">
+            {draftTactics.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {draftTactics.map((tactic) => (
+                  <div key={tactic.id} className="relative group">
+                    <TacticGridCard 
+                      id={tactic.id}
+                      title={tactic.title} 
+                      formation={tactic.formation} 
+                      views={tactic.stats.views || 0}
+                      likes={tactic.stats.likes}
+                      onClick={() => router.push(`/tactic/edit/${tactic.id}`)}
+                    />
+                    {/* Draft badge */}
+                    <div className="absolute top-2 left-2 px-2 py-1 bg-yellow-500/90 text-black text-xs font-medium rounded">
+                      Bản nháp
+                    </div>
+                    {/* Edit and Delete buttons */}
+                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/tactic/edit/${tactic.id}`);
+                        }}
+                        className="p-2 bg-black/60 rounded-lg hover:bg-black/80"
+                        title="Chỉnh sửa"
+                      >
+                        <Edit className="w-4 h-4 text-white" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteTactic(tactic.id, 'draft');
+                        }}
+                        className="p-2 bg-red-600/80 rounded-lg hover:bg-red-600"
+                        title="Xóa"
+                      >
+                        <Trash2 className="w-4 h-4 text-white" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState 
+                icon={FilePlus2}
+                title="Chưa có bản nháp"
+                description="Lưu chiến thuật chưa hoàn thiện vào đây để tiếp tục chỉnh sửa sau."
+              />
+            )}
+          </TabsContent>
+        )}
 
         {/* Liked */}
         <TabsContent value="liked" className="mt-6">

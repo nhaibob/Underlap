@@ -1,68 +1,27 @@
+// src/lib/store/useCommentStore.ts
 import { create } from 'zustand';
-import { produce } from 'immer'; // Zustand đã tích hợp sẵn immer
+import { produce } from 'immer';
 import { Comment, CommentUser, CommentAttachment } from '@/types/comment';
-
-// --- Dữ liệu giả lập cho store ---
-// (Trong ứng dụng thật, bạn sẽ lấy current user từ context/session)
-const mockCurrentUser: CommentUser = {
-  id: 'user_1',
-  username: 'saban_dev',
-  avatarUrl: 'https://i.pravatar.cc/150?u=saban_dev',
-};
-
-// (Trong ứng dụng thật, bạn sẽ fetch_comments từ API)
-const mockComments: Comment[] = [
-  {
-    id: 'c1',
-    author: { id: 'user_2', username: 'nhaibob', avatarUrl: 'https://i.pravatar.cc/150?u=nhaibob' },
-    content: 'Đây là comment đầu tiên! Hỗ trợ **bold** và *italic*. \n```js\nconsole.log("Hello world");\n```',
-    createdAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(), // 15 phút trước
-    parentId: null,
-    reactions: [{ emoji: '🔥', count: 3, users: ['user_1', 'user_3', 'user_4'] }],
-    attachments: [],
-    mentions: [],
-    replies: [
-      {
-        id: 'c2',
-        author: mockCurrentUser,
-        content: 'Trả lời đây @nhaibob!',
-        createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(), // 5 phút trước
-        parentId: 'c1',
-        reactions: [{ emoji: '👍', count: 1, users: ['user_2'] }],
-        attachments: [],
-        mentions: ['nhaibob'],
-        replies: [],
-      },
-    ],
-  },
-  {
-    id: 'c3',
-    author: { id: 'user_3', username: 'underlap', avatarUrl: 'https://i.pravatar.cc/150?u=underlap' },
-    content: 'Hệ thống comment này tuyệt vời quá.',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 giờ trước
-    parentId: null,
-    reactions: [],
-    attachments: [],
-    mentions: [],
-    replies: [],
-  },
-];
-// --- Kết thúc dữ liệu giả lập ---
-
 
 interface CommentStoreState {
   comments: Comment[];
-  drafts: Record<string, string>; // key: contextId (postId) | "new_c1" (reply_to_c1)
-  fetchComments: (contextId: string) => Promise<void>; // contextId: postId, tacticId...
-  addComment: (contextId: string, content: string, parentId: string | null, attachments: CommentAttachment[]) => Promise<void>;
-  editComment: (commentId: string, newContent: string) => Promise<void>;
-  deleteComment: (commentId: string) => Promise<void>;
+  isLoading: boolean;
+  error: string | null;
+  currentUser: CommentUser | null;
+  drafts: Record<string, string>;
+  
+  // Actions
+  setCurrentUser: (user: CommentUser | null) => void;
+  fetchComments: (tacticId: string) => Promise<void>;
+  addComment: (tacticId: string, content: string, parentId: string | null, attachments: CommentAttachment[]) => Promise<void>;
+  editComment: (tacticId: string, commentId: string, newContent: string) => Promise<void>;
+  deleteComment: (tacticId: string, commentId: string) => Promise<void>;
   addReaction: (commentId: string, emoji: string, userId: string) => Promise<void>;
   getDraft: (draftKey: string) => string;
   setDraft: (draftKey: string, content: string) => void;
 }
 
-// Hàm trợ giúp (utility) để tìm và cập nhật comment lồng nhau
+// Helper to find and update nested comments
 const findCommentAndUpdate = (comments: Comment[], commentId: string, updateFn: (comment: Comment) => void): boolean => {
   for (let i = 0; i < comments.length; i++) {
     const comment = comments[i];
@@ -79,7 +38,7 @@ const findCommentAndUpdate = (comments: Comment[], commentId: string, updateFn: 
   return false;
 };
 
-// Hàm trợ giúp (utility) để tìm và xóa comment lồng nhau
+// Helper to find and delete nested comments
 const findCommentAndDelete = (comments: Comment[], commentId: string): boolean => {
   for (let i = 0; i < comments.length; i++) {
     if (comments[i].id === commentId) {
@@ -95,114 +54,240 @@ const findCommentAndDelete = (comments: Comment[], commentId: string): boolean =
   return false;
 };
 
-// Hàm trợ giúp (utility) để tìm và thêm reply
+// Helper to add reply to nested comment
 const findCommentAndAddReply = (comments: Comment[], parentId: string, newComment: Comment): boolean => {
-    for (let i = 0; i < comments.length; i++) {
-        if (comments[i].id === parentId) {
-            comments[i].replies.unshift(newComment); // Thêm vào đầu danh sách replies
-            return true;
-        }
-        if (comments[i].replies && comments[i].replies.length > 0) {
-            if (findCommentAndAddReply(comments[i].replies, parentId, newComment)) {
-                return true;
-            }
-        }
+  for (let i = 0; i < comments.length; i++) {
+    if (comments[i].id === parentId) {
+      comments[i].replies.unshift(newComment);
+      return true;
     }
-    return false;
-}
+    if (comments[i].replies && comments[i].replies.length > 0) {
+      if (findCommentAndAddReply(comments[i].replies, parentId, newComment)) {
+        return true;
+      }
+    }
+  }
+  return false;
+};
+
+// Transform database comment to frontend format
+const transformComment = (dbComment: any): Comment => ({
+  id: dbComment.id,
+  author: {
+    id: dbComment.user_id,
+    username: dbComment.user_username,
+    avatarUrl: dbComment.user_avatar || '/assets/avatars/default.png'
+  },
+  content: dbComment.content,
+  createdAt: dbComment.created_at,
+  updatedAt: dbComment.updated_at,
+  parentId: dbComment.parent_id || null,
+  reactions: [],
+  attachments: dbComment.attachments || [],
+  mentions: [],
+  replies: []
+});
 
 export const useCommentStore = create<CommentStoreState>((set, get) => ({
   comments: [],
+  isLoading: false,
+  error: null,
+  currentUser: null,
   drafts: {},
 
-  fetchComments: async (contextId) => {
-    // TODO: Thay thế bằng API call thật
-    // Ví dụ: const fetchedComments = await api.get(`/posts/${contextId}/comments`);
-    console.log(`Fetching comments for context: ${contextId}`);
-    // Giả lập độ trễ mạng
-    await new Promise(res => setTimeout(res, 500));
-    set({ comments: mockComments });
-  },
+  setCurrentUser: (user) => set({ currentUser: user }),
 
-  addComment: async (contextId, content, parentId, attachments) => {
-    // TODO: Thay thế bằng API call thật
-    // Ví dụ: const newComment = await api.post(`/comments`, { contextId, content, parentId, attachments });
+  fetchComments: async (tacticId) => {
+    set({ isLoading: true, error: null });
     
-    // Giả lập API call
-    const newComment: Comment = {
-      id: `c_${Math.random().toString(36).substr(2, 9)}`,
-      author: mockCurrentUser,
-      content,
-      createdAt: new Date().toISOString(),
-      parentId,
-      attachments,
-      reactions: [],
-      mentions: [], // (API nên xử lý việc trích xuất @mentions)
-      replies: [],
-    };
-    
-    set(produce((draft: CommentStoreState) => {
-        if (parentId) {
-            // Đây là một reply
-            findCommentAndAddReply(draft.comments, parentId, newComment);
+    try {
+      const res = await fetch(`/api/tactic/${tacticId}/comments`);
+      
+      if (!res.ok) {
+        throw new Error('Failed to fetch comments');
+      }
+      
+      const data = await res.json();
+      
+      // Transform and organize comments (flat -> nested)
+      const commentsMap = new Map<string, Comment>();
+      const rootComments: Comment[] = [];
+      
+      // First pass: create all comments
+      for (const dbComment of data) {
+        commentsMap.set(dbComment.id, transformComment(dbComment));
+      }
+      
+      // Second pass: organize into tree
+      for (const dbComment of data) {
+        const comment = commentsMap.get(dbComment.id)!;
+        if (dbComment.parent_id && commentsMap.has(dbComment.parent_id)) {
+          commentsMap.get(dbComment.parent_id)!.replies.push(comment);
         } else {
-            // Đây là comment gốc
-            draft.comments.unshift(newComment); // Thêm vào đầu danh sách
+          rootComments.push(comment);
         }
-    }));
+      }
+      
+      set({ comments: rootComments, isLoading: false });
+    } catch (error: any) {
+      console.error('Fetch comments error:', error);
+      set({ error: error.message, isLoading: false, comments: [] });
+    }
   },
 
-  editComment: async (commentId, newContent) => {
-    // TODO: API call để edit
-    set(produce((draft: CommentStoreState) => {
+  addComment: async (tacticId, content, parentId, attachments) => {
+    const { currentUser } = get();
+    
+    if (!currentUser) {
+      set({ error: 'Bạn cần đăng nhập để bình luận' });
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/tactic/${tacticId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          username: currentUser.username,
+          name: currentUser.username,
+          avatar: currentUser.avatarUrl,
+          content,
+          parentId,
+          attachments
+        })
+      });
+
+      const result = await res.json();
+      
+      if (result.error) {
+        set({ error: result.error });
+        return;
+      }
+
+      const newComment: Comment = {
+        id: result.data.id,
+        author: currentUser,
+        content,
+        createdAt: result.data.created_at || new Date().toISOString(),
+        parentId,
+        attachments,
+        reactions: [],
+        mentions: [],
+        replies: [],
+      };
+
+      set(produce((draft: CommentStoreState) => {
+        if (parentId) {
+          findCommentAndAddReply(draft.comments, parentId, newComment);
+        } else {
+          draft.comments.unshift(newComment);
+        }
+      }));
+    } catch (error: any) {
+      console.error('Add comment error:', error);
+      set({ error: error.message });
+    }
+  },
+
+  editComment: async (tacticId, commentId, newContent) => {
+    const { currentUser } = get();
+    
+    if (!currentUser) {
+      set({ error: 'Bạn cần đăng nhập' });
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/tactic/${tacticId}/comments/${commentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: newContent,
+          userId: currentUser.id
+        })
+      });
+
+      const result = await res.json();
+      
+      if (result.error) {
+        set({ error: result.error });
+        return;
+      }
+
+      set(produce((draft: CommentStoreState) => {
         findCommentAndUpdate(draft.comments, commentId, (comment) => {
-            comment.content = newContent;
-            comment.updatedAt = new Date().toISOString();
+          comment.content = newContent;
+          comment.updatedAt = new Date().toISOString();
         });
-    }));
+      }));
+    } catch (error: any) {
+      console.error('Edit comment error:', error);
+      set({ error: error.message });
+    }
   },
 
-  deleteComment: async (commentId) => {
-    // TODO: API call để delete
-    set(produce((draft: CommentStoreState) => {
+  deleteComment: async (tacticId, commentId) => {
+    const { currentUser } = get();
+    
+    if (!currentUser) {
+      set({ error: 'Bạn cần đăng nhập' });
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/tactic/${tacticId}/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id })
+      });
+
+      const result = await res.json();
+      
+      if (result.error) {
+        set({ error: result.error });
+        return;
+      }
+
+      set(produce((draft: CommentStoreState) => {
         findCommentAndDelete(draft.comments, commentId);
-    }));
+      }));
+    } catch (error: any) {
+      console.error('Delete comment error:', error);
+      set({ error: error.message });
+    }
   },
 
   addReaction: async (commentId, emoji, userId) => {
-    // TODO: API call để toggle reaction
+    // Toggle reaction optimistically (no API yet, just local state)
     set(produce((draft: CommentStoreState) => {
-        findCommentAndUpdate(draft.comments, commentId, (comment) => {
-            const reactionIndex = comment.reactions.findIndex(r => r.emoji === emoji);
-            if (reactionIndex > -1) {
-                // Reaction đã tồn tại
-                const reaction = comment.reactions[reactionIndex];
-                const userIndex = reaction.users.indexOf(userId);
-                if (userIndex > -1) {
-                    // User bỏ react
-                    reaction.count--;
-                    reaction.users.splice(userIndex, 1);
-                    if (reaction.count === 0) {
-                        comment.reactions.splice(reactionIndex, 1);
-                    }
-                } else {
-                    // User thêm react
-                    reaction.count++;
-                    reaction.users.push(userId);
-                }
-            } else {
-                // Reaction mới
-                comment.reactions.push({ emoji, count: 1, users: [userId] });
+      findCommentAndUpdate(draft.comments, commentId, (comment) => {
+        const reactionIndex = comment.reactions.findIndex(r => r.emoji === emoji);
+        if (reactionIndex > -1) {
+          const reaction = comment.reactions[reactionIndex];
+          const userIndex = reaction.users.indexOf(userId);
+          if (userIndex > -1) {
+            reaction.count--;
+            reaction.users.splice(userIndex, 1);
+            if (reaction.count === 0) {
+              comment.reactions.splice(reactionIndex, 1);
             }
-        });
+          } else {
+            reaction.count++;
+            reaction.users.push(userId);
+          }
+        } else {
+          comment.reactions.push({ emoji, count: 1, users: [userId] });
+        }
+      });
     }));
   },
-  
+
   getDraft: (draftKey) => get().drafts[draftKey] || '',
-  
+
   setDraft: (draftKey, content) => {
     set(produce((draft: CommentStoreState) => {
-        draft.drafts[draftKey] = content;
+      draft.drafts[draftKey] = content;
     }));
   },
 }));

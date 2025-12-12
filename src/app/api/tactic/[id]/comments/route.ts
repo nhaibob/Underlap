@@ -33,7 +33,7 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { userId, username, name, avatar, content } = await request.json();
+    const { userId, username, name, avatar, content, parentId } = await request.json();
     
     if (!isSupabaseConfigured() || !supabase) {
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
@@ -51,7 +51,8 @@ export async function POST(
         user_username: username,
         user_name: name || username,
         user_avatar: avatar,
-        content: content.trim()
+        content: content.trim(),
+        parent_id: parentId || null
       })
       .select()
       .single();

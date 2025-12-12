@@ -9,23 +9,17 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useDropzone } from 'react-dropzone';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Smile, AtSign, Paperclip, Send, X, Image as ImageIcon, FileText, ClipboardPaste } from 'lucide-react';
+import { Smile, AtSign, Paperclip, Send, X, Image as ImageIcon, FileText, ClipboardPaste, Loader2 } from 'lucide-react';
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 import { CommentAttachment } from '@/types/comment';
 import { useDebouncedCallback } from 'use-debounce';
 
-// --- Dữ liệu giả lập (thay thế bằng API/dữ liệu thật của bạn) ---
-const MOCK_USER = {
-  id: 'user_1',
-  username: 'saban_dev',
-  avatarUrl: 'https://i.pravatar.cc/150?u=saban_dev',
-};
+// Fetch mentions from search (can be expanded later)
 const MOCK_MENTIONS = [
   { id: 'user_2', username: 'nhaibob' },
   { id: 'user_3', username: 'underlap' },
   { id: 'user_4', username: 'gemini' },
 ];
-// --- Kết thúc dữ liệu giả lập ---
 
 interface CommentInputProps {
   contextId: string; // postId hoặc tacticId
@@ -168,45 +162,80 @@ export const CommentInput: React.FC<CommentInputProps> = ({
   };
 
   // 8. Gửi Comment
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const uploadFile = async (file: File): Promise<string | null> => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', 'comments');
+      
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const data = await res.json();
+      return data.url || null;
+    } catch (err) {
+      console.error('Upload error:', err);
+      return null;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentUser) return;
     if (!content.trim() && attachments.length === 0 && !pastedImage) return;
 
-    // TODO: Upload files và pastedImage lên storage (ví dụ: S3, Firebase)
-    // và lấy về URL. Đây là phần QUAN TRỌNG cần làm ở backend.
+    setIsSubmitting(true);
     
-    // Giả lập attachments đã upload
-    const uploadedAttachments: CommentAttachment[] = [];
-    if (pastedImage) {
-        uploadedAttachments.push({
+    try {
+      const uploadedAttachments: CommentAttachment[] = [];
+      
+      // Upload pasted image
+      if (pastedImage) {
+        // Convert base64 to file
+        const res = await fetch(pastedImage);
+        const blob = await res.blob();
+        const file = new File([blob], 'pasted-image.png', { type: 'image/png' });
+        const url = await uploadFile(file);
+        if (url) {
+          uploadedAttachments.push({
             id: `file_${Math.random()}`,
             type: 'image',
-            url: pastedImage, // TRONG THỰC TẾ: đây sẽ là URL sau khi upload
+            url,
             name: 'pasted-image.png',
-        });
-    }
-    
-    // Giả lập upload file (bạn cần thay thế bằng logic upload thật)
-    for (const file of attachments) {
-        // const fileUrl = await uploadFileToServer(file); // Hàm upload của bạn
-        uploadedAttachments.push({
+          });
+        }
+      }
+      
+      // Upload attached files
+      for (const file of attachments) {
+        const url = await uploadFile(file);
+        if (url) {
+          uploadedAttachments.push({
             id: `file_${Math.random()}`,
             type: file.type.startsWith('image') ? 'image' : 'file',
-            url: URL.createObjectURL(file), // URL giả lập, thay bằng fileUrl
+            url,
             name: file.name,
             size: file.size,
-        });
-    }
+          });
+        }
+      }
 
-    await addComment(contextId, content.trim(), parentId, uploadedAttachments);
-    
-    // Reset state
-    setContent('');
-    setAttachments([]);
-    setPastedImage(null);
-    setDraft(draftKey, '');
-    if (onCommentPosted) {
-      onCommentPosted();
+      await addComment(contextId, content.trim(), parentId, uploadedAttachments);
+      
+      // Reset state
+      setContent('');
+      setAttachments([]);
+      setPastedImage(null);
+      setDraft(draftKey, '');
+      if (onCommentPosted) {
+        onCommentPosted();
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
@@ -218,14 +247,16 @@ export const CommentInput: React.FC<CommentInputProps> = ({
     user.username.toLowerCase().includes(mentionQuery.toLowerCase())
   );
 
+  const { currentUser } = useCommentStore();
+
   return (
     <form onSubmit={handleSubmit} {...getRootProps()} className={`relative ${isDragActive ? 'outline-dashed outline-2 outline-blue-500 bg-blue-50 dark:bg-blue-900/20 rounded-lg' : ''}`}>
       <input {...getInputProps()} />
       
       <div className="flex space-x-3 p-3 border rounded-lg bg-white dark:bg-gray-900 shadow-sm">
         <Avatar className="h-8 w-8">
-          <AvatarImage src={MOCK_USER.avatarUrl} alt={MOCK_USER.username} />
-          <AvatarFallback>{MOCK_USER.username[0]?.toUpperCase()}</AvatarFallback>
+          <AvatarImage src={currentUser?.avatarUrl} alt={currentUser?.username || 'User'} />
+          <AvatarFallback>{currentUser?.username?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
         </Avatar>
         
         <div className="flex-1 relative">
@@ -238,7 +269,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
             className="pr-24 min-h-[60px] text-sm"
             autoFocus={autoFocus}
           />
-          <Button type="submit" size="sm" className="absolute right-2 bottom-2" disabled={!content.trim() && attachments.length === 0 && !pastedImage}>
+          <Button type="submit" size="sm" className="absolute right-2 bottom-2" disabled={isSubmitting || !currentUser || (!content.trim() && attachments.length === 0 && !pastedImage)}>
             <Send className="h-4 w-4" />
           </Button>
           
