@@ -7,11 +7,11 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tool, ArrowColor, ArrowStyle } from '@/lib/hooks/useTacticLogic';
-import { ALL_ARROW_COLOR_VALUES
- } from '@/lib/constants';
+import { ALL_ARROW_COLOR_VALUES } from '@/lib/constants';
+import { PlayerPosition } from './PlayerToken';
 
 // Position groups for player picker
-const QUICK_POSITIONS = ['GK', 'CB', 'CM', 'ST'];
+const QUICK_POSITIONS: PlayerPosition[] = ['GK', 'CB', 'CM', 'ST'];
 
 interface FloatingToolbarProps {
   activeTool: Tool;
@@ -25,8 +25,8 @@ interface FloatingToolbarProps {
   canUndo: boolean;
   canRedo: boolean;
   // Optional: for player adding on mobile
-  positionToPlace?: string | null;
-  setPositionToPlace?: (pos: string | null) => void;
+  positionToPlace?: PlayerPosition | null;
+  setPositionToPlace?: (pos: PlayerPosition | null) => void;
 }
 
 import { motion, AnimatePresence } from 'framer-motion';
