@@ -7,6 +7,7 @@ import { CreatePostButton } from '@/components/core/CreatePostButton';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 import { Loader2, TrendingUp, Clock, Users, RefreshCw } from 'lucide-react';
+import { supabaseAuth } from '@/lib/supabase';
 
 interface PostData {
     id: string;
@@ -19,6 +20,7 @@ interface PostData {
         username: string; 
         avatarUrl: string; 
         name?: string;
+        id?: string;
     };
     stats: { 
         likes: number; 
@@ -44,6 +46,32 @@ export default function FeedPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [sortBy, setSortBy] = useState<SortType>('latest');
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [currentUser, setCurrentUser] = useState<any>(null);
+    const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+
+    // Fetch user on mount
+    useEffect(() => {
+        const getUser = async () => {
+            const user = await supabaseAuth.getUser();
+            setCurrentUser(user);
+            
+            // Fetch following list if user is logged in
+            if (user?.id) {
+                try {
+                    const res = await fetch(`/api/user/${user.user_metadata?.username || user.email?.split('@')[0]}/following`, {
+                        headers: { 'x-user-id': user.id }
+                    });
+                    if (res.ok) {
+                        const following = await res.json();
+                        setFollowingIds(new Set(following.map((f: any) => f.id)));
+                    }
+                } catch (error) {
+                    console.warn('Failed to fetch following list:', error);
+                }
+            }
+        };
+        getUser();
+    }, []);
 
     const fetchFeed = async (showRefresh = false) => {
         if (showRefresh) setIsRefreshing(true);
@@ -70,8 +98,19 @@ export default function FeedPage() {
         fetchFeed();
     }, [sortBy]);
 
-    // Sort feed data client-side based on sortBy
-    const sortedFeed = [...feedData].sort((a, b) => {
+    // Filter and sort feed data client-side based on sortBy
+    const filteredFeed = sortBy === 'following' 
+        ? feedData.filter(post => {
+            // Match by author id if available, otherwise by username
+            if (post.author.id) {
+                return followingIds.has(post.author.id);
+            }
+            // Fallback: check if we're following any user with this username
+            return Array.from(followingIds).some(id => id === post.author.username);
+          })
+        : feedData;
+
+    const sortedFeed = [...filteredFeed].sort((a, b) => {
         if (sortBy === 'trending') {
             return (b.stats.likes + b.stats.comments) - (a.stats.likes + a.stats.comments);
         }

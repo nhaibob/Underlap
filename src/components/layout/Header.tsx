@@ -6,8 +6,9 @@ import { usePathname, useRouter } from 'next/navigation';
 import { supabase, supabaseAuth } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/Avatar';
+import { NotificationDropdown } from '@/components/features/notifications';
 import { useUIStore } from '@/lib/store/uiStore';
-import { PenSquare, Search, Bell, Home, Compass, MessageCircle, LogOut, User, Settings, Menu } from 'lucide-react';
+import { PenSquare, Search, Home, Compass, MessageCircle, LogOut, User, Settings, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
@@ -113,9 +114,7 @@ export const Header = () => {
             Tạo chiến thuật
           </Button>
           
-          <Button variant="ghost" size="icon" className="hidden sm:flex">
-            <Bell className="w-5 h-5" />
-          </Button>
+          <NotificationDropdown className="hidden sm:flex" />
           
           <Button variant="ghost" size="icon" className="flex md:hidden">
              <Search className="w-5 h-5" />

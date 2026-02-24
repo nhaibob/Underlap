@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ProfileHeader } from '@/components/features/profile/ProfileHeader';
+import { FollowersModal } from '@/components/features/profile/FollowersModal';
 import { PostCard } from '@/components/core/PostCard';
 import { EditProfileModal } from '@/components/core/EditProfileModal';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs';
@@ -153,6 +154,14 @@ export default function ProfilePage({ params }: { params: { username: string } }
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [actualUsername, setActualUsername] = useState(rawUsername);
+  
+  // Follow state
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [followersModalOpen, setFollowersModalOpen] = useState(false);
+  const [followersModalType, setFollowersModalType] = useState<'followers' | 'following'>('followers');
 
   // Fetch user data
   useEffect(() => {
@@ -196,6 +205,9 @@ export default function ProfilePage({ params }: { params: { username: string } }
             if (profileData.id) {
               setProfileUserId(profileData.id);
             }
+            // Set follower/following counts
+            setFollowersCount(profileData.followers_count || 0);
+            setFollowingCount(profileData.following_count || 0);
           } else if (rawUsername.toLowerCase() === 'me' && user) {
             // Create mock profile from user session for "me" route
             setProfile({
@@ -234,6 +246,16 @@ export default function ProfilePage({ params }: { params: { username: string } }
           setTactics(published);
           setForkedTactics(forked);
           setDraftTactics(drafts);
+        }
+        // Fetch follow status if viewing another user's profile
+        if (user && profileUserId && user.id !== profileUserId) {
+          const followRes = await fetch(`/api/follow?targetId=${profileUserId}`, {
+            headers: { 'x-user-id': user.id }
+          });
+          if (followRes.ok) {
+            const { isFollowing: followStatus } = await followRes.json();
+            setIsFollowing(followStatus);
+          }
         }
       } catch (error) {
         console.error('Error fetching profile data:', error);
@@ -322,6 +344,47 @@ export default function ProfilePage({ params }: { params: { username: string } }
     }
   };
 
+  // Handle follow/unfollow
+  const handleFollowToggle = async () => {
+    if (!currentUser?.id || !profileUserId) {
+      router.push('/login');
+      return;
+    }
+
+    setIsFollowLoading(true);
+    try {
+      if (isFollowing) {
+        // Unfollow
+        const res = await fetch(`/api/follow?targetId=${profileUserId}`, {
+          method: 'DELETE',
+          headers: { 'x-user-id': currentUser.id }
+        });
+        if (res.ok) {
+          setIsFollowing(false);
+          setFollowersCount(prev => Math.max(0, prev - 1));
+        }
+      } else {
+        // Follow
+        const res = await fetch('/api/follow', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-user-id': currentUser.id 
+          },
+          body: JSON.stringify({ targetId: profileUserId })
+        });
+        if (res.ok) {
+          setIsFollowing(true);
+          setFollowersCount(prev => prev + 1);
+        }
+      }
+    } catch (error) {
+      console.error('Follow toggle error:', error);
+    } finally {
+      setIsFollowLoading(false);
+    }
+  };
+
   const formatJoinDate = (dateStr: string) => {
     if (!dateStr) return 'Không rõ';
     const date = new Date(dateStr);
@@ -351,11 +414,22 @@ export default function ProfilePage({ params }: { params: { username: string } }
         joinedDate={formatJoinDate(profile?.created_at || '')}
         isVerified={false}
         isOwnProfile={isOwnProfile}
+        isFollowing={isFollowing}
+        isFollowLoading={isFollowLoading}
         onEditProfile={() => setEditModalOpen(true)}
         onMessage={handleMessage}
+        onFollowToggle={handleFollowToggle}
+        onFollowersClick={() => {
+          setFollowersModalType('followers');
+          setFollowersModalOpen(true);
+        }}
+        onFollowingClick={() => {
+          setFollowersModalType('following');
+          setFollowersModalOpen(true);
+        }}
         stats={{
-          followers: 0,
-          following: 0,
+          followers: followersCount,
+          following: followingCount,
           likes: tactics.reduce((sum, t) => sum + t.stats.likes, 0),
           tactics: tactics.length
         }}
@@ -597,6 +671,15 @@ export default function ProfilePage({ params }: { params: { username: string } }
           location: profile.location || '',
           website: profile.website || ''
         } : undefined}
+      />
+
+      {/* Followers/Following Modal */}
+      <FollowersModal
+        isOpen={followersModalOpen}
+        onClose={() => setFollowersModalOpen(false)}
+        username={actualUsername}
+        type={followersModalType}
+        currentUserId={currentUser?.id}
       />
     </div>
   );

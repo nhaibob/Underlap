@@ -14,17 +14,17 @@ export const LandingHeader = () => {
 
         {/* Các nút hành động */}
         <div className="flex items-center gap-4">
-          {/* Nút Đăng nhập/Đăng ký */}
+          {/* Nút Đăng nhập */}
           <Link href="/login">
             <Button variant="ghost" className="text-text-secondary hover:text-text-primary">
               Đăng nhập
             </Button>
           </Link>
           
-          {/* Nút chính */}
-          <Link href="/feed">
-            <Button variant="default">
-              Bắt đầu
+          {/* Nút Đăng ký */}
+          <Link href="/register">
+            <Button variant="default" className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 shadow-md shadow-primary/20">
+              Đăng 
             </Button>
           </Link>
         </div>

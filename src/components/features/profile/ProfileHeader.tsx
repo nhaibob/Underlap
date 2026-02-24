@@ -1,7 +1,7 @@
 // src/components/features/profile/ProfileHeader.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { 
@@ -15,7 +15,8 @@ import {
   MessageCircle,
   MoreHorizontal,
   Camera,
-  Edit3
+  Edit3,
+  Loader2
 } from 'lucide-react';
 
 export interface ProfileHeaderProps {
@@ -36,12 +37,28 @@ export interface ProfileHeaderProps {
     tactics: number;
   };
   isOwnProfile?: boolean;
+  isFollowing?: boolean;
+  isFollowLoading?: boolean;
   onEditProfile?: () => void;
   onMessage?: () => void; // Handler for messaging
+  onFollowToggle?: () => void; // Handler for follow/unfollow
+  onFollowersClick?: () => void; // Handler for clicking followers count
+  onFollowingClick?: () => void; // Handler for clicking following count
 }
 
-const StatItem = ({ value, label }: { value: number, label: string }) => (
-  <div className="text-center group cursor-pointer">
+const StatItem = ({ 
+  value, 
+  label, 
+  onClick 
+}: { 
+  value: number; 
+  label: string; 
+  onClick?: () => void;
+}) => (
+  <div 
+    className={`text-center group ${onClick ? 'cursor-pointer' : ''}`}
+    onClick={onClick}
+  >
     <p className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors">
       {value >= 1000 ? `${(value / 1000).toFixed(1)}K` : value}
     </p>
@@ -62,10 +79,14 @@ export const ProfileHeader = ({
   isVerified = false,
   stats,
   isOwnProfile = false,
+  isFollowing = false,
+  isFollowLoading = false,
   onEditProfile,
-  onMessage
+  onMessage,
+  onFollowToggle,
+  onFollowersClick,
+  onFollowingClick
 }: ProfileHeaderProps) => {
-  const [isFollowing, setIsFollowing] = useState(false);
 
   const displayName = name || username;
   const displayBio = bio || "Chiến thuật gia đam mê bóng đá. Đang khám phá các hệ thống chiến thuật hiện đại.";
@@ -150,14 +171,17 @@ export const ProfileHeader = ({
               <>
                 <Button 
                   variant={isFollowing ? "outline" : "default"}
-                  onClick={() => setIsFollowing(!isFollowing)}
+                  onClick={onFollowToggle}
+                  disabled={isFollowLoading}
                   className={`gap-2 min-w-[120px] ${
                     isFollowing 
                       ? 'bg-card/50 border-white/10 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50' 
                       : 'shadow-lg shadow-primary/25'
                   }`}
                 >
-                  {isFollowing ? (
+                  {isFollowLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : isFollowing ? (
                     <>
                       <CheckCircle2 className="w-4 h-4" />
                       Đang theo dõi
@@ -241,8 +265,16 @@ export const ProfileHeader = ({
         <div className="flex items-center justify-between mt-6 pt-6 border-t border-white/10">
           <div className="flex gap-8 md:gap-12">
             <StatItem value={displayStats.tactics} label="Chiến thuật" />
-            <StatItem value={displayStats.followers} label="Người theo dõi" />
-            <StatItem value={displayStats.following} label="Đang theo dõi" />
+            <StatItem 
+              value={displayStats.followers} 
+              label="Người theo dõi" 
+              onClick={onFollowersClick}
+            />
+            <StatItem 
+              value={displayStats.following} 
+              label="Đang theo dõi" 
+              onClick={onFollowingClick}
+            />
             <StatItem value={displayStats.likes} label="Lượt thích" />
           </div>
           

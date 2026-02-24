@@ -84,7 +84,7 @@ export default function LoginPage() {
               Mật khẩu
             </label>
             <Link 
-              href="#" 
+              href="/forgot-password" 
               className="text-sm text-primary hover:text-primary/80 transition-colors"
             >
               Quên mật khẩu?
