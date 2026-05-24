@@ -478,7 +478,7 @@ export const TacticBoard = ({
     return layerVisibility[team];
   });
 
-  const handleBoardClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleBoardClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (readOnly) return;
     if (activeTool === 'draw' || activeTool === 'area' || activeTool === 'erase') return;
     if (!positionToPlace && !isPlacingBall && selectedPlayerId && activeTool === 'select') { 
