@@ -94,7 +94,7 @@ const FootballPitchBackground = memo(() => (
         <path d="M 595 375 A 20 20 0 0 1 575 395" stroke="#FFFFFF" strokeWidth="2.5" fill="none" opacity="0.95"/>
     </svg>
   </div>
-);
+));
 
 // --- Draggable Token ---
 const DraggablePlayerToken = memo(function DraggablePlayerToken({ 
