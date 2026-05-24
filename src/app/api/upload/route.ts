@@ -1,35 +1,42 @@
 // src/app/api/upload/route.ts
-import { NextResponse } from 'next/server';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { NextResponse } from "next/server";
+import { getAuthUser, supabaseAdmin as supabase } from "@/lib/authServer";
 
 export async function POST(request: Request) {
   try {
-    if (!isSupabaseConfigured() || !supabase) {
-      return NextResponse.json({ error: 'Storage not configured' }, { status: 500 });
+    const authUser = await getAuthUser(request);
+    if (!authUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const formData = await request.formData();
-    const file = formData.get('file') as File;
-    const folder = formData.get('folder') as string || 'avatars';
-    
+    const file = formData.get("file") as File;
+    const folder = (formData.get("folder") as string) || "avatars";
+
     if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
     // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ error: 'Invalid file type. Only JPEG, PNG, GIF, WebP allowed.' }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid file type. Only JPEG, PNG, GIF, WebP allowed." },
+        { status: 400 },
+      );
     }
 
     // Validate file size (max 5MB)
     const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
-      return NextResponse.json({ error: 'File too large. Max 5MB.' }, { status: 400 });
+      return NextResponse.json(
+        { error: "File too large. Max 5MB." },
+        { status: 400 },
+      );
     }
 
     // Generate unique filename
-    const ext = file.name.split('.').pop();
+    const ext = file.name.split(".").pop();
     const filename = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
     const filePath = `${folder}/${filename}`;
 
@@ -39,30 +46,29 @@ export async function POST(request: Request) {
 
     // Upload to Supabase Storage
     const { data, error } = await supabase.storage
-      .from('uploads')
+      .from("uploads")
       .upload(filePath, buffer, {
         contentType: file.type,
-        upsert: false
+        upsert: false,
       });
 
     if (error) {
-      console.error('Upload error:', error);
+      console.error("Upload error:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     // Get public URL
     const { data: urlData } = supabase.storage
-      .from('uploads')
+      .from("uploads")
       .getPublicUrl(filePath);
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       url: urlData.publicUrl,
-      path: filePath 
+      path: filePath,
     });
-
   } catch (error: any) {
-    console.error('Upload error:', error);
+    console.error("Upload error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

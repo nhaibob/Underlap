@@ -10,7 +10,8 @@ import { TacticPickerModal } from '@/components/features/messages/TacticPickerMo
 import { TacticViewModal } from '@/components/features/messages/TacticViewModal';
 import { TacticCreatorModal } from '@/components/features/messages/TacticCreatorModal';
 import { supabaseAuth } from '@/lib/supabase';
-import { 
+import { getAuthHeaders } from '@/lib/authFetch';
+import {
   ArrowLeft, 
   Send, 
   Loader2, 
@@ -77,7 +78,7 @@ export default function DMConversationPage({ params }: { params: { conversationI
     const fetchMessages = async () => {
       try {
         const res = await fetch(`/api/messages/${params.conversationId}`, {
-          headers: { 'x-user-id': userId }
+          headers: { ...(await getAuthHeaders()) }
         });
         if (res.ok) {
           const data = await res.json();
@@ -110,8 +111,7 @@ export default function DMConversationPage({ params }: { params: { conversationI
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': userId
-        },
+          ...(await getAuthHeaders()) },
         body: JSON.stringify({
           content,
           tacticData,
@@ -159,8 +159,7 @@ export default function DMConversationPage({ params }: { params: { conversationI
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': userId
-        },
+          ...(await getAuthHeaders()) },
         body: JSON.stringify({
           players: tacticData.players || [],
           arrows: tacticData.arrows || [],
@@ -199,7 +198,7 @@ export default function DMConversationPage({ params }: { params: { conversationI
     try {
       const res = await fetch(`/api/messages/${params.conversationId}?messageId=${messageId}`, {
         method: 'DELETE',
-        headers: { 'x-user-id': userId }
+        headers: { ...(await getAuthHeaders()) }
       });
       
       if (res.ok) {

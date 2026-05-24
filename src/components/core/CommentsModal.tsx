@@ -1,10 +1,11 @@
 // src/components/core/CommentsModal.tsx
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { X, Send, Loader2, MessageCircle } from 'lucide-react';
-import { Avatar } from '@/components/ui/Avatar';
-import { supabaseAuth } from '@/lib/supabase';
+import React, { useState, useEffect } from "react";
+import { X, Send, Loader2, MessageCircle } from "lucide-react";
+import { Avatar } from "@/components/ui/Avatar";
+import { supabaseAuth } from "@/lib/supabase";
+import { getAuthHeaders } from "@/lib/authFetch";
 
 interface Comment {
   id: string;
@@ -22,9 +23,14 @@ interface CommentsModalProps {
   tacticTitle?: string;
 }
 
-export const CommentsModal = ({ isOpen, onClose, tacticId, tacticTitle }: CommentsModalProps) => {
+export const CommentsModal = ({
+  isOpen,
+  onClose,
+  tacticId,
+  tacticTitle,
+}: CommentsModalProps) => {
   const [comments, setComments] = useState<Comment[]>([]);
-  const [newComment, setNewComment] = useState('');
+  const [newComment, setNewComment] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -52,7 +58,7 @@ export const CommentsModal = ({ isOpen, onClose, tacticId, tacticTitle }: Commen
       const data = await res.json();
       setComments(data);
     } catch (error) {
-      console.error('Fetch comments error:', error);
+      console.error("Fetch comments error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -64,26 +70,23 @@ export const CommentsModal = ({ isOpen, onClose, tacticId, tacticTitle }: Commen
 
     setIsSending(true);
     try {
+      const authHeaders = await getAuthHeaders();
       const res = await fetch(`/api/tactic/${tacticId}/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({
-          userId: user.id,
-          username: user.user_metadata?.username || user.email?.split('@')[0],
-          name: user.user_metadata?.name || user.user_metadata?.username || 'User',
-          avatar: user.user_metadata?.avatar_url,
-          content: newComment.trim()
-        })
+          content: newComment.trim(),
+        }),
       });
-      
+
       const data = await res.json();
       if (data.success) {
         // Add new comment to list
-        setComments(prev => [data.data, ...prev]);
-        setNewComment('');
+        setComments((prev) => [data.data, ...prev]);
+        setNewComment("");
       }
     } catch (error) {
-      console.error('Send comment error:', error);
+      console.error("Send comment error:", error);
     } finally {
       setIsSending(false);
     }
@@ -94,20 +97,20 @@ export const CommentsModal = ({ isOpen, onClose, tacticId, tacticTitle }: Commen
     const now = new Date();
     const diff = (now.getTime() - date.getTime()) / 1000;
 
-    if (diff < 60) return 'Vừa xong';
+    if (diff < 60) return "Vừa xong";
     if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`;
     if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`;
-    return date.toLocaleDateString('vi-VN');
+    return date.toLocaleDateString("vi-VN");
   };
 
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-md flex items-center justify-center p-4"
       onClick={onClose}
     >
-      <div 
+      <div
         className="w-full max-w-lg max-h-[80vh] bg-card rounded-2xl border border-white/10 shadow-2xl flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
@@ -116,9 +119,11 @@ export const CommentsModal = ({ isOpen, onClose, tacticId, tacticTitle }: Commen
           <div className="flex items-center gap-2">
             <MessageCircle className="w-5 h-5 text-primary" />
             <h3 className="font-semibold text-foreground">Bình luận</h3>
-            <span className="text-sm text-muted-foreground">({comments.length})</span>
+            <span className="text-sm text-muted-foreground">
+              ({comments.length})
+            </span>
           </div>
-          <button 
+          <button
             onClick={onClose}
             className="p-2 rounded-full hover:bg-white/10 transition-colors"
           >
@@ -141,10 +146,10 @@ export const CommentsModal = ({ isOpen, onClose, tacticId, tacticTitle }: Commen
           ) : (
             comments.map((comment) => (
               <div key={comment.id} className="flex gap-3">
-                <Avatar 
-                  src={comment.user_avatar} 
-                  alt={comment.user_name} 
-                  size="sm" 
+                <Avatar
+                  src={comment.user_avatar}
+                  alt={comment.user_name}
+                  size="sm"
                 />
                 <div className="flex-1 min-w-0">
                   <div className="bg-white/5 rounded-xl px-3 py-2">
@@ -156,7 +161,9 @@ export const CommentsModal = ({ isOpen, onClose, tacticId, tacticTitle }: Commen
                         @{comment.user_username}
                       </span>
                     </div>
-                    <p className="text-sm text-foreground/90">{comment.content}</p>
+                    <p className="text-sm text-foreground/90">
+                      {comment.content}
+                    </p>
                   </div>
                   <span className="text-xs text-muted-foreground mt-1 ml-2">
                     {formatTime(comment.created_at)}
@@ -169,22 +176,25 @@ export const CommentsModal = ({ isOpen, onClose, tacticId, tacticTitle }: Commen
 
         {/* Comment Input */}
         {user ? (
-          <form onSubmit={handleSubmit} className="p-4 border-t border-white/10">
+          <form
+            onSubmit={handleSubmit}
+            className="p-4 border-t border-white/10"
+          >
             <div className="flex gap-3">
-              <Avatar 
+              <Avatar
                 src={user.user_metadata?.avatar_url}
-                alt="You" 
-                size="sm" 
+                alt="You"
+                size="sm"
               />
               <div className="flex-1 flex gap-2">
-                <input 
+                <input
                   type="text"
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="Viết bình luận..."
                   className="flex-1 bg-white/5 rounded-full px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
-                <button 
+                <button
                   type="submit"
                   disabled={!newComment.trim() || isSending}
                   className="p-2 bg-primary rounded-full text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/80 transition-colors"

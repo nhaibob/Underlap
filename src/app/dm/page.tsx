@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { NewConversationModal } from '@/components/features/messages/NewConversationModal';
 import { supabaseAuth } from '@/lib/supabase';
-import { 
+import { getAuthHeaders } from '@/lib/authFetch';
+import {
   MessageSquare, 
   Search, 
   Loader2, 
@@ -60,7 +61,7 @@ export default function DMPage() {
     const fetchConversations = async () => {
       try {
         const res = await fetch('/api/messages', {
-          headers: { 'x-user-id': userId }
+          headers: { ...(await getAuthHeaders()) }
         });
         if (res.ok) {
           const data = await res.json();

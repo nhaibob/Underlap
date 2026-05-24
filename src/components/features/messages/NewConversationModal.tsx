@@ -9,6 +9,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { supabaseAuth } from '@/lib/supabase';
 import { X, Loader2, Search, MessageSquare, Check } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
+import { getAuthHeaders } from '@/lib/authFetch';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -102,8 +103,7 @@ export function NewConversationModal({ isOpen, onClose }: NewConversationModalPr
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': currentUserId
-        },
+          ...(await getAuthHeaders()) },
         body: JSON.stringify({ participantId: selectedUserId })
       });
 

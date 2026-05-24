@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { NotificationItem, Notification } from './NotificationItem';
 import { supabaseAuth } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { getAuthHeaders } from '@/lib/authFetch';
 
 interface NotificationDropdownProps {
   className?: string;
@@ -52,7 +53,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ clas
       if (!user) return;
 
       const response = await fetch('/api/notifications/unread-count', {
-        headers: { 'x-user-id': user.id }
+        headers: { ...(await getAuthHeaders()) }
       });
       const data = await response.json();
       setUnreadCount(data.count || 0);
@@ -69,7 +70,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ clas
       if (!user) return;
 
       const response = await fetch('/api/notifications?limit=15', {
-        headers: { 'x-user-id': user.id }
+        headers: { ...(await getAuthHeaders()) }
       });
       const data = await response.json();
       
@@ -94,8 +95,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ clas
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': user.id
-        },
+          ...(await getAuthHeaders()) },
         body: JSON.stringify({ notificationId })
       });
 
@@ -118,8 +118,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ clas
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': user.id
-        },
+          ...(await getAuthHeaders()) },
         body: JSON.stringify({ markAll: true })
       });
 
