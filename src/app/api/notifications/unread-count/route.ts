@@ -1,11 +1,11 @@
 // src/app/api/notifications/unread-count/route.ts
 import { NextResponse } from "next/server";
-import { getAuthUser, supabaseAdmin as supabase } from "@/lib/authServer";
+import { getServerUser, supabaseAdmin as supabase } from "@/lib/authServer";
 
 // GET - Get unread notification count (separated by type)
 export async function GET(request: Request) {
   try {
-    const authUser = await getAuthUser(request);
+    const authUser = await getServerUser();
     const userId = authUser?.id;
 
     if (!userId) {

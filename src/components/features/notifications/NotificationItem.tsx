@@ -87,7 +87,7 @@ const NOTIFICATION_CONFIG = {
     color: 'text-cyan-400',
     bgColor: 'bg-cyan-500/10',
     getMessage: (n: Notification) => 'đã gửi tin nhắn cho bạn',
-    getLink: (n: Notification) => n.conversation_id ? `/dm/${n.conversation_id}` : '/dm',
+    getLink: (n: Notification) => n.conversation_id ? `/messages/${n.conversation_id}` : '/messages',
   },
   fork: {
     icon: GitFork,

@@ -16,7 +16,6 @@ import {
   MouseSensor,
 } from '@dnd-kit/core';
 import { Loader2 } from 'lucide-react';
-import { getAuthHeaders } from '@/lib/authFetch';
 
 export default function EditTacticPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -144,8 +143,7 @@ export default function EditTacticPage({ params }: { params: { id: string } }) {
       const res = await fetch(`/api/tactic/${params.id}`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
-          ...(await getAuthHeaders()) },
+          'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: title.trim(),
           description,

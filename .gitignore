@@ -41,3 +41,7 @@ next-env.d.ts
 
 # Cache
 .cache/
+
+# Generated files (do not commit)
+output.css
+structure.txt

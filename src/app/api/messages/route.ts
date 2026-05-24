@@ -1,10 +1,10 @@
 // src/app/api/messages/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthUser, supabaseAdmin as supabase } from "@/lib/authServer";
+import { getServerUser, supabaseAdmin as supabase } from "@/lib/authServer";
 
 // GET - List user's conversations
 export async function GET(request: NextRequest) {
-  const authUser = await getAuthUser(request);
+  const authUser = await getServerUser();
   const userId = authUser?.id;
 
   if (!userId) {
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
 
 // POST - Create new conversation or get existing one
 export async function POST(request: NextRequest) {
-  const authUser = await getAuthUser(request);
+  const authUser = await getServerUser();
   const userId = authUser?.id;
 
   if (!userId) {

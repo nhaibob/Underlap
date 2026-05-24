@@ -1,19 +1,20 @@
 // src/components/features/notifications/NotificationDropdown.tsx
 "use client";
-import React, { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
-import { Bell, Check, Loader2, MessageCircle } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { NotificationItem, Notification } from './NotificationItem';
-import { supabaseAuth } from '@/lib/supabase';
-import { cn } from '@/lib/utils';
-import { getAuthHeaders } from '@/lib/authFetch';
+import React, { useState, useEffect, useRef } from "react";
+import Link from "next/link";
+import { Bell, Check, Loader2, MessageCircle } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { NotificationItem, Notification } from "./NotificationItem";
+import { useSession } from "next-auth/react";
+import { cn } from "@/lib/utils";
 
 interface NotificationDropdownProps {
   className?: string;
 }
 
-export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className }) => {
+export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
+  className,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -21,66 +22,62 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ clas
   const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Dùng NextAuth session
+  const { data: session } = useSession();
+  const isLoggedIn = !!session?.user?.id;
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // Fetch unread count on mount and periodically
   useEffect(() => {
-    fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 30000); // Every 30 seconds
-    return () => clearInterval(interval);
-  }, []);
+    if (isLoggedIn) {
+      fetchUnreadCount();
+      const interval = setInterval(fetchUnreadCount, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [isLoggedIn]);
 
   // Fetch notifications when dropdown opens
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && isLoggedIn) {
       fetchNotifications();
     }
   }, [isOpen]);
 
   const fetchUnreadCount = async () => {
     try {
-      const user = await supabaseAuth.getUser();
-      if (!user) return;
-
-      const response = await fetch('/api/notifications/unread-count', {
-        headers: { ...(await getAuthHeaders()) }
-      });
+      const response = await fetch("/api/notifications/unread-count");
       const data = await response.json();
       setUnreadCount(data.count || 0);
       setUnreadMessageCount(data.messageCount || 0);
     } catch (error) {
-      console.error('Failed to fetch unread count:', error);
+      console.error("Failed to fetch unread count:", error);
     }
   };
 
   const fetchNotifications = async () => {
     setIsLoading(true);
     try {
-      const user = await supabaseAuth.getUser();
-      if (!user) return;
-
-      const response = await fetch('/api/notifications?limit=15', {
-        headers: { ...(await getAuthHeaders()) }
-      });
+      const response = await fetch("/api/notifications?limit=15");
       const data = await response.json();
-      
-      // Filter out message notifications - they are shown separately in DM
       const activityNotifications = (data.notifications || []).filter(
-        (n: Notification) => n.type !== 'message'
+        (n: Notification) => n.type !== "message",
       );
       setNotifications(activityNotifications);
     } catch (error) {
-      console.error('Failed to fetch notifications:', error);
+      console.error("Failed to fetch notifications:", error);
     } finally {
       setIsLoading(false);
     }
@@ -88,64 +85,51 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ clas
 
   const markAsRead = async (notificationId: string) => {
     try {
-      const user = await supabaseAuth.getUser();
-      if (!user) return;
-
-      await fetch('/api/notifications', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(await getAuthHeaders()) },
-        body: JSON.stringify({ notificationId })
+      await fetch("/api/notifications", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notificationId }),
       });
-
-      // Update local state
-      setNotifications(prev => 
-        prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === notificationId ? { ...n, is_read: true } : n,
+        ),
       );
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch (error) {
-      console.error('Failed to mark as read:', error);
+      console.error("Failed to mark as read:", error);
     }
   };
 
   const markAllAsRead = async () => {
     try {
-      const user = await supabaseAuth.getUser();
-      if (!user) return;
-
-      await fetch('/api/notifications', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(await getAuthHeaders()) },
-        body: JSON.stringify({ markAll: true })
+      await fetch("/api/notifications", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ markAll: true }),
       });
-
-      // Update local state
-      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
       setUnreadCount(0);
     } catch (error) {
-      console.error('Failed to mark all as read:', error);
+      console.error("Failed to mark all as read:", error);
     }
   };
 
-  // Calculate activity-only unread count (excluding messages)
-  const activityUnreadCount = notifications.filter(n => !n.is_read).length;
+  const activityUnreadCount = notifications.filter((n) => !n.is_read).length;
 
   return (
     <div ref={dropdownRef} className={cn("relative", className)}>
       {/* Bell Button */}
-      <Button 
-        variant="ghost" 
-        size="icon" 
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={() => setIsOpen(!isOpen)}
         className="relative"
       >
         <Bell className="w-5 h-5" />
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-white text-xs font-bold rounded-full flex items-center justify-center">
-            {unreadCount > 99 ? '99+' : unreadCount}
+            {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
       </Button>
@@ -167,9 +151,9 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ clas
             )}
           </div>
 
-          {/* Messages Link - Separated Section */}
+          {/* Messages Link */}
           <Link
-            href="/dm"
+            href="/messages"
             onClick={() => setIsOpen(false)}
             className="flex items-center gap-3 px-4 py-3 bg-cyan-500/5 border-b border-white/10 hover:bg-cyan-500/10 transition-colors"
           >
@@ -178,7 +162,9 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ clas
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-text-primary">Tin nhắn</p>
-              <p className="text-xs text-text-secondary">Xem tin nhắn riêng của bạn</p>
+              <p className="text-xs text-text-secondary">
+                Xem tin nhắn riêng của bạn
+              </p>
             </div>
             {unreadMessageCount > 0 && (
               <span className="px-2 py-0.5 bg-cyan-500 text-white text-xs font-bold rounded-full">

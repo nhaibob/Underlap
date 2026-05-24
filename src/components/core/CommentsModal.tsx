@@ -4,8 +4,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Send, Loader2, MessageCircle } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
-import { supabaseAuth } from "@/lib/supabase";
-import { getAuthHeaders } from "@/lib/authFetch";
+import { useSession } from "next-auth/react";
 
 interface Comment {
   id: string;
@@ -33,16 +32,10 @@ export const CommentsModal = ({
   const [newComment, setNewComment] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [user, setUser] = useState<any>(null);
 
-  // Get current user
-  useEffect(() => {
-    const getUser = async () => {
-      const currentUser = await supabaseAuth.getUser();
-      setUser(currentUser);
-    };
-    getUser();
-  }, []);
+  // Dùng NextAuth session thay vì supabaseAuth.getUser()
+  const { data: session } = useSession();
+  const user = session?.user;
 
   // Fetch comments when modal opens
   useEffect(() => {
@@ -70,13 +63,10 @@ export const CommentsModal = ({
 
     setIsSending(true);
     try {
-      const authHeaders = await getAuthHeaders();
       const res = await fetch(`/api/tactic/${tacticId}/comments`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeaders },
-        body: JSON.stringify({
-          content: newComment.trim(),
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: newComment.trim() }),
       });
 
       const data = await res.json();
@@ -182,7 +172,7 @@ export const CommentsModal = ({
           >
             <div className="flex gap-3">
               <Avatar
-                src={user.user_metadata?.avatar_url}
+                src={(user as any)?.image}
                 alt="You"
                 size="sm"
               />

@@ -1,13 +1,13 @@
 // src/app/api/messages/[conversationId]/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthUser, supabaseAdmin as supabase } from "@/lib/authServer";
+import { getServerUser, supabaseAdmin as supabase } from "@/lib/authServer";
 
 // GET - Get messages in a conversation
 export async function GET(
   request: NextRequest,
   { params }: { params: { conversationId: string } },
 ) {
-  const authUser = await getAuthUser(request);
+  const authUser = await getServerUser();
   const userId = authUser?.id;
 
   if (!userId) {
@@ -88,7 +88,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { conversationId: string } },
 ) {
-  const authUser = await getAuthUser(request);
+  const authUser = await getServerUser();
   const userId = authUser?.id;
 
   if (!userId) {
@@ -169,7 +169,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { conversationId: string } },
 ) {
-  const authUser = await getAuthUser(request);
+  const authUser = await getServerUser();
   const userId = authUser?.id;
   const { searchParams } = new URL(request.url);
   const messageId = searchParams.get("messageId");

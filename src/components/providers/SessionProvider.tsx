@@ -1,9 +1,12 @@
-// src/components/providers/SessionProvider.tsx
-// Simple provider wrapper (NextAuth removed — using Supabase Auth)
 "use client";
+// src/components/providers/SessionProvider.tsx
+// Bọc ứng dụng bằng NextAuth SessionProvider
+// Cho phép dùng useSession() hook trong toàn bộ client components
 
-import { ReactNode } from "react";
+import { SessionProvider as NextAuthSessionProvider } from "next-auth/react";
 
-export function SessionProvider({ children }: { children: ReactNode }) {
-  return <>{children}</>;
+export function SessionProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <NextAuthSessionProvider>{children}</NextAuthSessionProvider>
+  );
 }

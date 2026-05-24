@@ -1,6 +1,6 @@
 // src/app/api/user/[username]/followers/route.ts
 import { NextResponse } from "next/server";
-import { getAuthUser, supabaseAdmin as supabase } from "@/lib/authServer";
+import { getServerUser, supabaseAdmin as supabase } from "@/lib/authServer";
 
 // GET - Get list of followers for a user
 export async function GET(
@@ -9,7 +9,7 @@ export async function GET(
 ) {
   try {
     const username = decodeURIComponent(params.username);
-    const authUser = await getAuthUser(request);
+    const authUser = await getServerUser();
     const currentUserId = authUser?.id || null;
 
     // First get the user's profile ID

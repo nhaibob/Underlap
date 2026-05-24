@@ -14,7 +14,6 @@ import {
 } from '@dnd-kit/core';
 import { TacticEditorUI } from './TacticEditorUI';
 import { useTacticLogic } from '@/lib/hooks/useTacticLogic';
-import { getAuthHeaders } from '@/lib/authFetch';
 
 export const CreateTacticModal = () => {
   const { isCreateModalOpen, closeCreateModal } = useUIStore();
@@ -132,8 +131,7 @@ export const CreateTacticModal = () => {
         const response = await fetch('/api/tactic', { 
             method: 'POST', 
             headers: { 
-              'Content-Type': 'application/json',
-              ...(await getAuthHeaders())
+              'Content-Type': 'application/json'
             }, 
             body: JSON.stringify(payload) 
         });
@@ -176,8 +174,7 @@ export const CreateTacticModal = () => {
         const response = await fetch('/api/tactic', { 
             method: 'POST', 
             headers: { 
-              'Content-Type': 'application/json',
-              ...(await getAuthHeaders())
+              'Content-Type': 'application/json'
             }, 
             body: JSON.stringify(payload) 
         });

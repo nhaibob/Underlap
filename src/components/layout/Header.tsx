@@ -1,91 +1,82 @@
 // src/components/layout/Header.tsx
-"use client"; 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { supabase, supabaseAuth } from '@/lib/supabase';
-import { Button } from '@/components/ui/Button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/Avatar';
-import { NotificationDropdown } from '@/components/features/notifications';
-import { useUIStore } from '@/lib/store/uiStore';
-import { PenSquare, Search, Home, Compass, MessageCircle, LogOut, User, Settings, Menu } from 'lucide-react';
-import { cn } from '@/lib/utils';
+"use client";
+import React, { useState } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
+import { Button } from "@/components/ui/Button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
+import { NotificationDropdown } from "@/components/features/notifications";
+import { useUIStore } from "@/lib/store/uiStore";
+import {
+  PenSquare,
+  Search,
+  Home,
+  Compass,
+  MessageCircle,
+  LogOut,
+  User,
+  Settings,
+  Menu,
+  Loader2,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-    { href: '/feed', icon: Home, label: 'Feed' },
-    { href: '/explore', icon: Compass, label: 'Khám phá' },
-    { href: '/dm', icon: MessageCircle, label: 'Tin nhắn' },
+  { href: "/feed", icon: Home, label: "Feed" },
+  { href: "/explore", icon: Compass, label: "Khám phá" },
+  { href: "/messages", icon: MessageCircle, label: "Tin nhắn" },
 ];
 
-const NavLink = ({ href, icon: Icon }: typeof NAV_ITEMS[0]) => {
-    const pathname = usePathname();
-    const isActive = pathname === href || (pathname.startsWith('/profile') && href === '/profile/me');
+const NavLink = ({ href, icon: Icon }: (typeof NAV_ITEMS)[0]) => {
+  const pathname = usePathname();
+  const isActive =
+    pathname === href ||
+    (pathname.startsWith("/profile") && href === "/profile/me");
 
-    return (
-        <Link 
-            href={href}
-            className={cn(
-                "flex items-center p-2 rounded-full transition-colors",
-                isActive 
-                    ? "bg-panel text-text-primary" 
-                    : "text-text-secondary hover:bg-panel hover:text-text-primary"
-            )}
-        >
-            <Icon className="w-5 h-5" />
-        </Link>
-    );
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "flex items-center p-2 rounded-full transition-colors",
+        isActive
+          ? "bg-panel text-text-primary"
+          : "text-text-secondary hover:bg-panel hover:text-text-primary",
+      )}
+    >
+      <Icon className="w-5 h-5" />
+    </Link>
+  );
 };
 
 export const Header = () => {
   const router = useRouter();
   const { openCreateModal, openSettingsModal } = useUIStore();
   const [showDropdown, setShowDropdown] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  
-  // Get current user on mount
-  useEffect(() => {
-    const getUser = async () => {
-      const currentUser = await supabaseAuth.getUser();
-      setUser(currentUser);
-    };
-    getUser();
 
-    // Listen for auth changes
-    if (supabase) {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-        setUser(session?.user || null);
-      });
-
-      return () => subscription.unsubscribe();
-    }
-  }, []);
+  // ── Dùng NextAuth session thay vì supabase.getUser() ──────────────────────
+  const { data: session, status } = useSession();
+  const user = session?.user;
 
   const handleLogout = async () => {
-    try {
-      await supabaseAuth.signOut();
-      router.push('/');
-      router.refresh();
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
+    setShowDropdown(false);
+    await signOut({ redirect: false });
+    router.push("/");
+    router.refresh();
   };
 
-  const displayName = user?.user_metadata?.username || user?.email?.split('@')[0] || 'User';
-  const displayEmail = user?.email || '';
-  const avatarUrl = user?.user_metadata?.avatar_url || '';
+  const displayName =
+    (user as any)?.username || user?.name || user?.email?.split("@")[0] || "User";
+  const displayEmail = user?.email || "";
+  const avatarUrl = user?.image || "";
 
   return (
     <header className="sticky top-0 z-50 w-full h-16 bg-panel/80 backdrop-blur-md border-b border-panel">
       <div className="flex items-center justify-between h-full px-4 md:px-6">
-        
         {/* 1. LOGO & NAV */}
         <div className="flex items-center gap-6">
           <Link href="/feed" className="flex items-center gap-2 flex-shrink-0">
-            <img 
-              src="/logo.png" 
-              alt="Underlap" 
-              className="h-8 w-auto"
-            />
+            <img src="/logo.png" alt="Underlap" className="h-8 w-auto" />
           </Link>
           <nav className="hidden lg:flex items-center gap-4">
             {NAV_ITEMS.map((item) => (
@@ -108,39 +99,48 @@ export const Header = () => {
 
         {/* 3. CÁC NÚT HÀNH ĐỘNG */}
         <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
-          
-          <Button variant="default" className="gap-2 hidden md:flex" onClick={openCreateModal}>
+          <Button
+            variant="default"
+            className="gap-2 hidden md:flex"
+            onClick={openCreateModal}
+          >
             <PenSquare className="w-4 h-4" />
             Tạo chiến thuật
           </Button>
-          
+
           <NotificationDropdown className="hidden sm:flex" />
-          
+
           <Button variant="ghost" size="icon" className="flex md:hidden">
-             <Search className="w-5 h-5" />
+            <Search className="w-5 h-5" />
           </Button>
-          
-          {/* Combined Avatar + Menu Button */}
+
+          {/* Avatar + Dropdown Menu */}
           <div className="relative">
-            <button 
+            <button
               onClick={() => setShowDropdown(!showDropdown)}
               className="flex items-center gap-2 p-1 rounded-full hover:bg-white/5 transition-colors focus:outline-none"
             >
-              <Avatar className="w-8 h-8">
-                <AvatarImage src={avatarUrl} alt={displayName} /> 
-                <AvatarFallback className="text-sm">{displayName[0]?.toUpperCase() || "U"}</AvatarFallback>
-              </Avatar>
+              {status === "loading" ? (
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+              ) : (
+                <Avatar className="w-8 h-8">
+                  <AvatarImage src={avatarUrl} alt={displayName} />
+                  <AvatarFallback className="text-sm">
+                    {displayName[0]?.toUpperCase() || "U"}
+                  </AvatarFallback>
+                </Avatar>
+              )}
               <Menu className="w-5 h-5 text-muted-foreground" />
             </button>
-            
+
             {/* Dropdown Menu */}
             {showDropdown && (
               <>
-                <div 
-                  className="fixed inset-0 z-40" 
+                <div
+                  className="fixed inset-0 z-40"
                   onClick={() => setShowDropdown(false)}
                 />
-                
+
                 <div className="absolute right-0 mt-2 w-56 bg-card rounded-xl shadow-xl border border-white/10 py-2 z-50">
                   <div className="px-4 py-3 border-b border-white/10">
                     <p className="text-sm font-medium text-foreground truncate">
@@ -150,9 +150,9 @@ export const Header = () => {
                       {displayEmail}
                     </p>
                   </div>
-                  
+
                   <div className="py-1">
-                    <Link 
+                    <Link
                       href="/profile/me"
                       className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-white/5 transition-colors"
                       onClick={() => setShowDropdown(false)}
@@ -160,7 +160,7 @@ export const Header = () => {
                       <User className="w-4 h-4 text-muted-foreground" />
                       Trang cá nhân
                     </Link>
-                    
+
                     <button
                       onClick={() => {
                         setShowDropdown(false);
@@ -172,7 +172,7 @@ export const Header = () => {
                       Cài đặt
                     </button>
                   </div>
-                  
+
                   <div className="border-t border-white/10 pt-1">
                     <button
                       onClick={handleLogout}

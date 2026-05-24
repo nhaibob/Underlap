@@ -1,21 +1,18 @@
 // src/app/api/tactic/route.ts
 import { NextResponse } from "next/server";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import { getAuthUser, supabaseAdmin as supabase } from "@/lib/authServer";
-import { MOCK_POST_DATA } from "@/lib/mock-data";
+import { getServerUser, supabaseAdmin as supabase } from "@/lib/authServer";
 
 // GET - Fetch all public tactics for feed
 export async function GET() {
   try {
-    // Check if Supabase is configured
     if (!isSupabaseConfigured() || !supabase) {
-      console.log("Supabase not configured, using mock data");
-      return NextResponse.json([MOCK_POST_DATA], { status: 200 });
+      return NextResponse.json(
+        { error: "Database not configured" },
+        { status: 500 },
+      );
     }
 
-    console.log("Fetching tactics from Supabase...");
-
-    // Try to fetch from Supabase
     const { data: tactics, error } = await supabase
       .from("tactics")
       .select("*")
@@ -24,15 +21,12 @@ export async function GET() {
       .limit(20);
 
     if (error) {
-      console.warn("Supabase fetch error, using mock data:", error.message);
-      return NextResponse.json([MOCK_POST_DATA], { status: 200 });
+      console.error("Supabase fetch error:", error.message);
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    console.log(`Found ${tactics?.length || 0} tactics in database`);
-
     if (!tactics || tactics.length === 0) {
-      console.log("No tactics found, using mock data");
-      return NextResponse.json([MOCK_POST_DATA], { status: 200 });
+      return NextResponse.json([], { status: 200 });
     }
 
     // Transform data to match frontend expected format
@@ -63,7 +57,7 @@ export async function GET() {
     return NextResponse.json(formattedTactics, { status: 200 });
   } catch (error) {
     console.error("API Error:", error);
-    return NextResponse.json([MOCK_POST_DATA], { status: 200 });
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
 
@@ -92,8 +86,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Get authenticated user
-    const authUser = await getAuthUser(request);
+    // Get authenticated user from NextAuth session
+    const authUser = await getServerUser();
     const userId = authUser?.id;
     let authorUsername = data.metadata.authorUsername || "Anonymous";
     let authorName = data.metadata.authorName || "Anonymous";

@@ -13,8 +13,7 @@ import {
   Copy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { supabaseAuth } from "@/lib/supabase";
-import { getAuthHeaders } from "@/lib/authFetch";
+import { useSession } from "next-auth/react";
 
 export interface ReactionBarProps {
   tacticId?: string;
@@ -42,30 +41,19 @@ export const ReactionBar = ({
   const [forksCount, setForksCount] = useState(forks);
   const [saved, setSaved] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // Get current user on mount
-  useEffect(() => {
-    const getUser = async () => {
-      const user = await supabaseAuth.getUser();
-      if (user) {
-        setUserId(user.id);
-      }
-    };
-    getUser();
-  }, []);
+  // Dùng NextAuth session thay vì supabaseAuth.getUser()
+  const { data: session } = useSession();
+  const userId = session?.user?.id || null;
 
   // Check if already liked
   useEffect(() => {
     if (tacticId && userId) {
-      (async () => {
-        const headers = await getAuthHeaders();
-        fetch(`/api/tactic/${tacticId}/like`, { headers })
-          .then((res) => res.json())
-          .then((data) => setLiked(data.liked))
-          .catch(() => {});
-      })();
+      fetch(`/api/tactic/${tacticId}/like`)
+        .then((res) => res.json())
+        .then((data) => setLiked(data.liked))
+        .catch(() => {});
     }
   }, [tacticId, userId]);
 
@@ -75,20 +63,17 @@ export const ReactionBar = ({
     setIsLoading(true);
 
     try {
-      const authHeaders = await getAuthHeaders();
       if (liked) {
-        // Unlike
         await fetch(`/api/tactic/${tacticId}/like`, {
           method: "DELETE",
-          headers: { "Content-Type": "application/json", ...authHeaders },
+          headers: { "Content-Type": "application/json" },
         });
         setLiked(false);
         setLikesCount((prev) => Math.max(0, prev - 1));
       } else {
-        // Like
         await fetch(`/api/tactic/${tacticId}/like`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", ...authHeaders },
+          headers: { "Content-Type": "application/json" },
         });
         setLiked(true);
         setLikesCount((prev) => prev + 1);
@@ -126,7 +111,6 @@ export const ReactionBar = ({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(await getAuthHeaders()),
         },
         body: JSON.stringify({ tacticId }),
       });

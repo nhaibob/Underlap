@@ -1,6 +1,6 @@
 // src/app/api/tactic/[id]/comments/[commentId]/route.ts
 import { NextResponse } from "next/server";
-import { getAuthUser, supabaseAdmin as supabase } from "@/lib/authServer";
+import { getServerUser, supabaseAdmin as supabase } from "@/lib/authServer";
 
 // PATCH: Update a comment
 export async function PATCH(
@@ -8,7 +8,7 @@ export async function PATCH(
   { params }: { params: { id: string; commentId: string } },
 ) {
   try {
-    const authUser = await getAuthUser(request);
+    const authUser = await getServerUser();
     if (!authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -52,7 +52,7 @@ export async function DELETE(
   { params }: { params: { id: string; commentId: string } },
 ) {
   try {
-    const authUser = await getAuthUser(request);
+    const authUser = await getServerUser();
     if (!authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

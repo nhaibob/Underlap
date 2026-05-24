@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/Button';
 import { supabaseAuth } from '@/lib/supabase';
 import { Bell, Check, Trash2, Loader2, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getAuthHeaders } from '@/lib/authFetch';
 
 type FilterType = 'all' | 'follow' | 'like' | 'comment';
 
@@ -37,7 +36,7 @@ export default function NotificationsPage() {
 
       const currentOffset = reset ? 0 : offset;
       const response = await fetch(`/api/notifications?limit=${LIMIT}&offset=${currentOffset}`, {
-        headers: { ...(await getAuthHeaders()) }
+        headers: { }
       });
       const data = await response.json();
       
@@ -78,8 +77,7 @@ export default function NotificationsPage() {
       await fetch('/api/notifications', {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
-          ...(await getAuthHeaders()) },
+          'Content-Type': 'application/json' },
         body: JSON.stringify({ notificationId })
       });
 
@@ -99,8 +97,7 @@ export default function NotificationsPage() {
       await fetch('/api/notifications', {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
-          ...(await getAuthHeaders()) },
+          'Content-Type': 'application/json' },
         body: JSON.stringify({ markAll: true })
       });
 
@@ -119,7 +116,7 @@ export default function NotificationsPage() {
 
       await fetch('/api/notifications?all=true', {
         method: 'DELETE',
-        headers: { ...(await getAuthHeaders()) }
+        headers: { }
       });
 
       setNotifications([]);

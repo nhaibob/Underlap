@@ -1,7 +1,7 @@
 // src/app/api/tactic/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import { getAuthUser, supabaseAdmin as supabase } from "@/lib/authServer";
+import { getServerUser, supabaseAdmin as supabase } from "@/lib/authServer";
 
 // GET: Fetch a single tactic by ID
 export async function GET(
@@ -81,7 +81,7 @@ export async function PUT(
   { params }: { params: { id: string } },
 ) {
   try {
-    const authUser = await getAuthUser(request);
+    const authUser = await getServerUser();
 
     if (!authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -132,7 +132,7 @@ export async function DELETE(
   { params }: { params: { id: string } },
 ) {
   try {
-    const authUser = await getAuthUser(request);
+    const authUser = await getServerUser();
 
     if (!authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

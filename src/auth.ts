@@ -1,88 +1,200 @@
 // src/auth.ts
-import NextAuth from "next-auth"
-import Google from "next-auth/providers/google"
-import Facebook from "next-auth/providers/facebook"
-import Credentials from "next-auth/providers/credentials"
+// NextAuth v5 — Session manager chính của ứng dụng
+// Dùng httpOnly cookie (bảo mật hơn localStorage)
+// Tích hợp Supabase Auth cho email/password
+// Hỗ trợ Google + GitHub OAuth (bật khi có credentials)
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+import NextAuth from "next-auth";
+import type { NextAuthConfig } from "next-auth";
+import Google from "next-auth/providers/google";
+import GitHub from "next-auth/providers/github";
+import Credentials from "next-auth/providers/credentials";
+import { createClient } from "@supabase/supabase-js";
+
+// Supabase Admin client (service role) — dùng server-side
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+);
+
+export const config = {
   providers: [
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET,
-    }),
-    Facebook({
-      clientId: process.env.AUTH_FACEBOOK_ID,
-      clientSecret: process.env.AUTH_FACEBOOK_SECRET,
-    }),
-    // Credentials provider for email/password login
+    // ── Google OAuth ──────────────────────────────────────────────────────────
+    // Chỉ bật khi có credentials (không crash app nếu chưa có)
+    ...(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET
+      ? [
+          Google({
+            clientId: process.env.AUTH_GOOGLE_ID,
+            clientSecret: process.env.AUTH_GOOGLE_SECRET,
+          }),
+        ]
+      : []),
+
+    // ── GitHub OAuth ──────────────────────────────────────────────────────────
+    ...(process.env.AUTH_GITHUB_ID && process.env.AUTH_GITHUB_SECRET
+      ? [
+          GitHub({
+            clientId: process.env.AUTH_GITHUB_ID,
+            clientSecret: process.env.AUTH_GITHUB_SECRET,
+          }),
+        ]
+      : []),
+
+    // ── Email / Password ──────────────────────────────────────────────────────
     Credentials({
       name: "credentials",
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+        email: { label: "Email hoặc Username", type: "text" },
+        password: { label: "Mật khẩu", type: "password" },
       },
       async authorize(credentials) {
-        // Import supabase dynamically to avoid module issues
-        const { supabaseAuth } = await import("@/lib/supabase");
-        
+        if (!credentials?.email || !credentials?.password) return null;
+
         try {
-          if (!credentials?.email || !credentials?.password) {
-            return null;
-          }
-          
-          // Try to sign in with Supabase
-          const { user } = await supabaseAuth.signIn(
-            credentials.email as string,
-            credentials.password as string
+          // Dùng anon client để đăng nhập (không dùng admin)
+          const supabase = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
           );
-          
-          if (user) {
-            return {
-              id: user.id,
-              name: user.user_metadata?.name || user.user_metadata?.username || user.email?.split('@')[0],
-              email: user.email,
-              image: user.user_metadata?.avatar_url || '/assets/avatars/default.png'
-            };
+
+          let email = credentials.email as string;
+
+          // Hỗ trợ đăng nhập bằng username
+          if (!email.includes("@")) {
+            const { data: profile } = await supabaseAdmin
+              .from("profiles")
+              .select("email")
+              .eq("username", email.toLowerCase())
+              .single();
+
+            if (!profile?.email) return null;
+            email = profile.email;
           }
-          
-          return null;
-        } catch (error) {
-          console.error('Auth error:', error);
-          // Fallback to demo user for development
-          if (credentials?.email === "demo@underlap.com" && credentials?.password === "demo123") {
-            return {
-              id: "demo-user-id",
-              name: "Demo User",
-              email: "demo@underlap.com",
-              image: "/assets/avatars/default.png"
-            };
-          }
+
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password: credentials.password as string,
+          });
+
+          if (error || !data.user) return null;
+
+          // Lấy thêm thông tin profile
+          const { data: profile } = await supabaseAdmin
+            .from("profiles")
+            .select("id, username, name, avatar_url")
+            .eq("id", data.user.id)
+            .single();
+
+          return {
+            id: data.user.id,
+            email: data.user.email!,
+            name:
+              profile?.name ||
+              data.user.user_metadata?.username ||
+              email.split("@")[0],
+            image:
+              profile?.avatar_url ||
+              data.user.user_metadata?.avatar_url ||
+              null,
+            username:
+              profile?.username ||
+              data.user.user_metadata?.username ||
+              email.split("@")[0],
+          };
+        } catch (err) {
+          console.error("Credentials auth error:", err);
           return null;
         }
-      }
-    })
+      },
+    }),
   ],
-  pages: {
-    signIn: "/login",
-    // signOut: "/logout",
-    // error: "/error",
-    // newUser: "/register"
-  },
+
   callbacks: {
+    // ── Xử lý OAuth Login (Google/GitHub) ───────────────────────────────────
+    async signIn({ user, account }) {
+      if (
+        account?.provider === "google" ||
+        account?.provider === "github"
+      ) {
+        try {
+          // Kiểm tra nếu user đã có profile
+          const { data: existing } = await supabaseAdmin
+            .from("profiles")
+            .select("id, username")
+            .eq("email", user.email!)
+            .single();
+
+          if (!existing) {
+            // Tạo Supabase Auth user cho OAuth user
+            const { data: authData, error } =
+              await supabaseAdmin.auth.admin.createUser({
+                email: user.email!,
+                email_confirm: true,
+                user_metadata: {
+                  name: user.name,
+                  avatar_url: user.image,
+                  username: user.email!.split("@")[0],
+                  provider: account.provider,
+                },
+              });
+
+            if (!error && authData.user) {
+              user.id = authData.user.id;
+              const baseUsername = user.email!.split("@")[0].toLowerCase();
+              // Đảm bảo username là unique
+              const username = `${baseUsername}${Math.floor(Math.random() * 1000)}`;
+              await supabaseAdmin.from("profiles").upsert({
+                id: authData.user.id,
+                email: user.email,
+                username,
+                name: user.name,
+                avatar_url: user.image,
+              });
+              (user as any).username = username;
+            }
+          } else {
+            user.id = existing.id;
+            (user as any).username = existing.username;
+          }
+        } catch (err) {
+          console.error("OAuth signIn error:", err);
+        }
+      }
+      return true;
+    },
+
+    // ── JWT: Lưu thông tin vào cookie ────────────────────────────────────────
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id
+        token.id = user.id!;
+        token.username = (user as any).username;
       }
-      return token
+      return token;
     },
+
+    // ── Session: Expose thông tin cho client ─────────────────────────────────
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id as string
+        session.user.id = token.id as string;
+        (session.user as any).username = token.username;
       }
-      return session
-    }
+      return session;
+    },
   },
+
+  pages: {
+    signIn: "/login",
+    error: "/login",
+  },
+
   session: {
-    strategy: "jwt"
-  }
-})
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 ngày
+  },
+
+  // Bắt buộc cho Next.js deployment
+  trustHost: true,
+} satisfies NextAuthConfig;
+
+export const { handlers, signIn, signOut, auth } = NextAuth(config);

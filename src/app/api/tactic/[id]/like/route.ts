@@ -1,6 +1,6 @@
 // src/app/api/tactic/[id]/like/route.ts
 import { NextResponse } from "next/server";
-import { getAuthUser, supabaseAdmin as supabase } from "@/lib/authServer";
+import { getServerUser, supabaseAdmin as supabase } from "@/lib/authServer";
 
 // POST: Add like
 export async function POST(
@@ -8,7 +8,7 @@ export async function POST(
   { params }: { params: { id: string } },
 ) {
   try {
-    const authUser = await getAuthUser(request);
+    const authUser = await getServerUser();
     if (!authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -51,7 +51,7 @@ export async function DELETE(
   { params }: { params: { id: string } },
 ) {
   try {
-    const authUser = await getAuthUser(request);
+    const authUser = await getServerUser();
     if (!authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -77,7 +77,7 @@ export async function GET(
   { params }: { params: { id: string } },
 ) {
   try {
-    const authUser = await getAuthUser(request);
+    const authUser = await getServerUser();
     if (!authUser) {
       return NextResponse.json({ liked: false });
     }

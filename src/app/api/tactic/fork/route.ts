@@ -1,12 +1,12 @@
 // src/app/api/tactic/fork/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import { getAuthUser, supabaseAdmin as supabase } from "@/lib/authServer";
+import { getServerUser, supabaseAdmin as supabase } from "@/lib/authServer";
 
 // POST - Fork a tactic (create a copy in user's collection)
 export async function POST(request: NextRequest) {
   try {
-    const authUser = await getAuthUser(request);
+    const authUser = await getServerUser();
 
     if (!authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -1,6 +1,6 @@
 // src/app/api/notifications/route.ts
 import { NextResponse } from "next/server";
-import { getAuthUser, supabaseAdmin as supabase } from "@/lib/authServer";
+import { getServerUser, supabaseAdmin as supabase } from "@/lib/authServer";
 
 export interface NotificationData {
   id: string;
@@ -37,7 +37,7 @@ export interface NotificationData {
 // GET - Fetch notifications for user
 export async function GET(request: Request) {
   try {
-    const authUser = await getAuthUser(request);
+    const authUser = await getServerUser();
     const userId = authUser?.id;
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get("limit") || "20");
@@ -88,7 +88,7 @@ export async function GET(request: Request) {
 // PUT - Mark notifications as read
 export async function PUT(request: Request) {
   try {
-    const authUser = await getAuthUser(request);
+    const authUser = await getServerUser();
     const userId = authUser?.id;
     const body = await request.json();
     const { notificationId, markAll } = body;
@@ -146,7 +146,7 @@ export async function PUT(request: Request) {
 // DELETE - Delete notifications
 export async function DELETE(request: Request) {
   try {
-    const authUser = await getAuthUser(request);
+    const authUser = await getServerUser();
     const userId = authUser?.id;
     const { searchParams } = new URL(request.url);
     const notificationId = searchParams.get("id");

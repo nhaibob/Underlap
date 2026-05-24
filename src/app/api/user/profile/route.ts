@@ -1,6 +1,6 @@
 // src/app/api/user/profile/route.ts
 import { NextResponse } from "next/server";
-import { getAuthUser, supabaseAdmin as supabase } from "@/lib/authServer";
+import { getServerUser, supabaseAdmin as supabase } from "@/lib/authServer";
 
 // GET: Fetch user profile
 export async function GET(request: Request) {
@@ -35,7 +35,7 @@ export async function GET(request: Request) {
 // PUT: Update user profile
 export async function PUT(request: Request) {
   try {
-    const authUser = await getAuthUser(request);
+    const authUser = await getServerUser();
     if (!authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

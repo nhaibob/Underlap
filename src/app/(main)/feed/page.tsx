@@ -66,7 +66,7 @@ export default function FeedPage() {
           const res = await fetch(
             `/api/user/${user.user_metadata?.username || user.email?.split("@")[0]}/following`,
             {
-              headers: { ...(await getAuthHeaders()) },
+              headers: { },
             },
           );
           if (res.ok) {

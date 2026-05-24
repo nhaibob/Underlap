@@ -1,10 +1,10 @@
 // src/app/api/upload/route.ts
 import { NextResponse } from "next/server";
-import { getAuthUser, supabaseAdmin as supabase } from "@/lib/authServer";
+import { getServerUser, supabaseAdmin as supabase } from "@/lib/authServer";
 
 export async function POST(request: Request) {
   try {
-    const authUser = await getAuthUser(request);
+    const authUser = await getServerUser();
     if (!authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
