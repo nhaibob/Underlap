@@ -136,7 +136,6 @@ export const CreateTacticModal = () => {
             body: JSON.stringify(payload) 
         });
         const result = await response.json();
-        console.log("POST Result:", result);
         
         // Reset và đóng modal
         logic.reset({ players: [], arrows: [], areas: [] });
@@ -179,7 +178,6 @@ export const CreateTacticModal = () => {
             body: JSON.stringify(payload) 
         });
         const result = await response.json();
-        console.log("Draft saved:", result);
         
         alert('✅ Đã lưu bản nháp!');
         logic.reset({ players: [], arrows: [], areas: [] });

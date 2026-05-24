@@ -18,7 +18,6 @@ export async function POST(request: NextRequest) {
 
     // Check if Supabase is configured
     if (!isSupabaseConfigured() || !supabase) {
-      console.log("Supabase not configured, fork saved locally");
       return NextResponse.json(
         {
           message: "Tactic forked locally (database not configured)",
@@ -94,11 +93,6 @@ export async function POST(request: NextRequest) {
       .eq("id", userId)
       .single();
 
-    console.log("--- FORK DEBUG ---");
-    console.log("User ID:", userId);
-    console.log("Original tactic ID:", tacticId);
-    console.log("Profile found:", profile?.username);
-
     // Set default values if profile not found
     const authorUsername = profile?.username || "Anonymous";
     const authorName = profile?.name || profile?.username || "Anonymous";
@@ -129,10 +123,6 @@ export async function POST(request: NextRequest) {
         { status: 500 },
       );
     }
-
-    console.log("--- TACTIC FORKED ---");
-    console.log(`New ID: ${newTactic.id}`);
-    console.log(`By User: ${authorUsername}`);
 
     // Increment forks_count on the original tactic
     if (tacticId && originalTactic) {

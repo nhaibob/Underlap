@@ -1,5 +1,5 @@
 "use client"; 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, memo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { PlayerToken } from './PlayerToken';
 import { BallToken } from './BallToken';
@@ -44,7 +44,7 @@ export interface Area {
 }
 
 // --- Background ---
-const FootballPitchBackground = () => (
+const FootballPitchBackground = memo(() => (
   <div className="absolute inset-0 w-full h-full overflow-hidden select-none pointer-events-none">
     {/* Enhanced grass background - more vibrant and realistic */}
     <div className="absolute inset-0 bg-gradient-to-br from-[#2E7D47] via-[#25683D] to-[#1D5432]" />
@@ -97,7 +97,7 @@ const FootballPitchBackground = () => (
 );
 
 // --- Draggable Token ---
-function DraggablePlayerToken({ 
+const DraggablePlayerToken = memo(function DraggablePlayerToken({ 
     player, activeTool, selectedPlayerId, setSelectedPlayerId, onDelete 
 }: { 
     player: Player, activeTool: Tool, 
@@ -155,10 +155,10 @@ function DraggablePlayerToken({
       />
     </div>
   );
-}
+});
 
 // --- Draggable Ball Token ---
-function DraggableBallToken({ 
+const DraggableBallToken = memo(function DraggableBallToken({ 
     ball, activeTool, setBall 
 }: { 
     ball: Ball, 
@@ -208,7 +208,7 @@ function DraggableBallToken({
       <BallToken />
     </div>
   );
-}
+});
 
 // --- Tactical Layer (Arrow & Area Drawing) ---
 const TacticalLayer = ({ 
@@ -469,7 +469,7 @@ export const TacticBoard = ({
   const { setNodeRef } = useDroppable({ id: 'tactic-board-droppable-area' });
   const boardRef = useRef<HTMLDivElement>(null);
   
-  const handleDeletePlayer = (id: string) => { setPlayers?.((prev: any) => prev.filter((p: any) => p.id !== id)); };
+  const handleDeletePlayer = useCallback((id: string) => { setPlayers?.((prev: any) => prev.filter((p: any) => p.id !== id)); }, [setPlayers]);
 
   // Filter players by visibility
   const visiblePlayers = players.filter((p: any) => {
@@ -502,7 +502,7 @@ export const TacticBoard = ({
     if (positionToPlace) {
         onBoardClick?.({ x, y });
     }
-  };
+  }, [readOnly, activeTool, positionToPlace, isPlacingBall, selectedPlayerId, setSelectedPlayerId, addBallAtPosition, onBoardClick]);
 
   const isInteractive = variant === 'full' && !readOnly;
   const showContent = players.length > 0 || arrows.length > 0;

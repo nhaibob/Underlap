@@ -53,7 +53,6 @@ export async function GET() {
       },
     }));
 
-    console.log("Returning tactics from database");
     return NextResponse.json(formattedTactics, { status: 200 });
   } catch (error) {
     console.error("API Error:", error);
@@ -75,7 +74,6 @@ export async function POST(request: Request) {
 
     // Check if Supabase is configured
     if (!isSupabaseConfigured() || !supabase) {
-      console.log("Supabase not configured, saving locally");
       return NextResponse.json(
         {
           message: "Tactic saved locally (database not configured)",
@@ -109,13 +107,6 @@ export async function POST(request: Request) {
       }
     }
 
-    console.log(
-      "Creating tactic for user:",
-      authorUsername,
-      "status:",
-      data.status || "published",
-    );
-
     // Insert tactic with correct author info
     const { data: newTactic, error } = await supabase
       .from("tactics")
@@ -146,10 +137,6 @@ export async function POST(request: Request) {
         { status: 201 },
       );
     }
-
-    console.log("--- TACTIC SAVED TO DATABASE ---");
-    console.log(`ID: ${newTactic.id}`);
-    console.log(`Title: ${newTactic.title}`);
 
     return NextResponse.json(
       {

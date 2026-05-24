@@ -73,7 +73,6 @@ export function NewConversationModal({ isOpen, onClose }: NewConversationModalPr
           console.error('Search error:', error);
         }
 
-        console.log('User search results:', data);
         setUsers(data || []);
       } catch (error) {
         console.error('Search error:', error);
@@ -87,17 +86,13 @@ export function NewConversationModal({ isOpen, onClose }: NewConversationModalPr
   }, [searchQuery, isOpen, currentUserId]);
 
   const handleStartConversation = async () => {
-    console.log('Starting conversation', { selectedUserId, currentUserId });
-    
     if (!selectedUserId || !currentUserId) {
-      console.error('Missing IDs', { selectedUserId, currentUserId });
       alert('Không thể bắt đầu cuộc trò chuyện. Vui lòng đăng nhập lại.');
       return;
     }
 
     setIsCreating(true);
     try {
-      console.log('Creating conversation...');
       const res = await fetch('/api/messages', {
         method: 'POST',
         headers: {
@@ -105,9 +100,7 @@ export function NewConversationModal({ isOpen, onClose }: NewConversationModalPr
         body: JSON.stringify({ participantId: selectedUserId })
       });
 
-      console.log('Response status:', res.status);
       const data = await res.json();
-      console.log('Response data:', data);
 
       if (res.ok) {
         onClose();
