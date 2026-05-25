@@ -3,12 +3,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
 
-  // === THÊM KHỐI NÀY ĐỂ TẮT ESLINT KHI BUILD ===
-  eslint: {
-    // Cảnh báo: Điều này sẽ bỏ qua lỗi linting khi build.
-    ignoreDuringBuilds: true,
-  },
-  // ===========================================
 
   // === TẮT CACHE MỨC ĐỘ SERVER COMPONENT ===
   async headers() {

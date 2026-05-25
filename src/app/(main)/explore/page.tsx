@@ -273,7 +273,7 @@ export default function ExplorePage() {
         <div className="flex flex-wrap gap-2 mb-4">
           {activeQuery && (
             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/15 text-primary text-sm">
-              Tìm: "{activeQuery}"
+              Tìm: &quot;{activeQuery}&quot;
               <button onClick={() => { setSearchQuery(''); setActiveQuery(''); }}>
                 <X className="w-3 h-3" />
               </button>
