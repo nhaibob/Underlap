@@ -1,19 +1,18 @@
 "use client";
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { TacticBoard, Player, Arrow, Area } from './TacticBoard';
-import { Button } from '@/components/ui/Button';
 import { CompactToolbar } from './CompactToolbar';
 import { MetaPanel, MetaPanelProps } from '@/components/features/tactic-board/MetaPanel'; 
 import { useDndMonitor } from '@dnd-kit/core';
-import { useUIStore } from '@/lib/store/uiStore';
 import { Team, Ball } from './TacticBoard';
 import { Tool, ArrowColor, ArrowStyle, ArrowType, LayerVisibility } from '@/lib/hooks/useTacticLogic';
 import { PlayerEditPanel } from './PlayerEditPanel';
 import { PlayerTokenProps } from './PlayerToken'; 
 import { cn } from '@/lib/utils'; 
-import { X, Save, PanelRightClose, PanelRight } from 'lucide-react';
 import { FloatingToolbar } from './FloatingToolbar';
 import { toPng } from 'html-to-image';
+import { useEditorShortcuts } from '@/lib/hooks/useEditorShortcuts';
+import { TacticEditorHeader } from './TacticEditorHeader';
 
 interface TacticEditorUIProps {
   players: Player[]; setPlayers: React.Dispatch<React.SetStateAction<Player[]>>;
@@ -37,7 +36,6 @@ interface TacticEditorUIProps {
   canUndo: boolean;
   canRedo: boolean;
   
-  // NEW: Team, Ball, Layer props
   selectedTeam: Team;
   setSelectedTeam: (team: Team) => void;
   ball: Ball | null;
@@ -47,9 +45,7 @@ interface TacticEditorUIProps {
   layerVisibility: LayerVisibility;
   toggleLayerVisibility: (layer: keyof LayerVisibility) => void;
   addBallAtPosition: (pos: { x: number, y: number }) => void;
-  // NEW: Formation
   loadFormation?: (formationKey: string, team?: Team) => void;
-  // Optional close handler for standalone pages (not modals)
   onClose?: () => void;
 }
 
@@ -70,56 +66,20 @@ export const TacticEditorUI = ({
   onClose
 }: TacticEditorUIProps) => {
     
-  const { closeCreateModal } = useUIStore();
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
   const boardContainerRef = useRef<HTMLDivElement>(null);
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if in input field
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      
-      // Tool shortcuts
-      if (!e.ctrlKey && !e.metaKey) {
-        switch (e.key.toLowerCase()) {
-          case 'v': setActiveTool('select'); break;
-          case 'd': case 'p': setActiveTool('draw'); break;
-          case 'a': setActiveTool('area'); break;
-          case 'e': setActiveTool('erase'); break;
-          case 'escape': 
-            setSelectedPlayerId(null); 
-            setPositionToPlace(null);
-            setIsPlacingBall(false);
-            break;
-          case 'delete': case 'backspace':
-            if (selectedPlayerId) {
-              e.preventDefault();
-              onPlayerDelete(selectedPlayerId);
-            }
-            break;
-        }
-      }
-      
-      // Ctrl shortcuts
-      if (e.ctrlKey || e.metaKey) {
-        switch (e.key.toLowerCase()) {
-          case 'z':
-            e.preventDefault();
-            if (e.shiftKey) redo();
-            else undo();
-            break;
-          case 'y':
-            e.preventDefault();
-            redo();
-            break;
-        }
-      }
-    };
-    
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [setActiveTool, selectedPlayerId, onPlayerDelete, undo, redo, setSelectedPlayerId, setPositionToPlace, setIsPlacingBall]);
+  // Use the extracted hook for keyboard shortcuts
+  useEditorShortcuts({
+    setActiveTool,
+    selectedPlayerId,
+    setSelectedPlayerId,
+    onPlayerDelete,
+    setPositionToPlace,
+    setIsPlacingBall,
+    undo,
+    redo
+  });
 
   // Export as PNG
   const handleExport = useCallback(async () => {
@@ -158,85 +118,20 @@ export const TacticEditorUI = ({
   
   return (
     <div className="flex flex-col h-full bg-background text-foreground overflow-hidden">
-      {/* === HEADER === */}
-      <header className="h-16 flex items-center justify-between px-4 sm:px-6 border-b border-border/50 bg-gradient-to-r from-violet-500/10 via-purple-500/5 to-transparent backdrop-blur-md z-50 shrink-0">
-        <div className="flex items-center gap-4">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={onClose || closeCreateModal} 
-            className="text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-all"
-            title="Đóng"
-          >
-            <X className="w-5 h-5" />
-          </Button>
-          <div className="border-l border-border/50 h-8 hidden sm:block" />
-          <div>
-            <h2 className="text-lg font-bold font-headline tracking-tight bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
-              Tạo Chiến Thuật
-            </h2>
-            <p className="text-xs text-muted-foreground flex items-center gap-2">
-              <span className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-violet-500"></span>
-                {players.length} cầu thủ
-              </span>
-              <span className="text-muted-foreground/50">•</span>
-              <span className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-500"></span>
-                {arrows.length} mũi tên
-              </span>
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Toggle Panel Button (Desktop) */}
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => setIsPanelCollapsed(!isPanelCollapsed)}
-            className="hidden xl:flex text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-all"
-            title={isPanelCollapsed ? "Mở panel" : "Đóng panel"}
-          >
-            {isPanelCollapsed ? <PanelRight className="w-5 h-5" /> : <PanelRightClose className="w-5 h-5" />}
-          </Button>
-          
-          {/* Save Draft Button */}
-          {metaProps.onSaveDraft && (
-            <Button 
-              variant="outline" 
-              onClick={metaProps.onSaveDraft} 
-              disabled={metaProps.isPosting} 
-              className="gap-2 border-white/10 hover:bg-white/5" 
-              size="sm"
-            >
-              <Save size={16} />
-              <span className="hidden sm:inline">Lưu nháp</span>
-            </Button>
-          )}
-          
-          {/* Publish Button */}
-          <Button 
-            variant="default" 
-            onClick={metaProps.onPost} 
-            disabled={metaProps.isPosting || !canPost} 
-            className="gap-2 min-w-[100px] bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 shadow-lg shadow-violet-500/20" 
-            size="sm"
-          >
-            {metaProps.isPosting ? (
-              <span className="animate-pulse">Đang lưu...</span>
-            ) : (
-              <>
-                <Save size={16} />
-                <span className="hidden sm:inline">Đăng bài</span>
-                <span className="sm:hidden">Lưu</span>
-              </>
-            )}
-          </Button>
-        </div>
-      </header>
+      {/* Header */}
+      <TacticEditorHeader 
+        onClose={onClose}
+        playerCount={players.length}
+        arrowCount={arrows.length}
+        isPanelCollapsed={isPanelCollapsed}
+        setIsPanelCollapsed={setIsPanelCollapsed}
+        onSaveDraft={metaProps.onSaveDraft}
+        onPost={metaProps.onPost}
+        isPosting={metaProps.isPosting}
+        canPost={canPost}
+      />
       
-      {/* === MAIN CONTENT === */}
+      {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
         {/* Board Area */}
         <main className="flex-1 flex flex-col overflow-hidden">
@@ -283,13 +178,10 @@ export const TacticEditorUI = ({
                  }} 
             />
             
-            {/* Tactic Board - constrained by height to prevent overflow */}
+            {/* Tactic Board */}
             <div 
               className="w-full transition-all duration-300"
               style={{ 
-                // Use CSS calc to properly size based on available height
-                // The board has 3:2 aspect ratio, so width = height * 1.5
-                // 230px offset = header(64px) + toolbar(~50px) + padding + bottom margin
                 maxWidth: 'min(calc((100vh - 230px) * 1.5), 100%)',
                 maxHeight: 'calc(100vh - 230px)'
               }}
@@ -340,7 +232,7 @@ export const TacticEditorUI = ({
           </div>
         </main>
 
-        {/* === RIGHT PANEL (Collapsible) === */}
+        {/* Right Panel (Collapsible) */}
         <aside className={cn(
           "hidden xl:flex flex-col bg-card/50 backdrop-blur-sm border-l border-border transition-all duration-300 overflow-hidden",
           isPanelCollapsed ? "w-0 border-l-0" : "w-80"

@@ -1,20 +1,16 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useCommentStore } from '@/lib/store/useCommentStore';
-import { useCommentClipboard } from '@/lib/hooks/useCommentClipboard';
+import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useDropzone } from 'react-dropzone';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Smile, AtSign, Paperclip, Send, X, Image as ImageIcon, FileText, ClipboardPaste, Loader2 } from 'lucide-react';
-import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
-import { CommentAttachment } from '@/types/comment';
-import { useDebouncedCallback } from 'use-debounce';
+import { Smile, Paperclip, Send, ClipboardPaste } from 'lucide-react';
+import EmojiPicker from 'emoji-picker-react';
+import { useCommentInput } from '@/lib/hooks/useCommentInput';
+import { CommentAttachmentsPreview } from './CommentAttachmentsPreview';
 
-// Fetch mentions from search (can be expanded later)
 const MOCK_MENTIONS = [
   { id: 'user_2', username: 'nhaibob' },
   { id: 'user_3', username: 'underlap' },
@@ -22,10 +18,10 @@ const MOCK_MENTIONS = [
 ];
 
 interface CommentInputProps {
-  contextId: string; // postId hoặc tacticId
+  contextId: string;
   parentId?: string | null;
   autoFocus?: boolean;
-  onCommentPosted?: () => void; // Callback để đóng input (ví dụ: khi reply)
+  onCommentPosted?: () => void;
 }
 
 export const CommentInput: React.FC<CommentInputProps> = ({ 
@@ -34,220 +30,16 @@ export const CommentInput: React.FC<CommentInputProps> = ({
   autoFocus = false,
   onCommentPosted 
 }) => {
-  const draftKey = parentId ? `reply_${parentId}` : `context_${contextId}`;
-  const { addComment, getDraft, setDraft } = useCommentStore();
-  const { clipboardImage, clearClipboardImage } = useCommentClipboard();
-
-  const [content, setContent] = useState('');
-  const [attachments, setAttachments] = useState<File[]>([]);
-  const [pastedImage, setPastedImage] = useState<string | null>(null);
-  const [isMentioning, setIsMentioning] = useState(false);
-  const [mentionQuery, setMentionQuery] = useState('');
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // 1. Tải Draft hoặc Clipboard Image
-  useEffect(() => {
-    // Ưu tiên clipboard image nếu có
-    if (clipboardImage && !parentId) { // Chỉ dán vào comment gốc
-      setPastedImage(clipboardImage);
-      clearClipboardImage();
-    } else {
-      const draft = getDraft(draftKey);
-      if (draft) {
-        setContent(draft);
-      }
-    }
-  }, [clipboardImage, clearClipboardImage, draftKey, getDraft, parentId]);
-
-  // 2. Auto-save Draft
-  const debouncedSetDraft = useDebouncedCallback((value: string) => {
-    setDraft(draftKey, value);
-  }, 500);
-
-  // 3. Xử lý thay đổi nội dung
-  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newContent = e.target.value;
-    setContent(newContent);
-    debouncedSetDraft(newContent);
-
-    // Xử lý @mention
-    const cursorPos = e.target.selectionStart;
-    const textBeforeCursor = newContent.substring(0, cursorPos);
-    const atMatch = textBeforeCursor.match(/@(\w*)$/);
-    
-    if (atMatch) {
-      setIsMentioning(true);
-      setMentionQuery(atMatch[1]);
-    } else {
-      setIsMentioning(false);
-    }
-  };
-  
-  // 4. Xử lý dán (Paste)
-  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-    const item = Array.from(e.clipboardData.items).find(i => i.type.startsWith('image/'));
-    if (item) {
-      e.preventDefault();
-      const file = item.getAsFile();
-      if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setPastedImage(reader.result as string);
-        };
-        reader.readAsDataURL(file);
-      }
-    }
-  };
-
-  // 5. Xử lý Drag/Drop
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    // Lọc file (PNG, JPG, PDF)
-    const filteredFiles = acceptedFiles.filter(file => 
-      ['image/png', 'image/jpeg', 'application/pdf'].includes(file.type)
-    );
-    setAttachments(prev => [...prev, ...filteredFiles]);
-  }, []);
-
-  const { getRootProps, getInputProps, isDragActive, open: openFileDialog } = useDropzone({
-    onDrop,
-    noClick: true,
-    noKeyboard: true,
-    accept: {
-      'image/png': ['.png'],
-      'image/jpeg': ['.jpg', '.jpeg'],
-      'application/pdf': ['.pdf'],
-    }
-  });
-
-  // 6. Xử lý Emoji
-  const onEmojiClick = (emojiData: EmojiClickData) => {
-    if (!textareaRef.current) return;
-    
-    const { selectionStart, selectionEnd } = textareaRef.current;
-    const newContent = 
-      content.substring(0, selectionStart) + 
-      emojiData.emoji + 
-      content.substring(selectionEnd);
-      
-    setContent(newContent);
-    debouncedSetDraft(newContent);
-    textareaRef.current.focus();
-    // Cập nhật vị trí con trỏ sau khi chèn
-    const newCursorPos = selectionStart + emojiData.emoji.length;
-    setTimeout(() => textareaRef.current?.setSelectionRange(newCursorPos, newCursorPos), 0);
-  };
-  
-  // 7. Xử lý @mention select
-  const handleMentionClick = (username: string) => {
-    if (!textareaRef.current) return;
-    
-    const { selectionStart } = textareaRef.current;
-    const textBeforeCursor = content.substring(0, selectionStart);
-    const atIndex = textBeforeCursor.lastIndexOf('@');
-    
-    if (atIndex === -1) return;
-
-    const newContent = 
-      content.substring(0, atIndex) +
-      `@${username} ` +
-      content.substring(selectionStart);
-
-    setContent(newContent);
-    debouncedSetDraft(newContent);
-    setIsMentioning(false);
-    textareaRef.current.focus();
-     // Cập nhật vị trí con trỏ
-    const newCursorPos = atIndex + username.length + 2; // +2 cho '@' và ' '
-    setTimeout(() => textareaRef.current?.setSelectionRange(newCursorPos, newCursorPos), 0);
-  };
-
-  // 8. Gửi Comment
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const uploadFile = async (file: File): Promise<string | null> => {
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('folder', 'comments');
-      
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData
-      });
-      
-      const data = await res.json();
-      return data.url || null;
-    } catch (err) {
-      console.error('Upload error:', err);
-      return null;
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentUser) return;
-    if (!content.trim() && attachments.length === 0 && !pastedImage) return;
-
-    setIsSubmitting(true);
-    
-    try {
-      const uploadedAttachments: CommentAttachment[] = [];
-      
-      // Upload pasted image
-      if (pastedImage) {
-        // Convert base64 to file
-        const res = await fetch(pastedImage);
-        const blob = await res.blob();
-        const file = new File([blob], 'pasted-image.png', { type: 'image/png' });
-        const url = await uploadFile(file);
-        if (url) {
-          uploadedAttachments.push({
-            id: `file_${Math.random()}`,
-            type: 'image',
-            url,
-            name: 'pasted-image.png',
-          });
-        }
-      }
-      
-      // Upload attached files
-      for (const file of attachments) {
-        const url = await uploadFile(file);
-        if (url) {
-          uploadedAttachments.push({
-            id: `file_${Math.random()}`,
-            type: file.type.startsWith('image') ? 'image' : 'file',
-            url,
-            name: file.name,
-            size: file.size,
-          });
-        }
-      }
-
-      await addComment(contextId, content.trim(), parentId, uploadedAttachments);
-      
-      // Reset state
-      setContent('');
-      setAttachments([]);
-      setPastedImage(null);
-      setDraft(draftKey, '');
-      if (onCommentPosted) {
-        onCommentPosted();
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-  
-  const removeAttachment = (index: number) => {
-    setAttachments(prev => prev.filter((_, i) => i !== index));
-  };
+  const {
+    content, attachments, pastedImage, isMentioning, mentionQuery, isSubmitting,
+    textareaRef, currentUser, clipboardImage, clearClipboardImage, setPastedImage,
+    handleContentChange, handlePaste, getRootProps, getInputProps, isDragActive,
+    openFileDialog, onEmojiClick, handleMentionClick, handleSubmit, removeAttachment
+  } = useCommentInput({ contextId, parentId, onCommentPosted });
 
   const filteredMentions = MOCK_MENTIONS.filter(user => 
     user.username.toLowerCase().includes(mentionQuery.toLowerCase())
   );
-
-  const { currentUser } = useCommentStore();
 
   return (
     <form onSubmit={handleSubmit} {...getRootProps()} className={`relative ${isDragActive ? 'outline-dashed outline-2 outline-blue-500 bg-blue-50 dark:bg-blue-900/20 rounded-lg' : ''}`}>
@@ -273,7 +65,6 @@ export const CommentInput: React.FC<CommentInputProps> = ({
             <Send className="h-4 w-4" />
           </Button>
           
-          {/* @mention Popover */}
           <AnimatePresence>
             {isMentioning && filteredMentions.length > 0 && (
               <motion.div
@@ -286,7 +77,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
                   {filteredMentions.map(user => (
                     <div 
                       key={user.id} 
-                      onMouseDown={(e) => e.preventDefault()} // Ngăn textarea mất focus
+                      onMouseDown={(e) => e.preventDefault()}
                       onClick={() => handleMentionClick(user.username)}
                       className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
                     >
@@ -302,43 +93,15 @@ export const CommentInput: React.FC<CommentInputProps> = ({
             )}
           </AnimatePresence>
 
-          {/* Previews (Pasted Image & Files) */}
           <AnimatePresence>
-            {(pastedImage || attachments.length > 0) && (
-              <motion.div 
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2"
-              >
-                {pastedImage && (
-                  <div className="relative group">
-                    <img src={pastedImage} alt="Pasted preview" className="rounded-md object-cover h-24 w-full" />
-                    <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-5 w-5 opacity-0 group-hover:opacity-100" onClick={() => setPastedImage(null)}>
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                )}
-                {attachments.map((file, index) => (
-                  <div key={index} className="relative group">
-                    {file.type.startsWith('image') ? (
-                      <img src={URL.createObjectURL(file)} alt={file.name} className="rounded-md object-cover h-24 w-full" />
-                    ) : (
-                      <div className="h-24 w-full bg-gray-100 dark:bg-gray-800 rounded-md flex flex-col items-center justify-center p-2">
-                        <FileText className="h-8 w-8 text-gray-500" />
-                        <span className="text-xs text-center truncate w-full mt-1">{file.name}</span>
-                      </div>
-                    )}
-                    <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-5 w-5 opacity-0 group-hover:opacity-100" onClick={() => removeAttachment(index)}>
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
-              </motion.div>
-            )}
+            <CommentAttachmentsPreview 
+              pastedImage={pastedImage}
+              setPastedImage={setPastedImage}
+              attachments={attachments}
+              removeAttachment={removeAttachment}
+            />
           </AnimatePresence>
           
-          {/* Toolbar */}
           <div className="flex items-center space-x-1 mt-2">
             <Popover>
               <PopoverTrigger asChild>
@@ -355,7 +118,6 @@ export const CommentInput: React.FC<CommentInputProps> = ({
               <Paperclip className="h-4.5 w-4.5" />
             </Button>
             
-            {/* Nút dán snapshot, chỉ hiện khi có ảnh trong clipboard store VÀ chưa dán */}
             {clipboardImage && !pastedImage && (
                  <Button type="button" variant="ghost" size="sm" className="text-gray-500 hover:text-gray-900 dark:hover:text-gray-100" onClick={() => { setPastedImage(clipboardImage); clearClipboardImage(); }}>
                     <ClipboardPaste className="h-4.5 w-4.5 mr-1" />
