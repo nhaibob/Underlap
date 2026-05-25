@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { Loader2, TrendingUp, Clock, Users, RefreshCw } from "lucide-react";
 import { supabaseAuth } from "@/lib/supabase";
-import { getAuthHeaders } from "@/lib/authFetch";
+
 
 interface PostData {
   id: string;

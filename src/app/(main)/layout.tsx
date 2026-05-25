@@ -24,24 +24,15 @@ export default function MainLayout({
       <div className="flex flex-1 container mx-auto gap-6">
         <main className="flex-1 min-w-0 px-4 md:px-6">
           <div className="pb-[4.5rem] md:pb-0">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={pathname}
-                variants={variants}
-                initial="hidden"
-                animate="enter"
-                exit="exit"
-                transition={{
-                  type: "spring",
-                  stiffness: 260,
-                  damping: 20,
-                  mass: 0.5,
-                }}
-                className="w-full"
-              >
-                {children}
-              </motion.div>
-            </AnimatePresence>
+            <motion.div
+              key={pathname}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="w-full"
+            >
+              {children}
+            </motion.div>
           </div>
         </main>
       </div>
