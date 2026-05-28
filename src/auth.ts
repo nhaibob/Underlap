@@ -10,6 +10,8 @@ import Google from "next-auth/providers/google";
 import GitHub from "next-auth/providers/github";
 import Credentials from "next-auth/providers/credentials";
 import { createClient } from "@supabase/supabase-js";
+import jwt from "jsonwebtoken";
+
 
 // Supabase Admin client (service role) — dùng server-side
 const supabaseAdmin = createClient(
@@ -170,6 +172,20 @@ export const config = {
         token.id = user.id!;
         token.username = (user as any).username;
       }
+      
+      // Tạo token Supabase từ secret để gởi kèm request client
+      const secret = process.env.SUPABASE_JWT_SECRET;
+      if (secret && token.id) {
+        const payload = {
+          aud: "authenticated",
+          exp: Math.floor(new Date(token.exp as number || Date.now() / 1000 + 30 * 24 * 60 * 60).getTime() / 1000), // Default exp or nextauth's exp
+          sub: token.id as string,
+          email: token.email,
+          role: "authenticated",
+        };
+        token.supabaseAccessToken = jwt.sign(payload, secret);
+      }
+
       return token;
     },
 
@@ -178,6 +194,7 @@ export const config = {
       if (session.user) {
         session.user.id = token.id as string;
         (session.user as any).username = token.username;
+        (session as any).supabaseAccessToken = token.supabaseAccessToken;
       }
       return session;
     },

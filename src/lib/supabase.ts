@@ -14,6 +14,20 @@ if (supabaseUrl && supabaseAnonKey) {
 
 export { supabase };
 
+export const getSupabaseClient = (accessToken?: string) => {
+  if (!supabaseUrl || !supabaseAnonKey) return null;
+  
+  if (!accessToken) return supabase;
+  
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  });
+};
+
 export const isSupabaseConfigured = () => supabase !== null;
 
 // Auth helpers

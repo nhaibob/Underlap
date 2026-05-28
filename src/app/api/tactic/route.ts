@@ -1,10 +1,12 @@
 // src/app/api/tactic/route.ts
 import { NextResponse } from "next/server";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import { getServerUser, supabaseAdmin as supabase } from "@/lib/authServer";
+import { getServerUser, getServerSupabaseClient, supabaseAdmin } from "@/lib/authServer";
 
-// GET - Fetch all public tactics for feed
-export async function GET() {
+export const dynamic = 'force-dynamic';
+
+// GET - Fetch all public tactics for feed, with optional search/filter/sort
+export async function GET(request: Request) {
   try {
     if (!isSupabaseConfigured() || !supabase) {
       return NextResponse.json(
@@ -13,12 +15,46 @@ export async function GET() {
       );
     }
 
-    const { data: tactics, error } = await supabase
+    const { searchParams } = new URL(request.url);
+    const q = searchParams.get("q") || "";
+    const formation = searchParams.get("formation") || "";
+    const tag = searchParams.get("tag") || "";
+    const sort = searchParams.get("sort") || "latest";
+    const limit = parseInt(searchParams.get("limit") || "50");
+
+    const supabase = await getServerSupabaseClient();
+    let query = supabase
       .from("tactics")
       .select("*")
       .eq("is_public", true)
-      .order("created_at", { ascending: false })
-      .limit(20);
+      .limit(limit);
+
+    // Server-side text search (title + description + author)
+    if (q) {
+      query = query.or(
+        `title.ilike.%${q}%,description.ilike.%${q}%,author_username.ilike.%${q}%,author_name.ilike.%${q}%`
+      );
+    }
+
+    // Filter by formation
+    if (formation) {
+      query = query.eq("formation", formation);
+    }
+
+    // Filter by tag
+    if (tag) {
+      query = query.contains("tags", [tag]);
+    }
+
+    // Sort
+    if (sort === "trending") {
+      // Trending = likes + comments weighted
+      query = query.order("likes_count", { ascending: false });
+    } else {
+      query = query.order("created_at", { ascending: false });
+    }
+
+    const { data: tactics, error } = await query;
 
     if (error) {
       console.error("Supabase fetch error:", error.message);
@@ -38,6 +74,7 @@ export async function GET() {
       createdAt: tactic.created_at,
       tags: tactic.tags || [],
       author: {
+        id: tactic.author_id || null,
         username: tactic.author_username || "Anonymous",
         name: tactic.author_name || tactic.author_username || "Anonymous",
         avatarUrl: tactic.author_avatar || "/assets/avatars/huyson.png",
@@ -94,7 +131,7 @@ export async function POST(request: Request) {
 
     // If userId is provided, lookup profile to get correct author info
     if (userId) {
-      const { data: profile } = await supabase
+      const { data: profile } = await supabaseAdmin
         .from("profiles")
         .select("username, name, avatar_url")
         .eq("id", userId)
@@ -107,6 +144,8 @@ export async function POST(request: Request) {
       }
     }
 
+    const supabase = await getServerSupabaseClient();
+    
     // Insert tactic with correct author info
     const { data: newTactic, error } = await supabase
       .from("tactics")
@@ -114,6 +153,7 @@ export async function POST(request: Request) {
         title: data.metadata.title || "Untitled Tactic",
         description: data.metadata.description || null,
         formation: data.metadata.formation || null,
+        author_id: userId || null,
         author_username: authorUsername,
         author_name: authorName,
         author_avatar: authorAvatar,

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
+import { supabaseAuth } from "@/lib/supabase";
 
 export interface ReactionBarProps {
   tacticId?: string;
@@ -41,11 +42,28 @@ export const ReactionBar = ({
   const [forksCount, setForksCount] = useState(forks);
   const [saved, setSaved] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaveLoading, setIsSaveLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Dùng NextAuth session thay vì supabaseAuth.getUser()
+  // Hỗ trợ cả NextAuth và Supabase Auth
   const { data: session } = useSession();
-  const userId = session?.user?.id || null;
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const resolveUser = async () => {
+      // Ưu tiên NextAuth session
+      if (session?.user?.id) {
+        setUserId(session.user.id);
+        return;
+      }
+      // Fallback: Supabase Auth
+      try {
+        const user = await supabaseAuth.getUser();
+        if (user?.id) setUserId(user.id);
+      } catch {}
+    };
+    resolveUser();
+  }, [session]);
 
   // Check if already liked
   useEffect(() => {
@@ -53,6 +71,16 @@ export const ReactionBar = ({
       fetch(`/api/tactic/${tacticId}/like`)
         .then((res) => res.json())
         .then((data) => setLiked(data.liked))
+        .catch(() => {});
+    }
+  }, [tacticId, userId]);
+
+  // Check if already saved
+  useEffect(() => {
+    if (tacticId && userId) {
+      fetch(`/api/tactic/${tacticId}/save`)
+        .then((res) => res.json())
+        .then((data) => setSaved(data.saved ?? false))
         .catch(() => {});
     }
   }, [tacticId, userId]);
@@ -85,8 +113,23 @@ export const ReactionBar = ({
     }
   };
 
-  const handleSave = () => {
-    setSaved(!saved);
+  const handleSave = async () => {
+    if (!tacticId || !userId || isSaveLoading) return;
+
+    setIsSaveLoading(true);
+    try {
+      if (saved) {
+        await fetch(`/api/tactic/${tacticId}/save`, { method: "DELETE" });
+        setSaved(false);
+      } else {
+        await fetch(`/api/tactic/${tacticId}/save`, { method: "POST" });
+        setSaved(true);
+      }
+    } catch (error) {
+      console.error("Save error:", error);
+    } finally {
+      setIsSaveLoading(false);
+    }
   };
 
   const handleShare = async () => {
@@ -218,19 +261,25 @@ export const ReactionBar = ({
           {/* Save Button */}
           <button
             onClick={handleSave}
+            disabled={isSaveLoading || !userId}
             className={cn(
               "flex items-center gap-2 text-sm font-medium transition-all duration-200 group",
               saved
                 ? "text-secondary"
                 : "text-muted-foreground hover:text-secondary",
+              isSaveLoading && "opacity-50",
             )}
           >
-            <Bookmark
-              className={cn(
-                "w-5 h-5 group-hover:scale-110 transition-transform",
-                saved && "fill-current",
-              )}
-            />
+            {isSaveLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Bookmark
+                className={cn(
+                  "w-5 h-5 group-hover:scale-110 transition-transform",
+                  saved && "fill-current",
+                )}
+              />
+            )}
             {showLabels && (
               <span className="hidden sm:inline">
                 {saved ? "Đã lưu" : "Lưu"}
@@ -302,19 +351,25 @@ export const ReactionBar = ({
       {/* Save Button */}
       <button
         onClick={handleSave}
+        disabled={isSaveLoading || !userId}
         className={cn(
           "flex items-center gap-2 text-sm transition-all duration-200 group",
           saved
             ? "text-secondary"
             : "text-muted-foreground hover:text-secondary",
+          isSaveLoading && "opacity-50",
         )}
       >
-        <Bookmark
-          className={cn(
-            "w-4 h-4 group-hover:scale-110 transition-transform",
-            saved && "fill-current",
-          )}
-        />
+        {isSaveLoading ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <Bookmark
+            className={cn(
+              "w-4 h-4 group-hover:scale-110 transition-transform",
+              saved && "fill-current",
+            )}
+          />
+        )}
         <span>{saved ? "Đã lưu" : "Lưu"}</span>
       </button>
 

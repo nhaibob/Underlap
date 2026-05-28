@@ -7,7 +7,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { NewConversationModal } from '@/components/features/messages/NewConversationModal';
-import { supabaseAuth } from '@/lib/supabase';
+import { supabaseAuth, supabase } from '@/lib/supabase';
 import { 
   MessageSquare, 
   Search, 
@@ -72,6 +72,24 @@ export default function MessagesPage() {
     };
 
     fetchConversations();
+
+    if (!supabase) return;
+    
+    // Subscribe to new messages to update the conversation list dynamically
+    const channel = supabase
+      .channel('conversations_list')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'messages' },
+        () => {
+          fetchConversations();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase?.removeChannel(channel);
+    };
   }, [userId]);
 
   const filteredConversations = conversations.filter(conv => {

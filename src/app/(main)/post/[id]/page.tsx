@@ -9,13 +9,16 @@ import { CommentSection } from '@/components/core/CommentSection';
 import { ReactionBar } from '@/components/core/ReactionBar';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
+import { supabaseAuth } from '@/lib/supabase';
 import { 
   ArrowLeft, 
   Loader2, 
   Swords, 
   Users,
   Calendar,
-  Eye
+  Eye,
+  UserPlus,
+  CheckCircle2
 } from 'lucide-react';
 
 interface TacticData {
@@ -48,6 +51,12 @@ export default function PostDetailPage({ params }: { params: { id: string } }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [layerVisibility, setLayerVisibility] = useState({ home: true, away: true, ball: true });
+  
+  // Follow state
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [isOwnPost, setIsOwnPost] = useState(false);
 
   useEffect(() => {
     const fetchTactic = async () => {
@@ -67,6 +76,67 @@ export default function PostDetailPage({ params }: { params: { id: string } }) {
 
     fetchTactic();
   }, [params.id]);
+
+  // Fetch current user and check follow status after tactic loads
+  useEffect(() => {
+    if (!tactic) return;
+
+    const initUser = async () => {
+      try {
+        const user = await supabaseAuth.getUser();
+        if (!user?.id) return;
+
+        setCurrentUserId(user.id);
+
+        // Check if this is own post
+        if (tactic.author.id && user.id === tactic.author.id) {
+          setIsOwnPost(true);
+          return;
+        }
+
+        // Check follow status
+        if (tactic.author.id) {
+          const res = await fetch(`/api/follow?targetId=${tactic.author.id}`, {
+            headers: { 'x-user-id': user.id }
+          });
+          if (res.ok) {
+            const { isFollowing: followStatus } = await res.json();
+            setIsFollowing(followStatus);
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to init user:', e);
+      }
+    };
+
+    initUser();
+  }, [tactic]);
+
+  const handleFollowToggle = async () => {
+    if (!currentUserId || !tactic?.author?.id) return;
+
+    setIsFollowLoading(true);
+    try {
+      if (isFollowing) {
+        const res = await fetch(`/api/follow?targetId=${tactic.author.id}`, {
+          method: 'DELETE',
+          headers: { 'x-user-id': currentUserId }
+        });
+        if (res.ok) setIsFollowing(false);
+      } else {
+        const res = await fetch('/api/follow', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-user-id': currentUserId },
+          body: JSON.stringify({ targetId: tactic.author.id })
+        });
+        if (res.ok) setIsFollowing(true);
+      }
+    } catch (e) {
+      console.error('Follow error:', e);
+    } finally {
+      setIsFollowLoading(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -114,39 +184,70 @@ export default function PostDetailPage({ params }: { params: { id: string } }) {
         {/* Header */}
         <div className="p-6 border-b border-white/5">
           {/* Author Info */}
-          <div className="flex items-center gap-3">
-            <Link href={`/profile/${tactic.author.username}`}>
-              <Avatar 
-                src={tactic.author.avatarUrl} 
-                alt={tactic.author.name}
-                size="lg"
-                className="hover:ring-2 hover:ring-primary transition-all"
-              />
-            </Link>
-            <div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
               <Link href={`/profile/${tactic.author.username}`}>
-                <h3 className="font-bold text-foreground hover:text-primary transition-colors">
-                  {tactic.author.name}
-                </h3>
+                <Avatar 
+                  src={tactic.author.avatarUrl} 
+                  alt={tactic.author.name}
+                  size="lg"
+                  className="hover:ring-2 hover:ring-primary transition-all"
+                />
               </Link>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>@{tactic.author.username}</span>
-                <span>•</span>
-                <span className="flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5" />
-                  {new Date(tactic.createdAt).toLocaleDateString('vi-VN')}
-                </span>
-                {tactic.viewsCount && (
-                  <>
-                    <span>•</span>
-                    <span className="flex items-center gap-1">
-                      <Eye className="w-3.5 h-3.5" />
-                      {tactic.viewsCount} lượt xem
-                    </span>
-                  </>
-                )}
+              <div>
+                <Link href={`/profile/${tactic.author.username}`}>
+                  <h3 className="font-bold text-foreground hover:text-primary transition-colors">
+                    {tactic.author.name}
+                  </h3>
+                </Link>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>@{tactic.author.username}</span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5" />
+                    {new Date(tactic.createdAt).toLocaleDateString('vi-VN')}
+                  </span>
+                  {tactic.viewsCount && (
+                    <>
+                      <span>•</span>
+                      <span className="flex items-center gap-1">
+                        <Eye className="w-3.5 h-3.5" />
+                        {tactic.viewsCount} lượt xem
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
+
+            {/* Follow button — chỉ hiển thị khi xem bài của người khác và đã đăng nhập */}
+            {currentUserId && !isOwnPost && tactic.author.id && (
+              <Button
+                variant={isFollowing ? 'outline' : 'default'}
+                size="sm"
+                onClick={handleFollowToggle}
+                disabled={isFollowLoading}
+                className={`gap-2 flex-shrink-0 ${
+                  isFollowing
+                    ? 'border-white/10 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50'
+                    : 'shadow-md shadow-primary/20'
+                }`}
+              >
+                {isFollowLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : isFollowing ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    Đang theo dõi
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="w-4 h-4" />
+                    Theo dõi
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
 

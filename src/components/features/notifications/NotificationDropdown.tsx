@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { NotificationItem, Notification } from "./NotificationItem";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 
 interface NotificationDropdownProps {
   className?: string;
@@ -40,14 +41,35 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Fetch unread count on mount and periodically
+  // Fetch unread count on mount and subscribe to realtime updates
   useEffect(() => {
-    if (isLoggedIn) {
+    if (isLoggedIn && session?.user?.id) {
       fetchUnreadCount();
-      const interval = setInterval(fetchUnreadCount, 30000);
-      return () => clearInterval(interval);
+      
+      if (!supabase) return;
+
+      const channel = supabase
+        .channel('dropdown_notifications')
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${session.user.id}` },
+          () => {
+            fetchUnreadCount();
+            if (isOpen) fetchNotifications(); // Update list if open
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'messages' },
+          () => fetchUnreadCount() // Update message unread badge
+        )
+        .subscribe();
+
+      return () => {
+        supabase?.removeChannel(channel);
+      };
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, session?.user?.id, isOpen]);
 
   // Fetch notifications when dropdown opens
   useEffect(() => {

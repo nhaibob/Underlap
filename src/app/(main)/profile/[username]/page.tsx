@@ -33,6 +33,7 @@ export default function ProfilePage({ params }: { params: { username: string } }
     tactics,
     forkedTactics,
     draftTactics,
+    likedTactics,
     profile,
     profileUserId,
     isOwnProfile,
@@ -271,11 +272,27 @@ export default function ProfilePage({ params }: { params: { username: string } }
         )}
 
         <TabsContent value="liked" className="mt-6">
-          <EmptyState 
-            icon={Heart}
-            title="Chưa thích chiến thuật nào"
-            description="Các chiến thuật bạn thích sẽ xuất hiện ở đây."
-          />
+          {likedTactics.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {likedTactics.map((tactic) => (
+                <TacticGridCard
+                  key={tactic.id}
+                  id={tactic.id}
+                  title={tactic.title}
+                  formation={tactic.formation}
+                  views={tactic.stats.views || 0}
+                  likes={tactic.stats.likes}
+                  onClick={() => router.push(`/post/${tactic.id}`)}
+                />
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              icon={Heart}
+              title="Chưa thích chiến thuật nào"
+              description="Các chiến thuật bạn thích sẽ xuất hiện ở đây."
+            />
+          )}
         </TabsContent>
       </Tabs>
 

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { NotificationItem, Notification } from '@/components/features/notifications';
 import { Button } from '@/components/ui/Button';
-import { supabaseAuth } from '@/lib/supabase';
+import { supabaseAuth, supabase } from '@/lib/supabase';
 import { Bell, Check, Trash2, Loader2, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -26,6 +26,32 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     fetchNotifications(true);
+    
+    // Subscribe to new notifications
+    let channel: any;
+    const setupRealtime = async () => {
+      const user = await supabaseAuth.getUser();
+      if (!user || !supabase) return;
+      
+      channel = supabase
+        .channel('page_notifications')
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+          () => {
+            fetchNotifications(true); // reload list
+          }
+        )
+        .subscribe();
+    };
+    
+    setupRealtime();
+    
+    return () => {
+      if (channel && supabase) {
+        supabase.removeChannel(channel);
+      }
+    };
   }, [filter]);
 
   const fetchNotifications = async (reset = false) => {

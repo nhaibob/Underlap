@@ -6,14 +6,9 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Avatar } from '@/components/ui/Avatar';
-import { supabaseAuth } from '@/lib/supabase';
+import { useSession } from 'next-auth/react';
+import { getSupabaseClient } from '@/lib/supabase';
 import { X, Loader2, Search, MessageSquare, Check } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 interface User {
   id: string;
@@ -35,13 +30,12 @@ export function NewConversationModal({ isOpen, onClose }: NewConversationModalPr
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
+  const { data: session } = useSession();
+  const supabase = getSupabaseClient((session as any)?.supabaseAccessToken);
+
   useEffect(() => {
-    const initUser = async () => {
-      const user = await supabaseAuth.getUser();
-      if (user) setCurrentUserId(user.id);
-    };
-    initUser();
-  }, []);
+    if (session?.user) setCurrentUserId(session.user.id);
+  }, [session]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -52,6 +46,8 @@ export function NewConversationModal({ isOpen, onClose }: NewConversationModalPr
     const searchUsers = async () => {
       setIsLoading(true);
       try {
+        if (!supabase) return;
+        
         let query = supabase
           .from('profiles')
           .select('id, username, avatar_url')

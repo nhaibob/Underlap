@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabaseAuth } from '@/lib/supabase';
+import { supabaseAuth, supabase } from '@/lib/supabase';
 
 export interface Message {
   id: string;
@@ -57,9 +57,32 @@ export const useMessages = (conversationId: string) => {
 
   useEffect(() => {
     fetchMessages();
-    const interval = setInterval(fetchMessages, 5000);
-    return () => clearInterval(interval);
-  }, [fetchMessages]);
+
+    if (!supabase || !conversationId) return;
+
+    // Subscribe to real-time messages
+    const channel = supabase
+      .channel(`messages:${conversationId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${conversationId}`
+        },
+        (payload) => {
+          // Khi có tin nhắn mới, ta gọi lại fetchMessages để lấy cả thông tin profile (join)
+          // Thay vì tự ghép dữ liệu thủ công
+          fetchMessages();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase?.removeChannel(channel);
+    };
+  }, [conversationId, fetchMessages]);
 
   const sendMessage = async (content?: string, tacticData?: any, isSuggestion = false, originalMessageId?: string) => {
     if (!userId || (!content && !tacticData)) return null;

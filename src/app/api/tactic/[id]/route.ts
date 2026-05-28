@@ -98,7 +98,7 @@ export async function PUT(
     const body = await request.json();
     const { title, description, players, arrows, isPublic, status } = body;
 
-    // Update the tactic
+    // Update the tactic (only owner can update)
     const { data, error } = await supabase
       .from("tactics")
       .update({
@@ -111,6 +111,7 @@ export async function PUT(
         updated_at: new Date().toISOString(),
       })
       .eq("id", params.id)
+      .eq("author_id", userId)
       .select()
       .single();
 
@@ -149,7 +150,8 @@ export async function DELETE(
     const { error } = await supabase
       .from("tactics")
       .delete()
-      .eq("id", params.id);
+      .eq("id", params.id)
+      .eq("author_id", userId);
 
     if (error) {
       console.error("Delete tactic error:", error);

@@ -4,6 +4,9 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Drop and recreate tables (be careful in production!)
+DROP TABLE IF EXISTS public.messages CASCADE;
+DROP TABLE IF EXISTS public.conversation_participants CASCADE;
+DROP TABLE IF EXISTS public.conversations CASCADE;
 DROP TABLE IF EXISTS public.comments CASCADE;
 DROP TABLE IF EXISTS public.likes CASCADE;
 DROP TABLE IF EXISTS public.tactics CASCADE;
@@ -85,24 +88,24 @@ ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
 
 -- Profiles policies
 CREATE POLICY "Profiles viewable by everyone" ON public.profiles FOR SELECT USING (true);
-CREATE POLICY "Users can insert profiles" ON public.profiles FOR INSERT WITH CHECK (true);
-CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (true);
+CREATE POLICY "Users can insert profiles" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
 
 -- Tactics policies
-CREATE POLICY "Public tactics viewable by everyone" ON public.tactics FOR SELECT USING (is_public = true);
-CREATE POLICY "Anyone can create tactics" ON public.tactics FOR INSERT WITH CHECK (true);
-CREATE POLICY "Anyone can update tactics" ON public.tactics FOR UPDATE USING (true);
-CREATE POLICY "Anyone can delete tactics" ON public.tactics FOR DELETE USING (true);
+CREATE POLICY "Public tactics viewable by everyone" ON public.tactics FOR SELECT USING (is_public = true OR auth.uid() = author_id);
+CREATE POLICY "Anyone can create tactics" ON public.tactics FOR INSERT WITH CHECK (auth.uid() = author_id);
+CREATE POLICY "Anyone can update tactics" ON public.tactics FOR UPDATE USING (auth.uid() = author_id);
+CREATE POLICY "Anyone can delete tactics" ON public.tactics FOR DELETE USING (auth.uid() = author_id);
 
 -- Likes policies
 CREATE POLICY "Likes viewable by everyone" ON public.likes FOR SELECT USING (true);
-CREATE POLICY "Anyone can like" ON public.likes FOR INSERT WITH CHECK (true);
-CREATE POLICY "Anyone can unlike" ON public.likes FOR DELETE USING (true);
+CREATE POLICY "Anyone can like" ON public.likes FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Anyone can unlike" ON public.likes FOR DELETE USING (auth.uid() = user_id);
 
 -- Comments policies
 CREATE POLICY "Comments viewable by everyone" ON public.comments FOR SELECT USING (true);
-CREATE POLICY "Anyone can comment" ON public.comments FOR INSERT WITH CHECK (true);
-CREATE POLICY "Anyone can delete own comments" ON public.comments FOR DELETE USING (true);
+CREATE POLICY "Anyone can comment" ON public.comments FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Anyone can delete own comments" ON public.comments FOR DELETE USING (auth.uid() = user_id);
 
 -- ============================================
 -- INDEXES
@@ -219,10 +222,10 @@ CREATE POLICY "Users can send messages" ON messages
 
 -- INSERT and UPDATE Policies
 CREATE POLICY "Users can create conversations" ON conversations
-  FOR INSERT WITH CHECK (true);
+  FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
 
 CREATE POLICY "Users can add participants" ON conversation_participants
-  FOR INSERT WITH CHECK (true);
+  FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
 
 CREATE POLICY "Users can update their conversations" ON conversations
   FOR UPDATE USING (

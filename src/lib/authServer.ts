@@ -13,6 +13,20 @@ const supabaseServiceKey =
 // Admin client cho DB operations (bypass RLS khi cần)
 export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
+// RLS-enabled client: uses NextAuth JWT
+export async function getServerSupabaseClient() {
+  const session = await auth();
+  const token = (session as any)?.supabaseAccessToken;
+  
+  return createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+}
+
 export interface AuthUser {
   id: string;
   email: string;

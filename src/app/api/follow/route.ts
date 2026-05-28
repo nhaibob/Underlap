@@ -7,7 +7,8 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const authUser = await getServerUser();
-    const userId = authUser?.id || null;
+    // Support both NextAuth session and x-user-id header (Supabase auth fallback)
+    const userId = authUser?.id || request.headers.get('x-user-id') || null;
     const targetId = searchParams.get("targetId");
 
     if (!userId || !targetId) {
@@ -37,11 +38,12 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const authUser = await getServerUser();
+    // Support both NextAuth session and x-user-id header (Supabase auth fallback)
+    const userId = authUser?.id || request.headers.get('x-user-id');
 
-    if (!authUser) {
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const userId = authUser.id;
     const { targetId } = await request.json();
 
     if (!targetId) {
@@ -104,11 +106,12 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const authUser = await getServerUser();
+    // Support both NextAuth session and x-user-id header (Supabase auth fallback)
+    const userId = authUser?.id || request.headers.get('x-user-id');
 
-    if (!authUser) {
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const userId = authUser.id;
     const { searchParams } = new URL(request.url);
     const targetId = searchParams.get("targetId");
 

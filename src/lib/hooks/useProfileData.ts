@@ -45,6 +45,7 @@ export const useProfileData = (rawUsername: string) => {
   const [tactics, setTactics] = useState<TacticPost[]>([]);
   const [forkedTactics, setForkedTactics] = useState<TacticPost[]>([]);
   const [draftTactics, setDraftTactics] = useState<TacticPost[]>([]);
+  const [likedTactics, setLikedTactics] = useState<TacticPost[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profileUserId, setProfileUserId] = useState<string | null>(null);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
@@ -64,10 +65,12 @@ export const useProfileData = (rawUsername: string) => {
       setCurrentUser(user);
       
       let usernameToFetch = rawUsername;
+      let resolvedIsOwnProfile = false;
       
       if (rawUsername.toLowerCase() === 'me' && user) {
         usernameToFetch = user.user_metadata?.username || user.email?.split('@')[0] || 'me';
         setActualUsername(usernameToFetch);
+        resolvedIsOwnProfile = true;
         setIsOwnProfile(true);
       } else {
         setActualUsername(rawUsername);
@@ -77,15 +80,21 @@ export const useProfileData = (rawUsername: string) => {
           user?.email
         ].filter(Boolean).map(u => u?.toLowerCase());
         
-        setIsOwnProfile(currentUsernames.includes(rawUsername.toLowerCase()));
+        resolvedIsOwnProfile = currentUsernames.includes(rawUsername.toLowerCase());
+        setIsOwnProfile(resolvedIsOwnProfile);
       }
 
+      // Fetch profile
+      let fetchedProfileId: string | null = null;
       const profileRes = await fetch(`/api/user/profile?username=${usernameToFetch}`);
       if (profileRes.ok) {
         const profileData = await profileRes.json();
         if (!profileData.error) {
           setProfile(profileData);
-          if (profileData.id) setProfileUserId(profileData.id);
+          if (profileData.id) {
+            setProfileUserId(profileData.id);
+            fetchedProfileId = profileData.id;
+          }
           setFollowersCount(profileData.followers_count || 0);
           setFollowingCount(profileData.following_count || 0);
         } else if (rawUsername.toLowerCase() === 'me' && user) {
@@ -111,6 +120,7 @@ export const useProfileData = (rawUsername: string) => {
         });
       }
 
+      // Fetch tactics
       const tacticsRes = await fetch(`/api/user/${usernameToFetch}/tactics`);
       if (tacticsRes.ok) {
         const tacticsData = await tacticsRes.json();
@@ -122,8 +132,20 @@ export const useProfileData = (rawUsername: string) => {
         setDraftTactics(drafts);
       }
 
-      if (user && profileUserId && user.id !== profileUserId) {
-        const followRes = await fetch(`/api/follow?targetId=${profileUserId}`, {
+      // Fetch liked tactics
+      try {
+        const likedRes = await fetch(`/api/tactic/liked?username=${usernameToFetch}`);
+        if (likedRes.ok) {
+          const likedData = await likedRes.json();
+          setLikedTactics(Array.isArray(likedData) ? likedData : []);
+        }
+      } catch (e) {
+        console.warn('Failed to fetch liked tactics:', e);
+      }
+
+      // Check follow status — sử dụng fetchedProfileId thay vì state để tránh race condition
+      if (user && fetchedProfileId && user.id !== fetchedProfileId) {
+        const followRes = await fetch(`/api/follow?targetId=${fetchedProfileId}`, {
           headers: { 'x-user-id': user.id }
         });
         if (followRes.ok) {
@@ -140,7 +162,7 @@ export const useProfileData = (rawUsername: string) => {
 
   useEffect(() => {
     fetchProfileData();
-  }, [rawUsername, profileUserId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [rawUsername]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleMessage = async () => {
     if (!currentUser) {
@@ -246,6 +268,7 @@ export const useProfileData = (rawUsername: string) => {
     tactics,
     forkedTactics,
     draftTactics,
+    likedTactics,
     profile,
     profileUserId,
     isOwnProfile,
