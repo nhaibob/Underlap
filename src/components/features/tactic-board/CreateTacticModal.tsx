@@ -202,23 +202,24 @@ export const CreateTacticModal = () => {
       onSaveDraft: handleSaveDraft
   };
 
+  if (!isCreateModalOpen) return null;
+
   return (
-    <Modal isOpen={isCreateModalOpen} onClose={closeCreateModal} hideCloseButton={true} className="max-w-full w-[95vw] h-[95vh] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-0 border-none bg-transparent shadow-none">
-      <div className="w-full h-full bg-background rounded-lg border border-border shadow-2xl overflow-hidden">
-        <DndContext 
-          sensors={sensors}
-          onDragEnd={handleDragEnd} 
-          measuring={{ droppable: { strategy: MeasuringStrategy.WhileDragging } }}
-        >
-            <TacticEditorUI
-            {...logic}
-            onPlayerDelete={logic.deletePlayer}
-            onBoardClick={logic.addPlayerAtPosition}
-            onClearAll={logic.clearAll}
-            metaProps={metaProps}
-            />
-        </DndContext>
-      </div>
-    </Modal>
+    <div className="fixed inset-0 z-50 w-full h-screen bg-background overflow-hidden">
+      <DndContext 
+        sensors={sensors}
+        onDragEnd={handleDragEnd} 
+        measuring={{ droppable: { strategy: MeasuringStrategy.WhileDragging } }}
+      >
+          <TacticEditorUI
+          {...logic}
+          onPlayerDelete={logic.deletePlayer}
+          onBoardClick={logic.addPlayerAtPosition}
+          onClearAll={logic.clearAll}
+          metaProps={metaProps}
+          onClose={closeCreateModal}
+          />
+      </DndContext>
+    </div>
   );
 };
