@@ -80,4 +80,16 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-headline;
   }
+  
+  /* Ẩn thanh cuộn mặc định trên toàn hệ thống */
+  ::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+    display: none;
+  }
+  
+  * {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE 10+ */
+  }
 }

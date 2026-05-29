@@ -7,6 +7,7 @@ import { SettingsModal } from '@/components/core/SettingsModal';
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
 import { TransitionProvider } from '@/components/providers/TransitionProvider';
+import { LaserScrollbar } from '@/components/layout/LaserScrollbar';
 
 export const metadata: Metadata = {
     title: 'Underlap - Tactic Board',
@@ -27,6 +28,9 @@ export default function RootLayout({
                     {/* Render Modals */}
                     <CreateTacticModal />
                     <SettingsModal />
+
+                    {/* Custom UI Overlays */}
+                    <LaserScrollbar />
                 </SessionProvider>
             </body>
         </html>
