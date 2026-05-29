@@ -22,9 +22,7 @@ export default function RootLayout({
         <html lang="vi" className={`dark ${GeistSans.variable} ${GeistMono.variable}`}>
             <body className="bg-background text-text-primary antialiased font-sans">
                 <SessionProvider>
-                    <PageTransition>
-                        {children}
-                    </PageTransition>
+                    {children}
 
                     {/* Render Modals */}
                     <CreateTacticModal />
