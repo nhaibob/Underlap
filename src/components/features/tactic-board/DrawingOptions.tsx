@@ -21,11 +21,10 @@ export const DrawingOptions = ({
   if (activeTool !== 'draw' && activeTool !== 'area') return null;
 
   return (
-    <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-200">
-      <Divider />
+    <div className="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 flex items-center gap-3 bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl px-4 py-2.5 animate-in fade-in slide-in-from-top-2 duration-200 z-[60]">
       
       {/* Color Picker */}
-      <div className="flex items-center gap-0.5 sm:gap-1 bg-muted/50 rounded-lg p-0.5 sm:p-1">
+      <div className="flex items-center gap-0.5 sm:gap-1 bg-muted/50 rounded-full p-0.5 sm:p-1">
         {ALL_ARROW_COLOR_VALUES.map((c) => (
           <button
             key={c}
@@ -44,11 +43,11 @@ export const DrawingOptions = ({
 
       {/* Style Picker (only for draw) */}
       {activeTool === 'draw' && (
-        <div className="flex bg-muted/50 rounded-lg p-0.5">
+        <div className="flex bg-muted/50 rounded-full p-0.5">
           <button 
             onClick={() => setArrowStyle('solid')}
             className={cn(
-              "p-1.5 rounded-md transition-all",
+              "p-1.5 rounded-full transition-all",
               arrowStyle === 'solid' 
                 ? "bg-background shadow-sm text-foreground" 
                 : "text-muted-foreground hover:text-foreground"
@@ -60,7 +59,7 @@ export const DrawingOptions = ({
           <button 
             onClick={() => setArrowStyle('dashed')}
             className={cn(
-              "p-1.5 rounded-md transition-all",
+              "p-1.5 rounded-full transition-all",
               arrowStyle === 'dashed' 
                 ? "bg-background shadow-sm text-foreground" 
                 : "text-muted-foreground hover:text-foreground"

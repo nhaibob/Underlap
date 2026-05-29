@@ -23,9 +23,9 @@ export const ToolButton = ({
     onClick={onClick}
     disabled={disabled}
     className={cn(
-      "h-9 w-9 rounded-lg transition-colors duration-200 flex items-center justify-center relative",
+      "h-9 w-9 rounded-full transition-colors duration-200 flex items-center justify-center relative z-10",
       isActive 
-        ? "bg-primary text-primary-foreground shadow-md" 
+        ? "text-primary-foreground" 
         : "text-muted-foreground hover:text-foreground hover:bg-muted",
       variant === 'danger' && "text-red-400 hover:text-red-500 hover:bg-red-500/10",
       disabled && "opacity-40 cursor-not-allowed"
@@ -36,7 +36,7 @@ export const ToolButton = ({
     {isActive && (
       <motion.div
         layoutId="active-indicator"
-        className="absolute inset-0 rounded-lg bg-primary/10 -z-10"
+        className="absolute inset-0 rounded-full bg-primary shadow-md -z-10"
         initial={false}
         transition={{ type: "spring", stiffness: 500, damping: 30 }}
       />

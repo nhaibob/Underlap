@@ -131,37 +131,43 @@ export const TacticEditorUI = ({
         canPost={canPost}
       />
       
+      {/* Compact Toolbar (Desktop) - Absolutely positioned at the top center of the pitch */}
+      <div 
+        className="hidden xl:flex absolute top-4 z-[60] transition-all duration-300"
+        style={{
+          left: isPanelCollapsed ? '50%' : 'calc(50% - 160px)',
+          transform: 'translateX(-50%)'
+        }}
+      >
+        <CompactToolbar
+          activeTool={activeTool}
+          setActiveTool={setActiveTool}
+          arrowColor={arrowColor}
+          setArrowColor={setArrowColor}
+          arrowStyle={arrowStyle}
+          setArrowStyle={setArrowStyle}
+          positionToPlace={positionToPlace}
+          setPositionToPlace={setPositionToPlace}
+          undo={undo}
+          redo={redo}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          onClearAll={onClearAll}
+          selectedTeam={selectedTeam}
+          setSelectedTeam={setSelectedTeam}
+          isPlacingBall={isPlacingBall}
+          setIsPlacingBall={setIsPlacingBall}
+          layerVisibility={layerVisibility}
+          toggleLayerVisibility={toggleLayerVisibility}
+          loadFormation={loadFormation}
+          onExport={handleExport}
+        />
+      </div>
+
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
         {/* Board Area */}
         <main className="flex-1 flex flex-col overflow-hidden">
-          {/* Compact Toolbar (Desktop) */}
-          <div className="hidden xl:block z-50">
-            <CompactToolbar
-              activeTool={activeTool}
-              setActiveTool={setActiveTool}
-              arrowColor={arrowColor}
-              setArrowColor={setArrowColor}
-              arrowStyle={arrowStyle}
-              setArrowStyle={setArrowStyle}
-              positionToPlace={positionToPlace}
-              setPositionToPlace={setPositionToPlace}
-              undo={undo}
-              redo={redo}
-              canUndo={canUndo}
-              canRedo={canRedo}
-              onClearAll={onClearAll}
-              selectedTeam={selectedTeam}
-              setSelectedTeam={setSelectedTeam}
-              isPlacingBall={isPlacingBall}
-              setIsPlacingBall={setIsPlacingBall}
-              layerVisibility={layerVisibility}
-              toggleLayerVisibility={toggleLayerVisibility}
-              loadFormation={loadFormation}
-              onExport={handleExport}
-            />
-          </div>
-
           {/* Board Container */}
           <div 
             ref={boardContainerRef}
@@ -170,6 +176,7 @@ export const TacticEditorUI = ({
               "bg-background",
               positionToPlace && "cursor-crosshair"
             )}>
+            
             {/* Subtle Grid Pattern */}
             <div className="absolute inset-0 opacity-[0.02] pointer-events-none" 
                  style={{ 
