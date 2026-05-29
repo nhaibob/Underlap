@@ -92,7 +92,7 @@ export const Header = () => {
 
         {/* 2. SEARCH BAR (Absolute positioning to center/align) */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-4 md:px-6">
-          <div className="w-full max-w-2xl hidden md:block">
+          <div className="w-full max-w-3xl hidden md:block">
             <div className="relative flex items-center bg-transparent rounded-none border-b border-white/10 px-0 py-2 focus-within:border-white/50 transition-colors pointer-events-auto">
               <Search className="w-4 h-4 text-muted-foreground mr-3" />
               <input

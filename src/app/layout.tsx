@@ -6,7 +6,7 @@ import { CreateTacticModal } from '@/components/features/tactic-board/CreateTact
 import { SettingsModal } from '@/components/core/SettingsModal';
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
-import { PageTransition } from '@/components/layout/PageTransition';
+import { TransitionProvider } from '@/components/providers/TransitionProvider';
 
 export const metadata: Metadata = {
     title: 'Underlap - Tactic Board',
@@ -20,7 +20,7 @@ export default function RootLayout({
 }) {
     return (
         <html lang="vi" className={`dark ${GeistSans.variable} ${GeistMono.variable}`}>
-            <body className="bg-background text-text-primary antialiased font-sans">
+            <body className="bg-background text-text-primary antialiased font-sans flex flex-col min-h-screen">
                 <SessionProvider>
                     {children}
 

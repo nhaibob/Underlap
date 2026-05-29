@@ -192,18 +192,22 @@ export default function ProfilePage({ params }: { params: { username: string } }
                       onClick={() => router.push(`/post/${tactic.id}`)}
                     />
                     <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
+                      <motion.button
+                        whileHover={{ scale: 1.15, rotate: 5 }}
+                        whileTap={{ scale: 0.9 }}
                         onClick={(e) => { e.stopPropagation(); router.push(`/tactic/edit/${tactic.id}`); }}
-                        className="p-2 bg-black/60 rounded-lg hover:bg-black/80"
+                        className="p-2 bg-black/60 rounded-lg hover:bg-black/80 transition-all"
                       >
                         <Edit className="w-4 h-4 text-white" />
-                      </button>
-                      <button
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.15, rotate: -5 }}
+                        whileTap={{ scale: 0.9 }}
                         onClick={(e) => { e.stopPropagation(); handleDeleteTactic(tactic.id, 'forked'); }}
-                        className="p-2 bg-red-600/80 rounded-lg hover:bg-red-600"
+                        className="p-2 bg-red-600/80 rounded-lg hover:bg-red-600 transition-all"
                       >
                         <Trash2 className="w-4 h-4 text-white" />
-                      </button>
+                      </motion.button>
                     </div>
                   </div>
                 ))}
@@ -236,18 +240,22 @@ export default function ProfilePage({ params }: { params: { username: string } }
                       Bản nháp
                     </div>
                     <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
+                      <motion.button
+                        whileHover={{ scale: 1.15, rotate: 5 }}
+                        whileTap={{ scale: 0.9 }}
                         onClick={(e) => { e.stopPropagation(); router.push(`/tactic/edit/${tactic.id}`); }}
-                        className="p-2 bg-black/60 rounded-lg hover:bg-black/80"
+                        className="p-2 bg-black/60 rounded-lg hover:bg-black/80 transition-all"
                       >
                         <Edit className="w-4 h-4 text-white" />
-                      </button>
-                      <button
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.15, rotate: -5 }}
+                        whileTap={{ scale: 0.9 }}
                         onClick={(e) => { e.stopPropagation(); handleDeleteTactic(tactic.id, 'draft'); }}
-                        className="p-2 bg-red-600/80 rounded-lg hover:bg-red-600"
+                        className="p-2 bg-red-600/80 rounded-lg hover:bg-red-600 transition-all"
                       >
                         <Trash2 className="w-4 h-4 text-white" />
-                      </button>
+                      </motion.button>
                     </div>
                   </div>
                 ))}

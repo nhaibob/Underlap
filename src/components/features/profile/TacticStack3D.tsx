@@ -147,24 +147,32 @@ export const TacticStack3D: React.FC<TacticStack3DProps> = ({ tactics, isOwnProf
                       className="mt-4 flex flex-col gap-2"
                     >
                       <Link href={`/post/${tactic.id}`}>
-                        <button className="w-full py-3 bg-copper hover:bg-copper/90 text-black font-semibold rounded-lg transition-colors text-sm shadow-[0_0_20px_rgba(196,139,71,0.3)]">
+                        <motion.button 
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          className="w-full py-3 bg-copper hover:bg-copper/90 text-black font-semibold rounded-lg transition-all text-sm shadow-[0_0_20px_rgba(196,139,71,0.3)]"
+                        >
                           Xem sơ đồ
-                        </button>
+                        </motion.button>
                       </Link>
                       {isOwnProfile && (
                         <div className="flex gap-2">
-                          <button 
+                          <motion.button 
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEdit?.(tactic.id); }}
                             className="flex-1 py-2 bg-black/60 border border-white/10 text-white font-medium rounded-lg hover:bg-white/10 transition-colors text-xs backdrop-blur-md"
                           >
                             Chỉnh sửa
-                          </button>
-                          <button 
+                          </motion.button>
+                          <motion.button 
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete?.(tactic.id); }}
                             className="flex-1 py-2 bg-red-950/40 border border-red-500/20 text-red-400 font-medium rounded-lg hover:bg-red-900/60 transition-colors text-xs backdrop-blur-md"
                           >
                             Xóa thẻ
-                          </button>
+                          </motion.button>
                         </div>
                       )}
                     </motion.div>
