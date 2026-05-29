@@ -6,82 +6,73 @@
 
 @layer base {
   :root {
-    /* --- Light Mode --- */
-    --background: 210 40% 98%;
-    --foreground: 222 47% 11%;
-
+    /* --- Light Mode (Minimalist) --- */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 4%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
- 
+    --card-foreground: 0 0% 4%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
- 
-    --primary: 153 53% 24%; /* Underlap Green */
-    --primary-foreground: 0 0% 100%;
- 
-    --secondary: 146 50% 36%; /* Sea Green */
-    --secondary-foreground: 0 0% 100%;
- 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
- 
-    --accent: 153 20% 90%;
-    --accent-foreground: 153 53% 24%;
- 
+    --popover-foreground: 0 0% 4%;
+    
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 9%;
+    
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+    
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 9%;
+    
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 153 53% 24%;
- 
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 0% 9%;
     --radius: 0.5rem;
   }
  
   .dark {
-    /* --- Dark Mode (Giao diện chính của Underlap) --- */
-    
-    /* Nền chính: #0B0E12 */
-    --background: 220 24% 6%; 
-    
-    /* Chữ chính: #E6EEF3 */
-    --foreground: 203 33% 93%; 
+    /* --- Dark Mode (Awwwards/Linear/Threads Matte Black) --- */
+    --background: 0 0% 4%; /* #0a0a0a */
+    --foreground: 0 0% 98%; /* #fafafa */
 
-    /* Panel/Card: #0F1720 */
-    --card: 212 36% 10%; 
-    --card-foreground: 203 33% 93%;
+    --card: 0 0% 4%;
+    --card-foreground: 0 0% 98%;
  
-    --popover: 212 36% 10%;
-    --popover-foreground: 203 33% 93%;
+    --popover: 0 0% 4%;
+    --popover-foreground: 0 0% 98%;
  
-    /* Primary: #1C5D3F (Underlap Green from logo) */
-    --primary: 153 53% 24%; 
-    --primary-foreground: 0 0% 100%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
  
-    /* Secondary: #2E8B57 (Sea Green) */
-    --secondary: 146 50% 36%; 
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 98%;
  
-    --muted: 212 36% 15%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 64%; /* #a1a1aa */
  
-    /* Màu hover nhẹ */
-    --accent: 153 30% 20%; 
-    --accent-foreground: 0 0% 100%;
+    --accent: 0 0% 10%; 
+    --accent-foreground: 0 0% 98%;
  
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
  
-    /* Viền: #2C3545 (Tương phản nhẹ với nền) */
-    --border: 217 22% 22%; 
-    --input: 217 22% 22%; 
-    --ring: 153 53% 24%;
+    --border: 0 0% 12%; /* Subtle border */
+    --input: 0 0% 12%; 
+    --ring: 0 0% 83%;
   }
 }
  
 @layer base {
   * {
     @apply border-border;
+  }
+  html {
+    scrollbar-gutter: stable;
   }
   body {
     @apply bg-background text-foreground font-body;

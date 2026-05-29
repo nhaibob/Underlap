@@ -166,8 +166,8 @@ export const TacticEditorUI = ({
           <div 
             ref={boardContainerRef}
             className={cn(
-              "flex-1 relative overflow-hidden flex flex-col items-center justify-center p-2 sm:p-4 lg:p-6 select-none",
-              "bg-gradient-to-br from-neutral-800/40 to-neutral-900/30",
+              "flex-1 relative overflow-hidden flex flex-col items-center justify-center p-1 sm:p-2 lg:p-4 select-none",
+              "bg-background",
               positionToPlace && "cursor-crosshair"
             )}>
             {/* Subtle Grid Pattern */}
@@ -180,10 +180,10 @@ export const TacticEditorUI = ({
             
             {/* Tactic Board */}
             <div 
-              className="w-full transition-all duration-300"
+              className="w-full transition-all duration-300 drop-shadow-2xl"
               style={{ 
-                maxWidth: 'min(calc((100vh - 230px) * 1.5), 100%)',
-                maxHeight: 'calc(100vh - 230px)'
+                maxWidth: 'min(calc((100vh - 120px) * 1.5), 100%)',
+                maxHeight: 'calc(100vh - 120px)'
               }}
             >
               <TacticBoard 

@@ -69,11 +69,14 @@ export const PostCard = ({
   return (
     <>
       <div className="
-        group relative rounded-2xl bg-gradient-to-br from-panel via-panel to-panel/80
-        border border-white/5 hover:border-primary/40 
+        group relative rounded-2xl bg-gradient-to-br from-[#1a1a1a]/80 to-[#050505]/80 backdrop-blur-xl
+        border border-white/10 hover:border-white/30 
         transition-all duration-500 overflow-hidden
-        hover:shadow-xl hover:shadow-primary/5
+        shadow-[0_10px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.8)] hover:-translate-y-1
       ">
+        {/* Ánh sáng lướt qua */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        
         {/* Main Content */}
         <div className="p-5">
           {/* Header */}

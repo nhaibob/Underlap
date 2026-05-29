@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
 import { NotificationDropdown } from "@/components/features/notifications";
 import { useUIStore } from "@/lib/store/uiStore";
+import { motion } from "framer-motion";
 import {
   PenSquare,
   Search,
@@ -38,12 +39,15 @@ const NavLink = ({ href, icon: Icon }: (typeof NAV_ITEMS)[0]) => {
     <Link
       href={href}
       className={cn(
-        "flex items-center p-2 rounded-full transition-colors",
+        "relative flex items-center p-2.5 rounded-full transition-colors z-10",
         isActive
-          ? "bg-panel text-text-primary"
-          : "text-text-secondary hover:bg-panel hover:text-text-primary",
+          ? "text-black"
+          : "text-text-secondary hover:text-white hover:bg-white/5",
       )}
     >
+      {isActive && (
+        <motion.div layoutId="headerNavPill" className="absolute inset-0 bg-white rounded-full z-[-1] shadow-sm" transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }} />
+      )}
       <Icon className="w-5 h-5" />
     </Link>
   );
@@ -71,14 +75,15 @@ export const Header = () => {
   const avatarUrl = user?.image || "";
 
   return (
-    <header className="sticky top-0 z-50 w-full h-16 bg-panel/80 backdrop-blur-md border-b border-panel">
+    <header className="sticky top-0 z-50 w-full h-16 bg-background/60 backdrop-blur-xl border-b border-white/5 transition-all duration-300">
       <div className="flex items-center justify-between h-full px-4 md:px-6">
         {/* 1. LOGO & NAV */}
         <div className="flex items-center gap-6">
-          <Link href="/feed" className="flex items-center gap-2 flex-shrink-0">
-            <img src="/logo.png" alt="Underlap" className="h-8 w-auto" />
+          <Link href="/feed" className="flex items-center gap-2 flex-shrink-0 font-bold tracking-tight text-xl uppercase text-foreground">
+            {/* Minimalist text logo instead of image if preferred, but we keep img just in case */}
+            UNDERLAP
           </Link>
-          <nav className="hidden lg:flex items-center gap-4">
+          <nav className="hidden lg:flex items-center gap-6 text-sm font-medium">
             {NAV_ITEMS.map((item) => (
               <NavLink key={item.href} {...item} />
             ))}
@@ -87,12 +92,12 @@ export const Header = () => {
 
         {/* 2. THANH TÌM KIẾM */}
         <div className="flex-1 max-w-sm mx-6 hidden md:block">
-          <div className="relative flex items-center bg-background rounded-full px-4 py-2 border border-transparent focus-within:border-primary transition-colors">
-            <Search className="w-5 h-5 text-text-secondary mr-3" />
+          <div className="relative flex items-center bg-transparent rounded-none border-b border-white/10 px-0 py-2 focus-within:border-white/50 transition-colors">
+            <Search className="w-4 h-4 text-muted-foreground mr-3" />
             <input
               type="text"
-              placeholder="Tìm đội / sơ đồ..."
-              className="w-full bg-transparent text-text-primary placeholder:text-text-secondary focus:outline-none"
+              placeholder="Search..."
+              className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
             />
           </div>
         </div>

@@ -97,20 +97,19 @@ export const PlayerToken = ({
   return (
     <div
       className={cn(
-        "relative flex items-center justify-center rounded-full font-bold shadow-lg border-2 select-none",
+        "relative flex items-center justify-center rounded-full font-bold shadow-md shadow-black/40 select-none",
         colors.bg,
-        colors.border,
         colors.text,
-        variant === 'responsive' ? 'w-full h-full text-[clamp(8px,2vw,12px)]' : 'w-10 h-10 text-xs',
-        "transition-all duration-200",
+        variant === 'responsive' ? 'w-full h-full text-[clamp(8px,2vw,12px)]' : 'w-9 h-9 sm:w-10 sm:h-10 text-[10px] sm:text-xs',
+        "transition-transform duration-100 ease-out",
         className
       )}
+      style={{
+        boxShadow: '0 4px 12px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.2)'
+      }}
     >
-      {/* Inner glow effect */}
-      <div className="absolute inset-0.5 rounded-full bg-gradient-to-b from-white/30 to-transparent pointer-events-none" />
-      
       {/* Label */}
-      <span className="relative z-10 drop-shadow-sm">
+      <span className="relative z-10 drop-shadow-sm tracking-wide">
         {displayLabel}
       </span>
     </div>

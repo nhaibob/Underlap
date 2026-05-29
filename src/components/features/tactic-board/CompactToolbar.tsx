@@ -53,9 +53,8 @@ export const CompactToolbar = ({
 }: CompactToolbarProps) => {
   const [showLayerMenu, setShowLayerMenu] = useState(false);
   const [showFormationMenu, setShowFormationMenu] = useState(false);
-
   return (
-    <div className="flex items-center justify-between gap-2 px-3 py-2 bg-card/80 backdrop-blur-md border-b border-border/50">
+    <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-4 px-5 py-2.5 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-full shadow-2xl z-50">
       <div className="flex items-center gap-1">
         <div className="flex items-center gap-0.5">
           <ToolButton icon={Undo2} onClick={undo} disabled={!canUndo} title="Hoàn tác (Ctrl+Z)" />

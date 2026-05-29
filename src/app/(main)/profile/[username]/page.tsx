@@ -8,7 +8,9 @@ import { FollowersModal } from '@/components/features/profile/FollowersModal';
 import { EditProfileModal } from '@/components/core/EditProfileModal';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs';
 import { TacticGridCard } from '@/components/features/profile/TacticGridCard';
+import { TacticStack3D } from '@/components/features/profile/TacticStack3D';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { motion } from 'framer-motion';
 import { useProfileData } from '@/lib/hooks/useProfileData';
 import { 
   Grid3X3, 
@@ -116,27 +118,39 @@ export default function ProfilePage({ params }: { params: { username: string } }
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-        <TabsList className={`w-full grid ${isOwnProfile ? 'grid-cols-4' : 'grid-cols-2'} bg-panel/50 p-1 rounded-lg`}>
-          <TabsTrigger value="tactics" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white rounded-md transition-all">
+        <TabsList className={`w-full grid ${isOwnProfile ? 'grid-cols-4' : 'grid-cols-2'} gap-3`}>
+          <TabsTrigger value="tactics" className="relative flex items-center justify-center gap-2 rounded-xl py-3 transition-colors z-10 bg-[#111111]/80 border border-white/5 hover:bg-white/5 data-[state=active]:bg-transparent data-[state=active]:border-transparent data-[state=active]:shadow-none text-muted-foreground data-[state=active]:text-black">
+            {activeTab === 'tactics' && (
+              <motion.div layoutId="tabPill" className="absolute inset-0 bg-white rounded-xl z-[-1] shadow-md" transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }} />
+            )}
             <Grid3X3 className="w-4 h-4" />
             <span className="hidden sm:inline">Chiến thuật</span>
             {tactics.length > 0 && <span className="text-xs opacity-70">({tactics.length})</span>}
           </TabsTrigger>
           {isOwnProfile && (
-            <TabsTrigger value="forked" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white rounded-md transition-all">
+            <TabsTrigger value="forked" className="relative flex items-center justify-center gap-2 rounded-xl py-3 transition-colors z-10 bg-[#111111]/80 border border-white/5 hover:bg-white/5 data-[state=active]:bg-transparent data-[state=active]:border-transparent data-[state=active]:shadow-none text-muted-foreground data-[state=active]:text-black">
+              {activeTab === 'forked' && (
+                <motion.div layoutId="tabPill" className="absolute inset-0 bg-white rounded-xl z-[-1] shadow-md" transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }} />
+              )}
               <GitFork className="w-4 h-4" />
               <span className="hidden sm:inline">Đã fork</span>
               {forkedTactics.length > 0 && <span className="text-xs opacity-70">({forkedTactics.length})</span>}
             </TabsTrigger>
           )}
           {isOwnProfile && (
-            <TabsTrigger value="drafts" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white rounded-md transition-all">
+            <TabsTrigger value="drafts" className="relative flex items-center justify-center gap-2 rounded-xl py-3 transition-colors z-10 bg-[#111111]/80 border border-white/5 hover:bg-white/5 data-[state=active]:bg-transparent data-[state=active]:border-transparent data-[state=active]:shadow-none text-muted-foreground data-[state=active]:text-black">
+              {activeTab === 'drafts' && (
+                <motion.div layoutId="tabPill" className="absolute inset-0 bg-white rounded-xl z-[-1] shadow-md" transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }} />
+              )}
               <FilePlus2 className="w-4 h-4" />
               <span className="hidden sm:inline">Bản nháp</span>
               {draftTactics.length > 0 && <span className="text-xs opacity-70">({draftTactics.length})</span>}
             </TabsTrigger>
           )}
-          <TabsTrigger value="liked" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white rounded-md transition-all">
+          <TabsTrigger value="liked" className="relative flex items-center justify-center gap-2 rounded-xl py-3 transition-colors z-10 bg-[#111111]/80 border border-white/5 hover:bg-white/5 data-[state=active]:bg-transparent data-[state=active]:border-transparent data-[state=active]:shadow-none text-muted-foreground data-[state=active]:text-black">
+            {activeTab === 'liked' && (
+              <motion.div layoutId="tabPill" className="absolute inset-0 bg-white rounded-xl z-[-1] shadow-md" transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }} />
+            )}
             <Heart className="w-4 h-4" />
             <span className="hidden sm:inline">Đã thích</span>
           </TabsTrigger>
@@ -144,35 +158,13 @@ export default function ProfilePage({ params }: { params: { username: string } }
 
         <TabsContent value="tactics" className="mt-6">
           {tactics.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {tactics.map((tactic) => (
-                <div key={tactic.id} className="relative group">
-                  <TacticGridCard 
-                    id={tactic.id}
-                    title={tactic.title} 
-                    formation={tactic.formation} 
-                    views={tactic.stats.views || 0}
-                    likes={tactic.stats.likes}
-                    onClick={() => router.push(`/post/${tactic.id}`)}
-                  />
-                  {isOwnProfile && (
-                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); router.push(`/tactic/edit/${tactic.id}`); }}
-                        className="p-2 bg-black/60 rounded-lg hover:bg-black/80"
-                      >
-                        <Edit className="w-4 h-4 text-white" />
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleDeleteTactic(tactic.id, 'published'); }}
-                        className="p-2 bg-red-600/80 rounded-lg hover:bg-red-600"
-                      >
-                        <Trash2 className="w-4 h-4 text-white" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
+            <div className="w-full">
+              <TacticStack3D 
+                tactics={tactics}
+                isOwnProfile={isOwnProfile}
+                onEdit={(id) => router.push(`/tactic/edit/${id}`)}
+                onDelete={(id) => handleDeleteTactic(id, 'published')}
+              />
             </div>
           ) : (
             <EmptyState 

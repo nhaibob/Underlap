@@ -24,7 +24,7 @@ export const LandingHeader = () => {
           {/* Nút Đăng ký */}
           <Link href="/register">
             <Button variant="default" className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 shadow-md shadow-primary/20">
-              Đăng 
+              Đăng ký
             </Button>
           </Link>
         </div>

@@ -10,14 +10,14 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow hover:bg-primary/90",
+          "relative overflow-hidden bg-primary text-primary-foreground shadow-sm transition-colors hover:text-black z-0 before:absolute before:inset-0 before:-z-10 before:bg-white before:scale-x-0 before:origin-left before:transition-transform before:duration-500 before:ease-[cubic-bezier(0.19,1,0.22,1)] hover:before:scale-x-100",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
+          "relative overflow-hidden bg-destructive text-destructive-foreground shadow-sm transition-colors hover:text-white z-0 before:absolute before:inset-0 before:-z-10 before:bg-red-900 before:scale-x-0 before:origin-left before:transition-transform before:duration-500 before:ease-[cubic-bezier(0.19,1,0.22,1)] hover:before:scale-x-100",
         outline:
-          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
+          "relative overflow-hidden border border-white/10 bg-transparent shadow-sm transition-colors hover:text-black z-0 before:absolute before:inset-0 before:-z-10 before:bg-white before:scale-x-0 before:origin-left before:transition-transform before:duration-500 before:ease-[cubic-bezier(0.19,1,0.22,1)] hover:before:scale-x-100",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
+          "relative overflow-hidden bg-secondary text-secondary-foreground shadow-sm transition-colors hover:text-black z-0 before:absolute before:inset-0 before:-z-10 before:bg-white before:scale-x-0 before:origin-left before:transition-transform before:duration-500 before:ease-[cubic-bezier(0.19,1,0.22,1)] hover:before:scale-x-100",
+        ghost: "relative overflow-hidden transition-colors hover:text-black z-0 before:absolute before:inset-0 before:-z-10 before:bg-white before:scale-x-0 before:origin-left before:transition-transform before:duration-500 before:ease-[cubic-bezier(0.19,1,0.22,1)] hover:before:scale-x-100",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {

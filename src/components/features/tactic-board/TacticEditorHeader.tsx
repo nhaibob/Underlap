@@ -29,31 +29,30 @@ export const TacticEditorHeader = ({
   const { closeCreateModal } = useUIStore();
 
   return (
-    <header className="h-16 flex items-center justify-between px-4 sm:px-6 border-b border-border/50 bg-gradient-to-r from-violet-500/10 via-purple-500/5 to-transparent backdrop-blur-md z-50 shrink-0">
+    <header className="h-16 flex items-center justify-between px-4 sm:px-6 bg-transparent z-50 shrink-0 relative mt-2">
       <div className="flex items-center gap-4">
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={onClose || closeCreateModal} 
-          className="text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-all"
+          className="text-muted-foreground hover:text-white hover:bg-white/10 rounded-full transition-all bg-black/40 backdrop-blur-md shadow-lg"
           title="Đóng"
         >
           <X className="w-5 h-5" />
         </Button>
-        <div className="border-l border-border/50 h-8 hidden sm:block" />
-        <div>
-          <h2 className="text-lg font-bold font-headline tracking-tight bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
+        <div className="flex flex-col bg-black/40 backdrop-blur-md px-4 py-1 rounded-full shadow-lg border border-white/5">
+          <h2 className="text-sm font-bold font-headline tracking-tight text-white">
             Tạo Chiến Thuật
           </h2>
-          <p className="text-xs text-muted-foreground flex items-center gap-2">
+          <p className="text-[10px] text-muted-foreground flex items-center gap-2 mt-0.5">
             <span className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-violet-500"></span>
-              {playerCount} cầu thủ
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              {playerCount}
             </span>
             <span className="text-muted-foreground/50">•</span>
             <span className="flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-cyan-500"></span>
-              {arrowCount} mũi tên
+              {arrowCount}
             </span>
           </p>
         </div>

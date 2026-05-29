@@ -18,20 +18,21 @@ const config = {
       },
     },
     extend: {
-      // 1. FONT CHỮ
+      // 1. FONT CHỮ (GEIST SANS)
       fontFamily: {
-        headline: ['"Space Grotesk"', 'sans-serif'],
-        body: ['Inter', 'sans-serif'],
+        sans: ['var(--font-geist-sans)', 'sans-serif'],
+        mono: ['var(--font-geist-mono)', 'monospace'],
+        headline: ['var(--font-geist-sans)', 'sans-serif'],
+        body: ['var(--font-geist-sans)', 'sans-serif'],
       },
       // 2. MÀU SẮC (Dùng biến CSS)
       colors: {
-        border: "hsl(var(--border))", // <-- Dòng này sửa lỗi build
+        border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         
-        // Mapping màu Panel cũ sang biến card mới
         panel: "hsl(var(--card))", 
         
         primary: {
@@ -63,7 +64,10 @@ const config = {
           foreground: "hsl(var(--card-foreground))",
         },
         
-        // Các màu Utility giữ nguyên mã Hex nếu muốn
+        // Custom Colors cho Minimalist UI
+        matte: '#0a0a0a',
+        'matte-light': '#111111',
+        copper: '#C48B47',
         'red-500': '#EF4444',
         'blue-500': '#3B82F6',
         'yellow-400': '#FACC15',

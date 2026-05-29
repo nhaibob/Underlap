@@ -9,6 +9,7 @@ import Link from "next/link";
 import { Loader2, TrendingUp, Clock, Users, RefreshCw } from "lucide-react";
 import { supabaseAuth } from "@/lib/supabase";
 import { useUIStore } from "@/lib/store/uiStore";
+import { motion } from "framer-motion";
 
 
 interface PostData {
@@ -136,16 +137,7 @@ export default function FeedPage() {
     );
   });
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-3" />
-          <p className="text-muted-foreground">Đang tải bài viết...</p>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -169,7 +161,7 @@ export default function FeedPage() {
       </div>
 
       {/* Sort Tabs */}
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+      <div className="flex gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide">
         {SORT_OPTIONS.map((option) => {
           const Icon = option.icon;
           const isActive = sortBy === option.value;
@@ -178,15 +170,18 @@ export default function FeedPage() {
               key={option.value}
               onClick={() => setSortBy(option.value)}
               className={`
-                                flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
-                                transition-all duration-200 border
-                                ${
-                                  isActive
-                                    ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/25"
-                                    : "bg-panel border-white/10 text-muted-foreground hover:text-foreground hover:border-white/20"
-                                }
-                            `}
+                relative flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap
+                transition-colors z-10 bg-[#111111]/80 border border-white/5 hover:bg-white/5
+                ${
+                  isActive
+                    ? "text-black !border-transparent !bg-transparent"
+                    : "text-muted-foreground hover:text-white"
+                }
+              `}
             >
+              {isActive && (
+                <motion.div layoutId="feedSortPill" className="absolute inset-0 bg-white rounded-full z-[-1] shadow-md" transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }} />
+              )}
               <Icon className="w-4 h-4" />
               {option.label}
             </button>
@@ -200,7 +195,14 @@ export default function FeedPage() {
       </div>
 
       {/* Feed Content */}
-      {sortedFeed.length === 0 ? (
+      {isLoading ? (
+        <div className="flex items-center justify-center min-h-[30vh]">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-3" />
+            <p className="text-muted-foreground">Đang tải bài viết...</p>
+          </div>
+        </div>
+      ) : sortedFeed.length === 0 ? (
         <div className="text-center py-12 bg-panel rounded-xl border border-white/10">
           <p className="text-muted-foreground mb-4">
             {sortBy === "following"
