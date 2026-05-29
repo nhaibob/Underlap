@@ -78,7 +78,7 @@ export const Header = () => {
     <header className="sticky top-0 z-50 w-full h-16 bg-background/60 backdrop-blur-xl border-b border-white/5 transition-all duration-300">
       <div className="flex items-center justify-between h-full px-4 md:px-6">
         {/* 1. LOGO & NAV */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-6 pointer-events-auto">
           <Link href="/feed" className="flex items-center gap-2 flex-shrink-0 font-bold tracking-tight text-xl uppercase text-foreground">
             {/* Minimalist text logo instead of image if preferred, but we keep img just in case */}
             UNDERLAP
@@ -90,29 +90,22 @@ export const Header = () => {
           </nav>
         </div>
 
-        {/* 2. THANH TÌM KIẾM */}
-        <div className="flex-1 max-w-sm mx-6 hidden md:block">
-          <div className="relative flex items-center bg-transparent rounded-none border-b border-white/10 px-0 py-2 focus-within:border-white/50 transition-colors">
-            <Search className="w-4 h-4 text-muted-foreground mr-3" />
-            <input
-              type="text"
-              placeholder="Search..."
-              className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
-            />
+        {/* 2. SEARCH BAR (Absolute positioning to center/align) */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-4 md:px-6">
+          <div className="w-full max-w-2xl hidden md:block">
+            <div className="relative flex items-center bg-transparent rounded-none border-b border-white/10 px-0 py-2 focus-within:border-white/50 transition-colors pointer-events-auto">
+              <Search className="w-4 h-4 text-muted-foreground mr-3" />
+              <input
+                type="text"
+                placeholder="Search..."
+                className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+              />
+            </div>
           </div>
         </div>
 
         {/* 3. CÁC NÚT HÀNH ĐỘNG */}
-        <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
-          <Button
-            variant="default"
-            className="gap-2 hidden md:flex"
-            onClick={openCreateModal}
-          >
-            <PenSquare className="w-4 h-4" />
-            Tạo chiến thuật
-          </Button>
-
+        <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0 pointer-events-auto">
           <NotificationDropdown className="hidden sm:flex" />
 
           <Button variant="ghost" size="icon" className="flex md:hidden">

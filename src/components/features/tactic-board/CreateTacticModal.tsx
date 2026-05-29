@@ -14,6 +14,7 @@ import {
 } from '@dnd-kit/core';
 import { TacticEditorUI } from './TacticEditorUI';
 import { useTacticLogic } from '@/lib/hooks/useTacticLogic';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const CreateTacticModal = () => {
   const { isCreateModalOpen, closeCreateModal } = useUIStore();
@@ -37,12 +38,11 @@ export const CreateTacticModal = () => {
     getUser();
   }, []);
 
-  // Sensors with distance constraint - drag only starts after moving 5px
-  // This allows clicks to work properly without accidentally starting a drag
+  // Sensors with distance constraint
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: {
-        distance: 5, // 5px movement required to start drag
+        distance: 5,
       },
     }),
     useSensor(PointerSensor, {
@@ -55,17 +55,13 @@ export const CreateTacticModal = () => {
   // Xử lý kéo thả (Drag End)
   function handleDragEnd(event: DragEndEvent) {
     const { activeTool, players, setPlayers, deletePlayer, boardRect, ball, setBall } = logic;
-    
-    // Only prevent dragging during draw/area/erase modes
     if (activeTool === 'draw' || activeTool === 'area' || activeTool === 'erase') return; 
     
     const { active, over, delta } = event;
     if (!over) return; 
     
-    // Kéo vào thùng rác (delete-zone)
     if (over.id === 'delete-zone') {
       if (!active.data.current?.isPaletteToken) {
-        // Check if it's the ball
         if ((active.id as string).startsWith('ball-')) {
           setBall(null);
         } else {
@@ -75,14 +71,12 @@ export const CreateTacticModal = () => {
       return;
     }
     
-    // Thả trên sân
     if (over.id === 'tactic-board-droppable-area') {
       if (active.data.current?.isPaletteToken) return;
 
       const scaleX = (boardRect?.width || 600) / 600;
       const scaleY = (boardRect?.height || 400) / 400;
       
-      // Handle ball dragging
       if ((active.id as string).startsWith('ball-') && ball) {
         setBall({
           ...ball,
@@ -94,7 +88,6 @@ export const CreateTacticModal = () => {
         return;
       }
       
-      // Handle player dragging
       const newPlayers = players.map((player) => {
           if (player.id === active.id) {
             return { 
@@ -135,9 +128,7 @@ export const CreateTacticModal = () => {
             }, 
             body: JSON.stringify(payload) 
         });
-        const result = await response.json();
-        
-        // Reset và đóng modal
+        await response.json();
         logic.reset({ players: [], arrows: [], areas: [] });
         setTitle(''); setDescription(''); setTags(''); 
         closeCreateModal();
@@ -149,7 +140,6 @@ export const CreateTacticModal = () => {
     }
   };
 
-  // Save as draft
   const handleSaveDraft = async () => {
     if (logic.players.length === 0) {
       alert('Vui lòng thêm ít nhất một cầu thủ');
@@ -177,8 +167,7 @@ export const CreateTacticModal = () => {
             }, 
             body: JSON.stringify(payload) 
         });
-        const result = await response.json();
-        
+        await response.json();
         alert('✅ Đã lưu bản nháp!');
         logic.reset({ players: [], arrows: [], areas: [] });
         setTitle(''); setDescription(''); setTags(''); 
@@ -202,24 +191,57 @@ export const CreateTacticModal = () => {
       onSaveDraft: handleSaveDraft
   };
 
-  if (!isCreateModalOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 w-full h-screen bg-background overflow-hidden">
-      <DndContext 
-        sensors={sensors}
-        onDragEnd={handleDragEnd} 
-        measuring={{ droppable: { strategy: MeasuringStrategy.WhileDragging } }}
-      >
-          <TacticEditorUI
-          {...logic}
-          onPlayerDelete={logic.deletePlayer}
-          onBoardClick={logic.addPlayerAtPosition}
-          onClearAll={logic.clearAll}
-          metaProps={metaProps}
-          onClose={closeCreateModal}
-          />
-      </DndContext>
-    </div>
+    <AnimatePresence>
+      {isCreateModalOpen && (
+        <motion.div 
+          className="fixed inset-0 z-50 w-full h-screen bg-background overflow-hidden"
+          initial={{ opacity: 1 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 1, transition: { delay: 0.5 } }} // Parent waits 0.5s for slices to close before unmounting
+        >
+          {/* Lớp che (overlay) gồm 5 mảnh dọc lật 3D */}
+          <div 
+            className="pointer-events-none absolute inset-0 flex z-50 overflow-hidden" 
+            style={{ perspective: 1200 }}
+          >
+            {Array.from({ length: 5 }).map((_, i) => (
+              <motion.div
+                key={i}
+                className="flex-1 bg-neutral-950 border-r border-neutral-800/50 last:border-none shadow-2xl"
+                initial={{ rotateY: 0, opacity: 1 }}
+                animate={{ 
+                  rotateY: 90, 
+                  opacity: 0,
+                  transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: i * 0.08 }
+                }}
+                exit={{ 
+                  rotateY: 0, 
+                  opacity: 1,
+                  // Đóng nhanh hơn (0.4s thay vì 0.8s) để không bị đợi lâu
+                  transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: (4 - i) * 0.04 }
+                }}
+                style={{ transformOrigin: 'left center' }}
+              />
+            ))}
+          </div>
+
+          <DndContext 
+            sensors={sensors}
+            onDragEnd={handleDragEnd} 
+            measuring={{ droppable: { strategy: MeasuringStrategy.WhileDragging } }}
+          >
+              <TacticEditorUI
+              {...logic}
+              onPlayerDelete={logic.deletePlayer}
+              onBoardClick={logic.addPlayerAtPosition}
+              onClearAll={logic.clearAll}
+              metaProps={metaProps}
+              onClose={closeCreateModal}
+              />
+          </DndContext>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
