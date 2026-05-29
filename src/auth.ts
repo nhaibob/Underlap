@@ -52,6 +52,7 @@ export const config = {
         if (!credentials?.email || !credentials?.password) return null;
 
         try {
+          console.log("[AUTH] Starting authorize for:", credentials.email);
           // Dùng anon client để đăng nhập (không dùng admin)
           const supabase = createClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -62,31 +63,44 @@ export const config = {
 
           // Hỗ trợ đăng nhập bằng username
           if (!email.includes("@")) {
+            console.log("[AUTH] Looking up username:", email);
             const { data: profile } = await supabaseAdmin
               .from("profiles")
               .select("email")
               .eq("username", email.toLowerCase())
               .single();
 
-            if (!profile?.email) return null;
+            if (!profile?.email) {
+              console.log("[AUTH] Username not found in profiles");
+              return null;
+            }
             email = profile.email;
           }
 
+          console.log("[AUTH] Attempting Supabase signInWithPassword for:", email);
           const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password: credentials.password as string,
           });
 
-          if (error || !data.user) return null;
+          if (error || !data.user) {
+            console.error("[AUTH] Supabase Auth Error:", error?.message);
+            return null;
+          }
 
+          console.log("[AUTH] Supabase signIn SUCCESS, fetching profile");
           // Lấy thêm thông tin profile
-          const { data: profile } = await supabaseAdmin
+          const { data: profile, error: profileError } = await supabaseAdmin
             .from("profiles")
             .select("id, username, name, avatar_url")
             .eq("id", data.user.id)
             .single();
 
-          return {
+          if (profileError) {
+             console.log("[AUTH] Profile lookup warning:", profileError.message);
+          }
+
+          const userObj = {
             id: data.user.id,
             email: data.user.email!,
             name:
@@ -102,8 +116,10 @@ export const config = {
               data.user.user_metadata?.username ||
               email.split("@")[0],
           };
+          console.log("[AUTH] Returning userObj:", userObj);
+          return userObj;
         } catch (err) {
-          console.error("Credentials auth error:", err);
+          console.error("[AUTH] Credentials auth catch block error:", err);
           return null;
         }
       },
@@ -165,10 +181,15 @@ export const config = {
     },
 
     // ── JWT: Lưu thông tin vào cookie ────────────────────────────────────────
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id!;
         token.username = (user as any).username;
+      }
+      if (trigger === "update" && session) {
+        if (session.name) token.name = session.name;
+        if (session.username) token.username = session.username;
+        if (session.image) token.picture = session.image;
       }
       return token;
     },
@@ -178,6 +199,8 @@ export const config = {
       if (session.user) {
         session.user.id = token.id as string;
         (session.user as any).username = token.username;
+        if (token.name) session.user.name = token.name;
+        if (token.picture) session.user.image = token.picture;
       }
       return session;
     },

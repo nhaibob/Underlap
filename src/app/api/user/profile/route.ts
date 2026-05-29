@@ -69,6 +69,24 @@ export async function PUT(request: Request) {
 
     if (error) throw error;
 
+    // Update denormalized data in tactics table
+    await supabase
+      .from("tactics")
+      .update({
+        author_name: name,
+        author_avatar: avatar_url,
+      })
+      .eq("author_id", authUser.id);
+
+    // Update denormalized data in comments table
+    await supabase
+      .from("comments")
+      .update({
+        user_name: name,
+        user_avatar: avatar_url,
+      })
+      .eq("user_id", authUser.id);
+
     return NextResponse.json({ success: true, data });
   } catch (error: any) {
     console.error("Update profile error:", error);

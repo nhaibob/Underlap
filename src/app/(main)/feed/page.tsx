@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { Loader2, TrendingUp, Clock, Users, RefreshCw } from "lucide-react";
 import { supabaseAuth } from "@/lib/supabase";
+import { useUIStore } from "@/lib/store/uiStore";
 
 
 interface PostData {
@@ -47,6 +48,7 @@ const SORT_OPTIONS: {
 ];
 
 export default function FeedPage() {
+  const { openCreateModal } = useUIStore();
   const [feedData, setFeedData] = useState<PostData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [sortBy, setSortBy] = useState<SortType>("latest");
@@ -205,20 +207,13 @@ export default function FeedPage() {
               ? "Chưa có bài viết từ người bạn theo dõi."
               : "Chưa có bài đăng nào."}
           </p>
-          <Link href="/">
-            <Button variant="default">Tạo chiến thuật đầu tiên</Button>
-          </Link>
+          <Button variant="default" onClick={openCreateModal}>Tạo chiến thuật đầu tiên</Button>
         </div>
       ) : (
         <div className="space-y-6">
           {sortedFeed.map((post) => (
             <div key={post.id} className="relative">
-              {/* Clickable overlay for navigation */}
-              <Link
-                href={`/post/${post.id}`}
-                className="absolute top-0 left-0 right-0 h-16 z-10 cursor-pointer"
-                title="Xem chi tiết"
-              />
+
               <PostCard
                 id={post.id}
                 author={{

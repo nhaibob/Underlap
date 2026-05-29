@@ -66,7 +66,7 @@ export const Header = () => {
   };
 
   const displayName =
-    (user as any)?.username || user?.name || user?.email?.split("@")[0] || "User";
+    user?.name || (user as any)?.username || user?.email?.split("@")[0] || "User";
   const displayEmail = user?.email || "";
   const avatarUrl = user?.image || "";
 

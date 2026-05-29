@@ -6,6 +6,7 @@ import { X, Loader2, User, FileText, MapPin, Link as LinkIcon, Camera, Upload, I
 import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
 import { supabaseAuth } from '@/lib/supabase';
+import { useSession } from 'next-auth/react';
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ export const EditProfileModal = ({ isOpen, onClose, onSave, currentData }: EditP
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { update } = useSession();
 
   useEffect(() => {
     if (currentData) {
@@ -117,6 +119,8 @@ export const EditProfileModal = ({ isOpen, onClose, onSave, currentData }: EditP
       if (data.error) {
         setError(data.error);
       } else {
+        // Update NextAuth session immediately
+        await update({ name, username, image: avatarUrl });
         onSave?.();
         onClose();
       }

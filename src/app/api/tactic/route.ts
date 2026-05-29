@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { getServerUser, supabaseAdmin as supabase } from "@/lib/authServer";
 
+export const dynamic = "force-dynamic";
+
 // GET - Fetch all public tactics for feed
 export async function GET() {
   try {
@@ -114,6 +116,7 @@ export async function POST(request: Request) {
         title: data.metadata.title || "Untitled Tactic",
         description: data.metadata.description || null,
         formation: data.metadata.formation || null,
+        author_id: userId || null,
         author_username: authorUsername,
         author_name: authorName,
         author_avatar: authorAvatar,

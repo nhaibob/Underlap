@@ -32,6 +32,12 @@ export const supabaseAuth = {
     });
 
     if (error) throw error;
+    
+    // Supabase auth prevents email enumeration by returning a fake user object if the email already exists
+    // We can detect this by checking if the user identities array is empty
+    if (data.user && data.user.identities && data.user.identities.length === 0) {
+      throw new Error("Email này đã được sử dụng. Vui lòng đăng nhập hoặc sử dụng email khác.");
+    }
 
     // Save username mapping to profiles table
     if (data.user) {
@@ -91,11 +97,28 @@ export const supabaseAuth = {
   },
 
   getUser: async () => {
-    if (!supabase) return null;
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    return user;
+    try {
+      const res = await fetch('/api/auth/session');
+      if (res.ok) {
+        const session = await res.json();
+        if (session && session.user) {
+          // Trả về cấu trúc tương thích với Supabase User để không cần sửa code cũ
+          return {
+            id: session.user.id,
+            email: session.user.email,
+            user_metadata: {
+              username: session.user.username,
+              name: session.user.name,
+              avatar_url: session.user.image,
+            },
+            created_at: new Date().toISOString()
+          };
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to get NextAuth session:", e);
+    }
+    return null;
   },
 
   // Get access token for API calls (Authorization header)
